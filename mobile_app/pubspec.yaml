@@ -1,0 +1,48 @@
+name: mobile_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  
+  # Paquete para hacer peticiones HTTP a nuestra API
+  http: ^1.2.1
+  # Paquete para guardar datos simples en el dispositivo
+  shared_preferences: ^2.2.3
+  # Paquete para mostrar mapas interactivos
+  flutter_map: ^6.1.0
+  # Paquete de ayuda para las coordenadas del mapa
+  latlong2: ^0.9.1
+  # Paquete para obtener la ubicación GPS del dispositivo
+  geolocator: ^12.0.0
+  # Paquete para solicitar permisos
+  permission_handler: ^11.3.1
+  # Paquete para decodificar tokens de sesión
+  jwt_decoder: ^2.0.1
+  # Paquete para elegir imágenes de la galería o cámara
+  image_picker: ^1.1.2
+  # Paquete para formatear fechas y horas
+  intl: ^0.19.0
+  # For local push notifications
+  flutter_local_notifications: ^17.1.2
+  # For running tasks in the background
+  flutter_background_service: ^5.0.1
+
+  provider: ^6.1.2
+
+  socket_io_client: ^3.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
