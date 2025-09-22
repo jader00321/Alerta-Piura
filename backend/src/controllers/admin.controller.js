@@ -591,6 +591,24 @@ const deleteNotification = async (req, res) => {
     }
 };
 
+const getLatestPendingReports = async (req, res) => {
+  try {
+    const query = `
+      SELECT r.id, r.titulo, c.nombre as categoria, u.alias as autor
+      FROM reportes r
+      JOIN categorias c ON r.id_categoria = c.id
+      JOIN usuarios u ON r.id_usuario = u.id
+      WHERE r.estado = 'pendiente_verificacion'
+      ORDER BY r.fecha_creacion DESC
+      LIMIT 5
+    `;
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener últimos reportes.' });
+  }
+};
+
 module.exports = {
   login,
   getDashboardStats,
@@ -617,4 +635,5 @@ module.exports = {
   getSimulatedSmsLog,
   getNotificationHistory,
   deleteNotification,
+  getLatestPendingReports,
 };

@@ -34,5 +34,6 @@ router.get('/sms-log', adminMiddleware, adminController.getSimulatedSmsLog);
 router.post('/users/notify', jsonParser, adminMiddleware, adminController.sendNotification);
 router.get('/notifications-history', adminMiddleware, adminController.getNotificationHistory);
 router.delete('/notifications-history/:id', adminMiddleware, adminController.deleteNotification);
+router.get('/reports/latest-pending', adminMiddleware, adminController.getLatestPendingReports);
 
 module.exports = router;

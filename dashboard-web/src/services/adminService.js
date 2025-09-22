@@ -135,6 +135,11 @@ const deleteNotification = async (id) => {
   return response.data;
 };
 
+const getLatestPendingReports = async () => {
+  const response = await axios.get(API_URL + '/reports/latest-pending', { headers: getAuthHeader() });
+  return response.data;
+};
+
 const adminService = {
   getStats,
   getAllUsers,
@@ -161,6 +166,7 @@ const adminService = {
   sendNotification,
   getNotificationHistory,
   deleteNotification,
+  getLatestPendingReports,
 };
 
 export default adminService;

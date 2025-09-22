@@ -19,6 +19,10 @@ import SmsIcon from '@mui/icons-material/Sms';
 import SmsLogPage from './SmsLogPage';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import NotificationHistoryPage from './NotificationHistoryPage';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+
+const drawerWidth = 240;
 
 function DashboardLayout({ onLogout }) {
   const navigate = useNavigate();
@@ -43,17 +47,14 @@ function DashboardLayout({ onLogout }) {
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Panel de Administrador
-          </Typography>
-          <Button color="inherit" onClick={handleLogout}>Cerrar Sesión</Button>
-        </Toolbar>
-      </AppBar>
+      <Header onLogout={handleLogout} />
       <Drawer
         variant="permanent"
-        sx={{ width: 240, flexShrink: 0, [`& .MuiDrawer-paper`]: { width: 240, boxSizing: 'border-box' } }}
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+        }}
       >
         <Toolbar />
         <Box sx={{ overflow: 'auto' }}>
@@ -69,9 +70,9 @@ function DashboardLayout({ onLogout }) {
           </List>
         </Box>
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, backgroundColor: (theme) => theme.palette.background.default, minHeight: '100vh' }}>
+      <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Toolbar />
-        <Container maxWidth="xl">
+        <Container maxWidth="xl" sx={{ flexGrow: 1, p: 3 }}>
           <Routes>
             <Route path="/" element={<DashboardOverview />} />
             <Route path="/sos-alerts" element={<SOSAlertsPage />} />
