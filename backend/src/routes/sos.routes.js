@@ -2,6 +2,7 @@ const { Router } = require('express');
 const express = require('express');
 const sosController = require('../controllers/sos.controller');
 const authMiddleware = require('../middleware/auth.middleware');
+const adminMiddleware = require('../middleware/admin.middleware');
 
 const router = Router();
 const jsonParser = express.json();

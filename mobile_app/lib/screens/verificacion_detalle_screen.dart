@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+//import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/api/lider_service.dart';
 import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';

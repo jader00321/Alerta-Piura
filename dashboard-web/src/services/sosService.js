@@ -7,19 +7,25 @@ const getAuthHeader = () => {
   return token ? { Authorization: 'Bearer ' + token } : {};
 };
 
-// This function now fetches real data
-const getActiveAlerts = async () => {
-  try {
-    const response = await axios.get(API_URL + '/active', { headers: getAuthHeader() });
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch active alerts:", error);
-    return [];
-  }
+const getAllAlerts = async () => {
+  const response = await axios.get(API_URL + '/all', { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getLocationHistory = async (alertId) => {
+  const response = await axios.get(API_URL + `/${alertId}/history`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const updateStatus = async (alertId, updates) => {
+  const response = await axios.put(API_URL + `/${alertId}/status`, updates, { headers: getAuthHeader() });
+  return response.data;
 };
 
 const sosService = {
-  getActiveAlerts,
+  getAllAlerts,
+  getLocationHistory,
+  updateStatus,
 };
 
 export default sosService;
