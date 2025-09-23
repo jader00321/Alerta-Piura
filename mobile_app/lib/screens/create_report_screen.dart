@@ -19,6 +19,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   final _tituloController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _categoriaSugeridaController = TextEditingController();
+  final _tagsController = TextEditingController();
+  final _referenciaController = TextEditingController();
 
   int? _selectedCategoria;
   bool _isAnonimo = false;
@@ -27,6 +29,13 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   final ReporteService _reporteService = ReporteService();
   List<Categoria> _categorias = [];
   bool _isLoadingCategories = true;
+  String _urgencia = 'Media';
+  String _impacto = 'A mi calle';
+  TimeOfDay? _horaIncidente;
+  String? _distrito;
+
+  final List<String> _distritosDePiura = ['Piura', 'Castilla', 'Veintiséis de Octubre', 'Catacaos', 'Cura Mori', 'El Tallán', 'La Arena', 'La Unión', 'Las Lomas', 'Tambo Grande'];
+  final List<String> _recommendedTags = ['peligroso', 'tráfico', 'niños', 'urgente'];
 
   XFile? _imageFile;
   final ImagePicker _picker = ImagePicker();
@@ -34,6 +43,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   @override
   void initState() {
     super.initState();
+    _horaIncidente = TimeOfDay.now();
     _fetchCategories();
   }
 
@@ -42,6 +52,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     _tituloController.dispose();
     _descripcionController.dispose();
     _categoriaSugeridaController.dispose();
+    _tagsController.dispose();
+    _referenciaController.dispose();
     super.dispose();
   }
 
@@ -60,8 +72,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? selectedImage =
-        await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? selectedImage = await _picker.pickImage(source: ImageSource.gallery);
     if (selectedImage != null) {
       setState(() {
         _imageFile = selectedImage;
@@ -123,6 +134,12 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         categoriaSugerida:
             _selectedCategoria == otroCategoria.id ? _categoriaSugeridaController.text : null,
         imagePath: _imageFile?.path,
+        urgencia: _urgencia,
+        horaIncidente: _horaIncidente?.format(context),
+        tags: _tagsController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
+        impacto: _impacto,
+        referenciaUbicacion: _referenciaController.text.isEmpty ? null : _referenciaController.text,
+        distrito: _distrito,
       );
 
       setState(() => _isLoading = false);
@@ -155,9 +172,28 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     }
   }
 
+  Future<void> _selectTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _horaIncidente ?? TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _horaIncidente = picked;
+      });
+    }
+  }
+
+  void _addTag(String tag) {
+    if (_tagsController.text.isEmpty) {
+      _tagsController.text = tag;
+    } else {
+      _tagsController.text = '${_tagsController.text}, $tag';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Find the ID for the 'Otro' category to use in conditional logic
     final otroCategoriaId = _categorias.firstWhere((cat) => cat.nombre.toLowerCase() == 'otro', orElse: () => Categoria(id: -1, nombre: '')).id;
 
     return Scaffold(
@@ -173,7 +209,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 child: GestureDetector(
                   onTap: _pickImage,
                   child: Container(
-                    height: 150,
+                    height: 200,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
@@ -206,7 +242,23 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 validator: (value) =>
                     value!.isEmpty ? 'El título es requerido' : null,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              const Text('Nivel de Urgencia', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              SegmentedButton<String>(
+                segments: const <ButtonSegment<String>>[
+                  ButtonSegment<String>(value: 'Baja', label: Text('Baja')),
+                  ButtonSegment<String>(value: 'Media', label: Text('Media')),
+                  ButtonSegment<String>(value: 'Alta', label: Text('Alta')),
+                ],
+                selected: {_urgencia},
+                onSelectionChanged: (Set<String> newSelection) {
+                  setState(() {
+                    _urgencia = newSelection.first;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
               _isLoadingCategories
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24.0),
@@ -231,32 +283,76 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                   padding: const EdgeInsets.only(top: 12.0),
                   child: TextFormField(
                     controller: _categoriaSugeridaController,
-                    decoration:
-                        const InputDecoration(labelText: 'Especifica la categoría'),
-                    validator: (value) =>
-                        value!.isEmpty ? 'Este campo es requerido' : null,
+                    decoration: const InputDecoration(labelText: 'Especifica la categoría'),
+                    validator: (value) => value!.isEmpty ? 'Este campo es requerido' : null,
                   ),
                 ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _descripcionController,
                 decoration:
                     const InputDecoration(labelText: 'Descripción (Opcional)'),
                 maxLines: 3,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _distrito,
+                decoration: const InputDecoration(labelText: 'Distrito'),
+                items: _distritosDePiura.map((String value) {
+                  return DropdownMenuItem<String>(value: value, child: Text(value));
+                }).toList(),
+                onChanged: (newValue) => setState(() => _distrito = newValue),
+                validator: (value) => value == null ? 'Selecciona un distrito' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(controller: _referenciaController, decoration: const InputDecoration(labelText: 'Referencia de Ubicación (Opcional)')),
+
+              const SizedBox(height: 18),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Hora del Incidente (Opcional)'),
+                subtitle: Text(_horaIncidente?.format(context) ?? 'No seleccionada'),
+                trailing: const Icon(Icons.access_time),
+                onTap: _selectTime,
+              ),
+
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _impacto,
+                decoration: const InputDecoration(labelText: 'Impacto del Problema'),
+                items: ['Solo a mí', 'A mi calle', 'A todo el barrio']
+                    .map((label) => DropdownMenuItem(child: Text(label), value: label))
+                    .toList(),
+                onChanged: (value) => setState(() => _impacto = value!),
+              ),
+
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _tagsController,
+                decoration: const InputDecoration(
+                  labelText: 'Etiquetas (separadas por coma)',
+                  helperText: 'Ayudan a clasificar mejor tu reporte (ej: inundación, poste caído).'
+                )
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Wrap(
+                  spacing: 8.0,
+                  children: _recommendedTags.map((tag) => ActionChip(
+                    label: Text(tag),
+                    onPressed: () => _addTag(tag),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 16),
               CheckboxListTile(
                 title: const Text('Publicar como anónimo'),
                 value: _isAnonimo,
-                onChanged: (bool? value) {
-                  setState(() {
-                    _isAnonimo = value!;
-                  });
-                },
+                onChanged: (bool? value) => setState(() => _isAnonimo = value!),
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               ElevatedButton.icon(
                 icon: const Icon(Icons.my_location),
                 label: const Text('Obtener Ubicación Actual'),
@@ -279,7 +375,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                       style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16)),
                       child: const Text('Enviar Reporte'),
-                    )
+                    ),
+            const SizedBox(height: 30),
             ],
           ),
         ),

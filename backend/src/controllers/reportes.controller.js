@@ -56,7 +56,11 @@ const getAllReports = async (req, res) => {
 
 const createReport = async (req, res) => {
   const id_usuario = req.user.id;
-  const { id_categoria, titulo, descripcion, es_anonimo, categoria_sugerida } = req.body;
+  // Get all the new fields from the request body
+  const { 
+    id_categoria, titulo, descripcion, es_anonimo, categoria_sugerida,
+    urgencia, hora_incidente, tags, impacto, referencia_ubicacion, distrito 
+  } = req.body;
   const location = JSON.parse(req.body.location);
   const foto_url = req.file ? req.file.path : null;
 
@@ -64,23 +68,35 @@ const createReport = async (req, res) => {
     return res.status(400).json({ message: 'Categoría, título y ubicación son requeridos.' });
   }
 
+  // --- NEW: Generate a Unique Report Code ---
+  const year = new Date().getFullYear();
+  const reportCountResult = await db.query('SELECT COUNT(*) FROM reportes');
+  const nextId = parseInt(reportCountResult.rows[0].count, 10) + 1;
+  const codigo_reporte = `AP-${year}-${nextId.toString().padStart(5, '0')}`;
+
   const client = await db.getClient();
   try {
     await client.query('BEGIN');
 
     const reporteQuery = `
-      INSERT INTO Reportes (id_usuario, id_categoria, titulo, descripcion, location, es_anonimo, categoria_sugerida, foto_url)
-      VALUES ($1, $2, $3, $4, ST_SetSRID(ST_GeomFromGeoJSON($5), 4326), $6, $7, $8)
+      INSERT INTO Reportes (
+        id_usuario, id_categoria, titulo, descripcion, location, es_anonimo, 
+        categoria_sugerida, foto_url, urgencia, hora_incidente, tags, 
+        impacto, referencia_ubicacion, distrito, codigo_reporte
+      )
+      VALUES ($1, $2, $3, $4, ST_SetSRID(ST_GeomFromGeoJSON($5), 4326), $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING *;
     `;
-    const reporteValues = [id_usuario, id_categoria, titulo, descripcion, JSON.stringify(location), es_anonimo || false, categoria_sugerida, foto_url];
+    const reporteValues = [
+      id_usuario, id_categoria, titulo, descripcion, JSON.stringify(location), 
+      es_anonimo || false, categoria_sugerida, foto_url, urgencia, hora_incidente, 
+      tags, impacto, referencia_ubicacion, distrito, codigo_reporte
+    ];
     const result = await client.query(reporteQuery, reporteValues);
 
     const puntosQuery = 'UPDATE Usuarios SET puntos = puntos + 10 WHERE id = $1';
     await client.query(puntosQuery, [id_usuario]);
-
-    // --- THIS IS THE KEY CHANGE ---
-    // After updating points, check for new badges.
+    
     await checkAndAwardBadges(client, id_usuario);
 
     await client.query('COMMIT');
@@ -122,24 +138,24 @@ const apoyarReporte = async (req, res) => {
   }
 };
 
-// Obtener un reporte por su ID con todos los detalles
-// --- UPDATED getReporteById FUNCTION ---
 const getReporteById = async (req, res) => {
   const { id } = req.params;
   try {
-    // This query is now richer, including foto_url and a formatted timestamp
     const reporteQuery = `
       SELECT 
         r.id, r.titulo, r.descripcion, r.estado, r.foto_url,
-        c.nombre as categoria, -- <-- ADD THIS LINE
+        r.urgencia, r.distrito, r.referencia_ubicacion, r.tags, r.impacto, r.codigo_reporte,
+        to_char(r.hora_incidente, 'HH24:MI') as hora_incidente,
+        c.nombre as categoria,
         to_char(r.fecha_creacion, 'DD Mon YYYY, HH24:MI') as fecha_creacion,
         r.es_anonimo,
         CASE WHEN r.es_anonimo = true THEN 'Anónimo' ELSE COALESCE(u.alias, u.nombre) END as autor,
+        u.id as id_autor,
         (SELECT COUNT(*) FROM apoyos WHERE id_reporte = r.id) as apoyos_count,
-        ST_AsGeoJSON(r.location) as location
+        ST_AsGeoJSON(r.location) as location -- Keep sending as GeoJSON string
       FROM Reportes r
       JOIN Usuarios u ON r.id_usuario = u.id
-      JOIN Categorias c ON r.id_categoria = c.id -- <-- ADD THIS JOIN
+      JOIN Categorias c ON r.id_categoria = c.id
       WHERE r.id = $1
     `;
     const reporteResult = await db.query(reporteQuery, [id]);
@@ -149,10 +165,9 @@ const getReporteById = async (req, res) => {
     }
     const reporte = reporteResult.rows[0];
 
-    // This query now also includes a formatted timestamp
     const comentariosQuery = `
       SELECT 
-        c.id, c.comentario, c.id_usuario, -- <-- AÑADIDO
+        c.id, c.comentario, c.id_usuario,
         to_char(c.fecha_creacion, 'DD Mon YYYY, HH24:MI') as fecha_creacion,
         COALESCE(u.alias, u.nombre) as autor,
         (SELECT COUNT(*) FROM comentario_apoyos WHERE id_comentario = c.id) as apoyos_count
@@ -162,7 +177,10 @@ const getReporteById = async (req, res) => {
       ORDER BY c.fecha_creacion ASC
     `;
     const comentariosResult = await db.query(comentariosQuery, [id]);
-    reporte.comentarios = comentariosResult.rows;
+    
+    // IMPORTANT: Send comments as a simple list, just as before.
+    reporte.comentarios = comentariosResult.rows; 
+    
     res.status(200).json(reporte);
   } catch (error) {
     console.error('Error al obtener el reporte por ID:', error);

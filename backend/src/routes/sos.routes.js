@@ -12,5 +12,8 @@ router.get('/active', sosController.getActiveSosAlerts);
 
 router.post('/activate', jsonParser, sosController.activateSos);
 router.post('/:alertId/location', jsonParser, sosController.addLocationUpdate);
+router.get('/all', adminMiddleware, sosController.getAllSosAlerts);
+router.get('/:alertId/history', adminMiddleware, sosController.getSosLocationHistory);
+router.put('/:id/status', jsonParser, adminMiddleware, sosController.updateSosStatus);
 
 module.exports = router;

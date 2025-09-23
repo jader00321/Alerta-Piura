@@ -9,6 +9,7 @@ const jsonParser = express.json();
 
 router.post('/login', jsonParser, adminController.login);
 
+
 // All routes below this require a valid admin token
 router.get('/stats', authMiddleware, adminController.getDashboardStats);
 router.get('/users', adminMiddleware, adminController.getAllUsers);
@@ -35,5 +36,7 @@ router.post('/users/notify', jsonParser, adminMiddleware, adminController.sendNo
 router.get('/notifications-history', adminMiddleware, adminController.getNotificationHistory);
 router.delete('/notifications-history/:id', adminMiddleware, adminController.deleteNotification);
 router.get('/reports/latest-pending', adminMiddleware, adminController.getLatestPendingReports);
+router.put('/reports/:id/approve', adminMiddleware, adminController.adminAprobarReporte);
+router.put('/reports/:id/reject', adminMiddleware, adminController.adminRechazarReporte);
 
 module.exports = router;

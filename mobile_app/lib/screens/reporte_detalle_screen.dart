@@ -4,6 +4,9 @@ import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:mobile_app/widgets/reporte_detalle/reporte_header.dart';
+import 'package:mobile_app/widgets/reporte_detalle/reporte_actions_bar.dart';
+import 'package:mobile_app/widgets/reporte_detalle/comments_section.dart';
 
 class ReporteDetalleScreen extends StatefulWidget {
   final int reporteId;
@@ -40,6 +43,29 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
     });
   }
 
+  // --- HANDLER FUNCTIONS ---
+  Future<void> _onSupportReport() async {
+    final response = await _reporteService.apoyarReporte(widget.reporteId);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(response['message']),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16)));
+      _loadReporte();
+    }
+  }
+
+  Future<void> _onSupportComment(int commentId) async {
+    final response = await _reporteService.apoyarComentario(commentId);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(response['message']),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16)));
+      _loadReporte();
+    }
+  }
+  
   Future<void> _postComentario() async {
     if (_comentarioController.text.trim().isEmpty) return;
     setState(() => _isPostingComment = true);
@@ -54,17 +80,6 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
       }
     }
     setState(() => _isPostingComment = false);
-  }
-
-  Future<void> _moderarReporte(bool aprobar) async {
-    final success = aprobar
-        ? await _liderService.aprobarReporte(widget.reporteId)
-        : await _liderService.rechazarReporte(widget.reporteId);
-    if (mounted && success) {
-      Navigator.pop(context, true);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al moderar el reporte')));
-    }
   }
 
   void _showEditCommentDialog(int commentId, String currentText) {
@@ -182,17 +197,19 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authNotifier = Provider.of<AuthNotifier>(context);
+    final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
+    //final userRole = authNotifier.userRole;
 
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) {
-        if (!didPop) {
-          Navigator.pop(context, _dataChanged);
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Detalle del Reporte')),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Detalle del Reporte'),
+        // This ensures that when the user presses the back arrow,
+        // we send back whether the data changed.
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context, _dataChanged),
+        ),
+      ),
         body: FutureBuilder<ReporteDetallado>(
           future: _reporteFuture,
           builder: (context, snapshot) {
@@ -200,7 +217,7 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
+              return Center(child: Text('Error al cargar el reporte: ${snapshot.error}'));
             }
             if (!snapshot.hasData) {
               return const Center(child: Text('Reporte no encontrado.'));
@@ -212,183 +229,28 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
                 Expanded(
                   child: ListView(
                     children: [
-                      // Image Section
-                      if (reporte.fotoUrl != null)
-                        Image.network(
-                          reporte.fotoUrl!,
-                          height: 250,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, progress) {
-                            return progress == null
-                                ? child
-                                : const SizedBox(height: 250, child: Center(child: CircularProgressIndicator()));
-                          },
-                        )
-                      else
-                        Container(
-                          height: 200,
-                          color: Theme.of(context).colorScheme.surfaceVariant,
-                          child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 50)),
-                        ),
-
-                      // Header Section
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Chip(
-                              label: Text(reporte.categoria),
-                              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(reporte.titulo, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 8),
-                            Text('Publicado por ${reporte.autor} • ${reporte.fechaCreacion}', style: Theme.of(context).textTheme.bodySmall),
-                            const SizedBox(height: 16),
-                            if (reporte.descripcion != null && reporte.descripcion!.isNotEmpty) Text(reporte.descripcion!),
-                          ],
-                        ),
-                      ),
-                      
-                      // Actions Bar
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          children: [
-                            TextButton.icon(
-                              icon: const Icon(Icons.thumb_up_alt_outlined),
-                              label: Text('${reporte.apoyosCount} Apoyos'),
-                              onPressed: () async {
-                                if (!authNotifier.isAuthenticated) {
-                                  Navigator.pushNamed(context, '/login');
-                                  return;
-                                }
-                                final response = await _reporteService.apoyarReporte(reporte.id);
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text(response['message']),
-                                    behavior: SnackBarBehavior.floating,
-                                    margin: const EdgeInsets.all(16),
-                                  ));
-                                  _dataChanged = true;
-                                  _loadReporte();
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 16),
-                            TextButton.icon(
-                              icon: const Icon(Icons.comment_outlined),
-                              label: Text('${reporte.comentarios.length} Comentarios'),
-                              onPressed: () {},
-                            ),
-                          ],
-                        ),
+                      ReporteHeader(reporte: reporte),
+                      ReporteActionsBar(
+                        apoyosCount: reporte.apoyosCount,
+                        comentariosCount: reporte.comentarios.length,
+                        onSupportPressed: _onSupportReport,
                       ),
                       const Divider(thickness: 1, height: 1),
-
-                      // Comments Section
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-                        child: Text('Comentarios', style: Theme.of(context).textTheme.titleLarge),
+                      CommentsSection(
+                        reporte: reporte,
+                        onEdit: _showEditCommentDialog,
+                        onDelete: _showConfirmDeleteDialog,
+                        onReportComment: _showReportCommentDialog,
+                        onReportUser: _showReportUserDialog,
+                        onSupportComment: _onSupportComment,
                       ),
-                      if (reporte.comentarios.isEmpty)
-                        const Center(child: Padding(padding: EdgeInsets.all(16), child: Text('No hay comentarios.')))
-                      else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: reporte.comentarios.length,
-                          itemBuilder: (context, index) {
-                            final c = reporte.comentarios[index];
-                            final bool isOwner = c.autor == authNotifier.userAlias;
-                            final bool isLider = authNotifier.userRole == 'lider_vecinal';
-
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(c.autor, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                            const SizedBox(height: 4),
-                                            Text(c.fechaCreacion, style: Theme.of(context).textTheme.bodySmall),
-                                          ],
-                                        ),
-                                      ),
-                                      if (authNotifier.isAuthenticated)
-                                        SizedBox(
-                                          width: 48,
-                                          height: 48,
-                                          child: PopupMenuButton<String>(
-                                            tooltip: 'Más opciones',
-                                            onSelected: (value) {
-                                              if (value == 'editar') _showEditCommentDialog(c.id, c.comentario);
-                                              if (value == 'eliminar') _showConfirmDeleteDialog(c.id);
-                                              if (value == 'reportar_comentario') _showReportCommentDialog(c.id);
-                                              if (value == 'reportar_usuario') _showReportUserDialog(c.idUsuario, c.autor);
-                                            },
-                                            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                                              if (isOwner) const PopupMenuItem<String>(value: 'editar', child: Text('Editar')),
-                                              if (isOwner || isLider) const PopupMenuItem<String>(value: 'eliminar', child: Text('Eliminar')),
-                                              if (!isOwner) const PopupMenuItem<String>(value: 'reportar_comentario', child: Text('Reportar Comentario')),
-                                              if (isLider && !isOwner) const PopupMenuItem<String>(value: 'reportar_usuario', child: Text('Reportar Usuario')),
-                                            ],
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(c.comentario),
-                                  Row(
-                                    children: [
-                                      TextButton.icon(
-                                        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                                        icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
-                                        label: Text(c.apoyosCount.toString()),
-                                        onPressed: () async {
-                                          if (!authNotifier.isAuthenticated) {
-                                            Navigator.pushNamed(context, '/login');
-                                            return;
-                                          }
-                                          final response = await _reporteService.apoyarComentario(c.id);
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                              content: Text(response['message']),
-                                              behavior: SnackBarBehavior.floating,
-                                              margin: const EdgeInsets.all(16),
-                                            ));
-                                          }
-                                          _dataChanged = true;
-                                          _loadReporte();
-                                        },
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            );
-                          },
-                        ),
                     ],
                   ),
                 ),
-                // --- CONDITIONAL COMMENT INPUT AREA ---
                 if (authNotifier.isAuthenticated)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      boxShadow: [BoxShadow(blurRadius: 5, color: Colors.black.withOpacity(0.1))]
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    decoration: BoxDecoration(color: Theme.of(context).cardColor, boxShadow: [BoxShadow(blurRadius: 5, color: Colors.black.withOpacity(0.1))]),
                     child: SafeArea(
                       child: Row(
                         children: [
@@ -400,7 +262,7 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
                             ),
                           ),
                           _isPostingComment
-                              ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator()))
+                              ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 24, height: 30, child: CircularProgressIndicator()))
                               : IconButton(icon: const Icon(Icons.send), onPressed: _postComentario),
                         ],
                       ),
@@ -415,44 +277,11 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
                       onPressed: () => Navigator.pushNamed(context, '/login'),
                     ),
                   ),
+                  const SizedBox(height: 16),
               ],
             );
           },
         ),
-        bottomNavigationBar: FutureBuilder<ReporteDetallado>(
-          future: _reporteFuture,
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) return const SizedBox.shrink();
-            final reporte = snapshot.data!;
-            // The _userRole is loaded in initState, check against it
-            if (authNotifier.userRole == 'lider_vecinal' && reporte.estado == 'pendiente_verificacion') {
-              return BottomAppBar(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.check_circle_outline),
-                        label: const Text('Aprobar'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                        onPressed: () => _moderarReporte(true),
-                      ),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.cancel_outlined),
-                        label: const Text('Rechazar'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                        onPressed: () => _moderarReporte(false),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          }
-        ),
-      ),
-    );
+      );
   }
 }

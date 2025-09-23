@@ -140,6 +140,14 @@ const getLatestPendingReports = async () => {
   return response.data;
 };
 
+const resolveReport = async (reportId, approve) => {
+  const endpoint = approve ? `/reports/${reportId}/approve` : `/reports/${reportId}/reject`;
+  const url = API_URL + endpoint;
+  
+  const response = await axios.put(url, {}, { headers: getAuthHeader() });
+  return response.data;
+};
+
 const adminService = {
   getStats,
   getAllUsers,
@@ -167,6 +175,7 @@ const adminService = {
   getNotificationHistory,
   deleteNotification,
   getLatestPendingReports,
+  resolveReport,
 };
 
 export default adminService;

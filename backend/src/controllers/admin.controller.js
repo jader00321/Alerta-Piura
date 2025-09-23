@@ -594,7 +594,17 @@ const deleteNotification = async (req, res) => {
 const getLatestPendingReports = async (req, res) => {
   try {
     const query = `
-      SELECT r.id, r.titulo, c.nombre as categoria, u.alias as autor
+      SELECT 
+        r.id, r.titulo, r.descripcion, r.es_anonimo, r.foto_url, r.estado, -- Added r.estado
+        r.urgencia, r.distrito, r.referencia_ubicacion, r.tags, r.impacto, r.codigo_reporte,
+        to_char(r.hora_incidente, 'HH24:MI') as hora_incidente,
+        c.nombre as categoria, 
+        u.nombre as autor_nombre,
+        u.email as autor_email,
+        u.telefono as autor_telefono,
+        u.rol as autor_rol, -- Added u.rol
+        to_char(r.fecha_creacion, 'DD Mon YYYY, HH24:MI') as fecha_creacion,
+        ST_AsGeoJSON(r.location) as location
       FROM reportes r
       JOIN categorias c ON r.id_categoria = c.id
       JOIN usuarios u ON r.id_usuario = u.id
@@ -603,11 +613,47 @@ const getLatestPendingReports = async (req, res) => {
       LIMIT 5
     `;
     const result = await db.query(query);
-    res.status(200).json(result.rows);
+    
+    const reports = result.rows.map(row => ({
+      ...row,
+      location: row.location ? JSON.parse(row.location) : null,
+    }));
+
+    res.status(200).json(reports);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener últimos reportes.' });
   }
 };
+
+// Admin-specific moderation functions (as provided previously, ensuring they exist)
+const adminAprobarReporte = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query("UPDATE reportes SET estado = 'verificado', fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *", [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Reporte no encontrado.' });
+    }
+    res.status(200).json({ message: 'Reporte aprobado.', report: result.rows[0] });
+  } catch (error) {
+    console.error('Error in adminAprobarReporte:', error);
+    res.status(500).json({ message: 'Error al aprobar el reporte.', error: error.message });
+  }
+};
+
+const adminRechazarReporte = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query("UPDATE reportes SET estado = 'rechazado', fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *", [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Reporte no encontrado.' });
+    }
+    res.status(200).json({ message: 'Reporte rechazado.', report: result.rows[0] });
+  } catch (error) {
+    console.error('Error in adminRechazarReporte:', error);
+    res.status(500).json({ message: 'Error al rechazar el reporte.', error: error.message });
+  }
+};
+
 
 module.exports = {
   login,
@@ -636,4 +682,6 @@ module.exports = {
   getNotificationHistory,
   deleteNotification,
   getLatestPendingReports,
+  adminAprobarReporte,
+  adminRechazarReporte,
 };

@@ -117,8 +117,82 @@ const getActiveSosAlerts = async (req, res) => {
   }
 };
 
+const getAllSosAlerts = async (req, res) => {
+  try {
+    const query = `
+      SELECT sa.*, u.alias, u.nombre, u.email, u.telefono, u.rol
+      FROM sos_alerts sa
+      JOIN usuarios u ON sa.id_usuario = u.id
+      ORDER BY sa.fecha_inicio DESC
+    `;
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener alertas SOS.' });
+  }
+};
+
+const getSosLocationHistory = async (req, res) => {
+  const { alertId } = req.params;
+  try {
+    const query = `
+      SELECT ST_Y(location) as lat, ST_X(location) as lon
+      FROM sos_location_updates
+      WHERE id_alerta_sos = $1
+      ORDER BY fecha_registro ASC
+    `;
+    const result = await db.query(query, [alertId]);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener historial de ubicación.' });
+  }
+};
+
+const updateSosStatus = async (req, res) => {
+  const { id } = req.params;
+  const { estado, estado_atencion, revisada } = req.body;
+  const io = req.app.get('socketio');
+
+  try {
+    // Build the query dynamically based on the fields provided
+    const fields = [];
+    const values = [];
+    let queryIndex = 1;
+
+    if (estado !== undefined) {
+      fields.push(`estado = $${queryIndex++}`);
+      values.push(estado);
+    }
+    if (estado_atencion !== undefined) {
+      fields.push(`estado_atencion = $${queryIndex++}`);
+      values.push(estado_atencion);
+    }
+    if (revisada !== undefined) {
+      fields.push(`revisada = $${queryIndex++}`);
+      values.push(revisada);
+    }
+    
+    if (fields.length === 0) {
+      return res.status(400).json({ message: 'No fields to update.' });
+    }
+    
+    values.push(id);
+    const query = `UPDATE sos_alerts SET ${fields.join(', ')} WHERE id = $${queryIndex} RETURNING *`;
+    const result = await db.query(query, values);
+    
+    // Notify all clients of the update
+    io.emit('sos-alert-updated', result.rows[0]);
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar alerta SOS.' });
+  }
+};
+
 module.exports = {
   activateSos,
   addLocationUpdate,
   getActiveSosAlerts,
+  getAllSosAlerts,
+  getSosLocationHistory,
+  updateSosStatus,
 };
