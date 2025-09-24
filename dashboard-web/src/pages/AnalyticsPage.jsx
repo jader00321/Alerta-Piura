@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Paper, Typography, CircularProgress } from '@mui/material';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import MarkerClusterGroup from '@changey/react-leaflet-markercluster'; // <-- IMPORT NEW PACKAGE
+import MarkerClusterGroup from '@changey/react-leaflet-markercluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import '@changey/react-leaflet-markercluster/dist/styles.min.css'; // CSS for the new cluster
+import '@changey/react-leaflet-markercluster/dist/styles.min.css'; // CSS for the cluster
 import adminService from '../services/adminService';
 
 // Fix for default icon issue
@@ -18,22 +18,49 @@ L.Icon.Default.mergeOptions({
 function AnalyticsPage() {
   const [reportPoints, setReportPoints] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
+  // This useEffect will run only once, preventing any loops.
   useEffect(() => {
-    // We can reuse the getHeatmapData endpoint as it provides the lat/lon
-    adminService.getHeatmapData()
+    adminService.getReportCoordinates()
       .then(data => {
-        const points = data.map(p => new L.LatLng(p[0], p[1]));
+        // Convert {lat, lon} objects to Leaflet's LatLng object
+        const points = data.map(p => new L.LatLng(p.lat, p.lon));
         setReportPoints(points);
-        setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error("Failed to load analytics data:", err);
+        setError('No se pudieron cargar los datos para el mapa.');
+      })
+      .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, []); // The empty dependency array ensures this runs only ONCE.
 
   const piuraCenter = [-5.19449, -80.63282];
+
+  // Conditional rendering to handle all states: loading, error, and success
+  const renderContent = () => {
+    if (loading) {
+      return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
+    }
+    if (error) {
+      return <Typography color="error" sx={{ p: 4 }}>{error}</Typography>;
+    }
+    return (
+      <MapContainer center={piuraCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap'
+        />
+        <MarkerClusterGroup>
+          {reportPoints.map((point, index) => (
+            <Marker key={index} position={point} />
+          ))}
+        </MarkerClusterGroup>
+      </MapContainer>
+    );
+  };
 
   return (
     <Box>
@@ -43,20 +70,7 @@ function AnalyticsPage() {
       
       <Typography variant="h6" gutterBottom>Mapa de Concentración de Incidentes</Typography>
       <Paper sx={{ height: '75vh', width: '100%' }}>
-        {loading ? <CircularProgress /> : (
-          <MapContainer center={piuraCenter} zoom={13} style={{ height: '100%', width: '100%' }}>
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; OpenStreetMap'
-            />
-            {/* --- USE THE NEW CLUSTER GROUP --- */}
-            <MarkerClusterGroup>
-              {reportPoints.map((point, index) => (
-                <Marker key={index} position={point} />
-              ))}
-            </MarkerClusterGroup>
-          </MapContainer>
-        )}
+        {renderContent()}
       </Paper>
     </Box>
   );

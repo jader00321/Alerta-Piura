@@ -2,12 +2,20 @@ const db = require('../config/db');
 
 const activateSos = async (req, res) => {
   const id_usuario = req.user.id;
-  // The app will now send the contact info in the body
-  const { lat, lon, emergencyContact } = req.body;
+  const { lat, lon, emergencyContact, durationInSeconds } = req.body;// App will now send contact info
 
   try {
-    const alertQuery = 'INSERT INTO sos_alerts (id_usuario) VALUES ($1) RETURNING *';
-    const alertResult = await db.query(alertQuery, [id_usuario]);
+    const year = new Date().getFullYear();
+    const countResult = await db.query('SELECT COUNT(*) FROM sos_alerts');
+    const nextId = parseInt(countResult.rows[0].count, 10) + 1;
+    const codigo_alerta = `SOS-${year}-${nextId.toString().padStart(5, '0')}`;
+
+    // Guardar la alerta CON el contacto de emergencia y el código
+    const alertQuery = `
+      INSERT INTO sos_alerts (id_usuario, codigo_alerta, contacto_emergencia_telefono, contacto_emergencia_mensaje, duracion_segundos) 
+      VALUES ($1, $2, $3, $4, $5) RETURNING *
+    `;
+    const alertResult = await db.query(alertQuery, [id_usuario, codigo_alerta, emergencyContact?.telefono, emergencyContact?.mensaje, durationInSeconds]);
     const newAlertRaw = alertResult.rows[0];
 
     if (lat && lon) {
@@ -18,33 +26,27 @@ const activateSos = async (req, res) => {
       await db.query(locationQuery, [newAlertRaw.id, lon, lat]);
     }
     
-    // --- NEW: SIMULATED SMS LOGIC ---
+    // --- SIMULATED SMS LOGIC ---
     if (emergencyContact && emergencyContact.telefono) {
       const userResult = await db.query('SELECT nombre, telefono FROM usuarios WHERE id = $1', [id_usuario]);
       const user = userResult.rows[0];
 
-      const messageBody = `ALERTA SOS de ${user.nombre} (${user.telefono || 'N/A'}). Ubicación: http://maps.google.com/?q=${lat},${lon}. Mensaje: "${emergencyContact.mensaje || '¡Necesito ayuda urgente!'}"`;
+      const messageBody = `ALERTA SOS de ${user.nombre || 'Usuario de Alerta Piura'} (${user.telefono || 'N/A'}). Última ubicación conocida: http://maps.google.com/maps?q=${lat},${lon}. Mensaje personalizado: "${emergencyContact.mensaje || '¡Necesito ayuda urgente!'}"`;
       
-      // Log to console AND save to database
-      console.log(`--- SIMULATED SMS ---`);
+      console.log(`--- SIMULATED SMS SENT ---`);
       console.log(`TO: ${emergencyContact.telefono}`);
       console.log(`MESSAGE: ${messageBody}`);
-      console.log(`---------------------`);
       
       await db.query(
         'INSERT INTO simulated_sms_log (id_usuario_sos, contacto_nombre, contacto_telefono, mensaje) VALUES ($1, $2, $3, $4)',
         [id_usuario, emergencyContact.nombre, emergencyContact.telefono, messageBody]
       );
     }
-    // --- END OF NEW LOGIC ---
 
-    const userResultForSocket = await db.query('SELECT nombre, alias, email FROM usuarios WHERE id = $1', [id_usuario]);
+    const userResultForSocket = await db.query('SELECT nombre, alias, email, telefono, rol FROM usuarios WHERE id = $1', [id_usuario]);
     
     const newAlert = {
-      id: newAlertRaw.id,
-      id_usuario: newAlertRaw.id_usuario,
-      estado: newAlertRaw.estado,
-      fecha_inicio: newAlertRaw.fecha_inicio,
+      ...newAlertRaw,
       usuario: userResultForSocket.rows[0],
       latitude: lat,
       longitude: lon
@@ -179,13 +181,33 @@ const updateSosStatus = async (req, res) => {
     values.push(id);
     const query = `UPDATE sos_alerts SET ${fields.join(', ')} WHERE id = $${queryIndex} RETURNING *`;
     const result = await db.query(query, values);
+
+    if (estado === 'finalizado') {
+      io.emit('stopSos', { alertId: parseInt(id, 10) });
+    }
     
     // Notify all clients of the update
     io.emit('sos-alert-updated', result.rows[0]);
     res.status(200).json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ message: 'Error al actualizar alerta SOS.' });
+    console.error('Error al actualizar alerta SOS:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
   }
+};
+
+const deactivateSos = async (req, res) => {
+    const { alertId } = req.params;
+    const io = req.app.get('socketio');
+    try {
+        const query = "UPDATE sos_alerts SET estado = 'finalizado', fecha_fin = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *";
+        const result = await db.query(query, [alertId]);
+        if (result.rows.length > 0) {
+            io.emit('sos-alert-updated', result.rows[0]);
+        }
+        res.status(200).json({ message: 'Alerta SOS finalizada.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al desactivar SOS.' });
+    }
 };
 
 module.exports = {
@@ -195,4 +217,5 @@ module.exports = {
   getAllSosAlerts,
   getSosLocationHistory,
   updateSosStatus,
+  deactivateSos,
 };

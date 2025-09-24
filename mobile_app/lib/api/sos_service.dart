@@ -9,11 +9,12 @@ class SosService {
     return prefs.getString('authToken');
   }
 
-  // --- UPDATED to include emergencyContact ---
+  // UPDATED to accept and send emergency contact details
   Future<int?> activateSos({
     required double lat, 
     required double lon,
     Map<String, String?>? emergencyContact,
+    required int durationInSeconds, 
   }) async {
     final token = await _getToken();
     if (token == null) return null;
@@ -26,11 +27,11 @@ class SosService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        // Send all data in the body
         body: json.encode({
           'lat': lat, 
           'lon': lon,
           'emergencyContact': emergencyContact,
+          'durationInSeconds': durationInSeconds,
         }),
       );
       if (response.statusCode == 201) {
@@ -58,6 +59,17 @@ class SosService {
       );
     } catch (e) {
       print('Error sending location update: $e');
+    }
+  }
+
+  Future<void> deactivateSos(int alertId) async {
+    final token = await _getToken();
+    if (token == null) return;
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/sos/$alertId/deactivate');
+    try {
+      await http.put(url, headers: {'Authorization': 'Bearer $token'});
+    } catch (e) {
+      print('Error al desactivar SOS: $e');
     }
   }
 }

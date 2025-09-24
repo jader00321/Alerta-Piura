@@ -38,5 +38,7 @@ router.delete('/notifications-history/:id', adminMiddleware, adminController.del
 router.get('/reports/latest-pending', adminMiddleware, adminController.getLatestPendingReports);
 router.put('/reports/:id/approve', adminMiddleware, adminController.adminAprobarReporte);
 router.put('/reports/:id/reject', adminMiddleware, adminController.adminRechazarReporte);
+router.get('/sos-dashboard', adminMiddleware, adminController.getSosDashboardData);
+router.get('/reports/coordinates', adminMiddleware, adminController.getReportCoordinates);
 
 module.exports = router;

@@ -7,12 +7,14 @@ const adminMiddleware = require('../middleware/admin.middleware');
 const router = Router();
 const jsonParser = express.json();
 
+// Todas las rutas SOS requieren un usuario logueado (ciudadano o líder)
 router.use(authMiddleware);
-
-router.get('/active', sosController.getActiveSosAlerts);
 
 router.post('/activate', jsonParser, sosController.activateSos);
 router.post('/:alertId/location', jsonParser, sosController.addLocationUpdate);
+router.put('/:alertId/deactivate', authMiddleware, sosController.deactivateSos);
+
+// Rutas SOS para el Administrador
 router.get('/all', adminMiddleware, sosController.getAllSosAlerts);
 router.get('/:alertId/history', adminMiddleware, sosController.getSosLocationHistory);
 router.put('/:id/status', jsonParser, adminMiddleware, sosController.updateSosStatus);

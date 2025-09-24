@@ -654,6 +654,54 @@ const adminRechazarReporte = async (req, res) => {
   }
 };
 
+const getSosDashboardData = async (req, res) => {
+  try {
+    // 1. Get all alerts, with user info, ordered by most recent
+    const alertsQuery = `
+      SELECT sa.*, 
+             u.alias, u.nombre, u.email, u.telefono, u.rol
+      FROM sos_alerts sa
+      JOIN usuarios u ON sa.id_usuario = u.id
+      ORDER BY sa.fecha_inicio DESC
+    `;
+    const alertsResult = await db.query(alertsQuery);
+    let alerts = alertsResult.rows;
+
+    // 2. Find the most recent ACTIVE alert
+    const latestActiveAlert = alerts.find(a => a.estado === 'activo');
+
+    // 3. If an active alert exists, fetch its full location history
+    if (latestActiveAlert) {
+      const historyQuery = `
+        SELECT ST_Y(location) as lat, ST_X(location) as lon
+        FROM sos_location_updates
+        WHERE id_alerta_sos = $1
+        ORDER BY fecha_registro ASC
+      `;
+      const historyResult = await db.query(historyQuery, [latestActiveAlert.id]);
+      latestActiveAlert.locationHistory = historyResult.rows;
+    }
+
+    res.status(200).json(alerts);
+  } catch (error) {
+    console.error("Error fetching SOS dashboard data:", error);
+    res.status(500).json({ message: 'Error al obtener datos del panel SOS.' });
+  }
+};
+
+const getReportCoordinates = async (req, res) => {
+  try {
+    const query = `
+      SELECT ST_Y(location) as lat, ST_X(location) as lon 
+      FROM reportes 
+      WHERE estado = 'verificado' AND location IS NOT NULL
+    `;
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener coordenadas de reportes.' });
+  }
+};
 
 module.exports = {
   login,
@@ -684,4 +732,6 @@ module.exports = {
   getLatestPendingReports,
   adminAprobarReporte,
   adminRechazarReporte,
+  getSosDashboardData,
+  getReportCoordinates,
 };

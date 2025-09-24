@@ -8,10 +8,10 @@ import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/reporte_model.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
-//import 'package:mobile_app/screens/login_screen.dart';
 import 'package:mobile_app/widgets/pulsing_pin.dart';
 import 'package:mobile_app/widgets/riesgo_indicator.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MapaView extends StatefulWidget {
   const MapaView({super.key});
@@ -64,6 +64,20 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
         }
       }
     });
+     FlutterBackgroundService().on('stopSos').listen((event) {
+      if (mounted) {
+        setState(() {
+          _isSosActive = false;
+          _isHoldingSos = false;
+          _sosRemainingSeconds = 0;
+          _countdownTimer?.cancel();
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Un administrador ha finalizado la alerta SOS.'),
+            backgroundColor: Colors.blue,
+          ));
+        });
+      }
+    });
   }
 
   @override
@@ -84,8 +98,14 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
 
   void _onSosPressStart(LongPressStartDetails details) {
     setState(() => _isHoldingSos = true);
-    _sosHoldTimer = Timer(const Duration(seconds: 3), () {
-      FlutterBackgroundService().invoke('startSosTracking');
+    _sosHoldTimer = Timer(const Duration(seconds: 3), () async { 
+      final prefs = await SharedPreferences.getInstance();
+      final durationInMinutes = prefs.getDouble('sosDuration') ?? 10.0;
+      
+      // Pass the duration to the background service
+      FlutterBackgroundService().invoke('startSosTracking', {
+        'durationInSeconds': durationInMinutes.toInt() * 60,
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Alerta SOS activada. Transmitiendo ubicación.'),

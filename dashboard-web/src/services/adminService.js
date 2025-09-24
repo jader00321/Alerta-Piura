@@ -148,6 +148,11 @@ const resolveReport = async (reportId, approve) => {
   return response.data;
 };
 
+const getReportCoordinates = async () => {
+  const response = await axios.get(API_URL + '/reports/coordinates', { headers: getAuthHeader() });
+  return response.data;
+};
+
 const adminService = {
   getStats,
   getAllUsers,
@@ -176,6 +181,7 @@ const adminService = {
   deleteNotification,
   getLatestPendingReports,
   resolveReport,
+  getReportCoordinates,
 };
 
 export default adminService;
