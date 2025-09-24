@@ -153,6 +153,33 @@ const getReportCoordinates = async () => {
   return response.data;
 };
 
+const getReportsByCategory = async () => {
+  const response = await axios.get(API_URL + '/analytics/by-category', { headers: getAuthHeader() });
+  return response.data;
+};
+const getReportsByStatus = async () => {
+  const response = await axios.get(API_URL + '/analytics/by-status', { headers: getAuthHeader() });
+  return response.data;
+};
+const getReportsByMonth = async () => {
+  const response = await axios.get(API_URL + '/analytics/by-month', { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getLeaderPerformance = async () => {
+  const response = await axios.get(API_URL + '/analytics/by-month', { headers: getAuthHeader() });
+  return response.data;
+};
+const getUsersByStatus = async () => {
+  const response = await axios.get(API_URL + '/analytics/users-by-status', { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getAverageResolutionTime = async () => {
+  const response = await axios.get(API_URL + '/analytics/resolution-time', { headers: getAuthHeader() });
+  return response.data;
+};
+
 const adminService = {
   getStats,
   getAllUsers,
@@ -182,6 +209,12 @@ const adminService = {
   getLatestPendingReports,
   resolveReport,
   getReportCoordinates,
+  getReportsByCategory,
+  getReportsByStatus,
+  getReportsByMonth,
+  getUsersByStatus,
+  getAverageResolutionTime,
+  getLeaderPerformance,
 };
 
 export default adminService;

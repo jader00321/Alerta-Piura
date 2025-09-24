@@ -210,6 +210,58 @@ const deactivateSos = async (req, res) => {
     }
 };
 
+const updateStatus = async (req, res) => {
+  const { id } = req.params;
+  const { estado, estado_atencion, revisada } = req.body;
+  const io = req.app.get('socketio');
+
+  try {
+    const fields = [];
+    const values = [];
+    let queryIndex = 1;
+
+    if (estado !== undefined) {
+      fields.push(`estado = $${queryIndex++}`);
+      values.push(estado);
+      // --- THIS IS THE KEY FIX ---
+      // If we are finalizing the alert, also set the end time.
+      if (estado === 'finalizado') {
+        fields.push(`fecha_fin = CURRENT_TIMESTAMP`);
+      }
+    }
+    if (estado_atencion !== undefined) {
+      fields.push(`estado_atencion = $${queryIndex++}`);
+      values.push(estado_atencion);
+    }
+    if (revisada !== undefined) {
+      fields.push(`revisada = $${queryIndex++}`);
+      values.push(revisada);
+    }
+    
+    if (fields.length === 0) {
+      return res.status(400).json({ message: 'No fields to update.' });
+    }
+    
+    values.push(id);
+    const query = `UPDATE sos_alerts SET ${fields.join(', ')} WHERE id = $${queryIndex} RETURNING *`;
+    const result = await db.query(query, values);
+    
+    // --- THIS IS THE SECOND KEY FIX ---
+    // If the admin was the one who finished the alert, send a specific
+    // command to the mobile app to force it to stop tracking.
+    if (estado === 'finalizado') {
+      io.emit('stopSos', { alertId: parseInt(id, 10) });
+    }
+    
+    // Notify all web clients of the general update
+    io.emit('sos-alert-updated', result.rows[0]);
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error al actualizar alerta SOS:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
 module.exports = {
   activateSos,
   addLocationUpdate,
@@ -218,4 +270,5 @@ module.exports = {
   getSosLocationHistory,
   updateSosStatus,
   deactivateSos,
+  updateStatus,
 };

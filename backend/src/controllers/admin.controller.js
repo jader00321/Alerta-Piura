@@ -703,6 +703,90 @@ const getReportCoordinates = async (req, res) => {
   }
 };
 
+const getReportsByCategory = async (req, res) => {
+  try {
+    const query = `
+      SELECT c.nombre as name, COUNT(r.id) as value
+      FROM reportes r
+      JOIN categorias c ON r.id_categoria = c.id
+      GROUP BY c.nombre
+      ORDER BY value DESC
+    `;
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener reportes por categoría.' });
+  }
+};
+
+const getReportsByStatus = async (req, res) => {
+  try {
+    const query = "SELECT estado as name, COUNT(id) as value FROM reportes GROUP BY estado";
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener reportes por estado.' });
+  }
+};
+
+const getReportsByMonth = async (req, res) => {
+  try {
+    const query = `
+      SELECT to_char(fecha_creacion, 'YYYY-MM') as name, COUNT(id) as value
+      FROM reportes
+      GROUP BY to_char(fecha_creacion, 'YYYY-MM')
+      ORDER BY name ASC
+    `;
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener reportes por mes.' });
+  }
+};
+
+const getUsersByStatus = async (req, res) => {
+  try {
+    const query = "SELECT status as name, COUNT(id) as value FROM usuarios GROUP BY status";
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener usuarios por estado.' });
+  }
+};
+
+const getAverageResolutionTime = async (req, res) => {
+  try {
+    const query = `
+      SELECT AVG(fecha_actualizacion - fecha_creacion) as avg_time
+      FROM reportes
+      WHERE estado IN ('verificado', 'rechazado') AND fecha_actualizacion IS NOT NULL
+    `;
+    const result = await db.query(query);
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al calcular el tiempo de resolución.' });
+  }
+};
+
+const getLeaderPerformance = async (req, res) => {
+  try {
+    // Esta consulta cuenta cuántos reportes ha moderado cada líder
+    const query = `
+      SELECT u.alias as name, COUNT(r.id) as value
+      FROM reportes r
+      JOIN usuarios u ON r.id_lider_verificador = u.id
+      WHERE u.rol = 'lider_vecinal'
+      GROUP BY u.alias
+      ORDER BY value DESC
+      LIMIT 10;
+    `;
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener rendimiento de líderes.' });
+  }
+};
+
 module.exports = {
   login,
   getDashboardStats,
@@ -734,4 +818,10 @@ module.exports = {
   adminRechazarReporte,
   getSosDashboardData,
   getReportCoordinates,
+  getReportsByCategory,
+  getReportsByStatus,
+  getReportsByMonth,
+  getUsersByStatus,
+  getAverageResolutionTime,
+  getLeaderPerformance,
 };

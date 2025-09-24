@@ -11,7 +11,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
-  
+  Timer? locationTimer; 
+
+  service.on('stopTracking').listen((event) {
+    locationTimer?.cancel();
+    service.stopSelf(); // Stops the entire background service
+  });
   // --- SERVICE SETUP ---
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -59,7 +64,7 @@ void onStart(ServiceInstance service) async {
       
       if (alertId != null) {
         // We use one timer to manage everything to be more efficient
-        Timer.periodic(const Duration(seconds: 1), (timer) async {
+         locationTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
           // Send UI update every second
           int remaining = durationInSeconds - ticks;
           if (remaining >= 0) {
@@ -78,16 +83,17 @@ void onStart(ServiceInstance service) async {
           }
 
           // Stop when duration is reached
-          if (ticks >= durationInSeconds) {
-            await sosService.deactivateSos(alertId);
-            flutterLocalNotificationsPlugin.cancel(888); // Hide the notification
+          if ((ticks * 15) >= durationInSeconds) {
             timer.cancel();
+            await sosService.deactivateSos(alertId);
+            service.invoke('update', {'sos_remaining_seconds': 0});
+            //flutterLocalNotificationsPlugin.cancel(888); // Hide the notification
           }
         });
       }
     } catch (e) {
       print('BACKGROUND: Error during SOS activation: $e');
-      flutterLocalNotificationsPlugin.cancel(888); // Ensure notification is cancelled on error
+      //flutterLocalNotificationsPlugin.cancel(888); // Ensure notification is cancelled on error
     }
   });
 

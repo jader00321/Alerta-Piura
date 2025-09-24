@@ -40,5 +40,11 @@ router.put('/reports/:id/approve', adminMiddleware, adminController.adminAprobar
 router.put('/reports/:id/reject', adminMiddleware, adminController.adminRechazarReporte);
 router.get('/sos-dashboard', adminMiddleware, adminController.getSosDashboardData);
 router.get('/reports/coordinates', adminMiddleware, adminController.getReportCoordinates);
+router.get('/analytics/by-category', adminMiddleware, adminController.getReportsByCategory);
+router.get('/analytics/by-status', adminMiddleware, adminController.getReportsByStatus);
+router.get('/analytics/by-month', adminMiddleware, adminController.getReportsByMonth);
+router.get('/analytics/users-by-status', adminMiddleware, adminController.getUsersByStatus);
+router.get('/analytics/resolution-time', adminMiddleware, adminController.getAverageResolutionTime);
+router.get('/analytics/leader-performance', adminMiddleware, adminController.getLeaderPerformance);
 
 module.exports = router;

@@ -66,16 +66,20 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
     });
      FlutterBackgroundService().on('stopSos').listen((event) {
       if (mounted) {
+        // 1. Stop the background service's timers
+        FlutterBackgroundService().invoke('stopTracking');
+        
+        // 2. Update the UI
         setState(() {
           _isSosActive = false;
-          _isHoldingSos = false;
-          _sosRemainingSeconds = 0;
           _countdownTimer?.cancel();
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Un administrador ha finalizado la alerta SOS.'),
-            backgroundColor: Colors.blue,
-          ));
         });
+        
+        // 3. Show a confirmation message
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Un administrador ha finalizado la alerta SOS.'),
+          backgroundColor: Colors.blue,
+        ));
       }
     });
   }
