@@ -7,6 +7,14 @@ const getAuthHeader = () => {
   return token ? { Authorization: 'Bearer ' + token } : {};
 };
 
+const buildQueryString = (params) => {
+  const query = Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+  return query ? `?${query}` : '';
+};
+
 const getStats = async () => {
   const response = await axios.get(API_URL + '/stats', { headers: getAuthHeader() });
   return response.data;
@@ -153,32 +161,59 @@ const getReportCoordinates = async () => {
   return response.data;
 };
 
-const getReportsByCategory = async () => {
-  const response = await axios.get(API_URL + '/analytics/by-category', { headers: getAuthHeader() });
-  return response.data;
-};
-const getReportsByStatus = async () => {
-  const response = await axios.get(API_URL + '/analytics/by-status', { headers: getAuthHeader() });
-  return response.data;
-};
-const getReportsByMonth = async () => {
-  const response = await axios.get(API_URL + '/analytics/by-month', { headers: getAuthHeader() });
-  return response.data;
-};
-
-const getLeaderPerformance = async () => {
-  const response = await axios.get(API_URL + '/analytics/by-month', { headers: getAuthHeader() });
-  return response.data;
-};
-const getUsersByStatus = async () => {
-  const response = await axios.get(API_URL + '/analytics/users-by-status', { headers: getAuthHeader() });
-  return response.data;
-};
-
 const getAverageResolutionTime = async () => {
   const response = await axios.get(API_URL + '/analytics/resolution-time', { headers: getAuthHeader() });
   return response.data;
 };
+
+const getReportsByCategory = async (dateRange) => {
+  const queryString = buildQueryString(dateRange);
+  const response = await axios.get(`${API_URL}/analytics/by-category${queryString}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getReportsByStatus = async (dateRange) => {
+  const queryString = buildQueryString(dateRange);
+  const response = await axios.get(`${API_URL}/analytics/by-status${queryString}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getReportsByMonth = async () => {
+  // This function shows the overall trend and does not need date filters.
+  const response = await axios.get(`${API_URL}/analytics/by-month`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getUsersByStatus = async () => {
+  // This function shows the current user status and does not need date filters.
+  const response = await axios.get(`${API_URL}/analytics/users-by-status`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getAverageVerificationTime = async (dateRange) => {
+  const queryString = buildQueryString(dateRange);
+  const response = await axios.get(`${API_URL}/analytics/verification-time${queryString}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getLeaderPerformance = async (dateRange) => {
+  const queryString = buildQueryString(dateRange);
+  const response = await axios.get(`${API_URL}/analytics/leader-performance${queryString}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getReportsByDistrict = async (dateRange) => {
+  const queryString = buildQueryString(dateRange);
+  const response = await axios.get(`${API_URL}/analytics/by-district${queryString}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getReportsByHour = async (dateRange) => {
+  const queryString = buildQueryString(dateRange);
+  const response = await axios.get(`${API_URL}/analytics/by-hour${queryString}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
 
 const adminService = {
   getStats,
@@ -215,6 +250,10 @@ const adminService = {
   getUsersByStatus,
   getAverageResolutionTime,
   getLeaderPerformance,
+  getAverageVerificationTime,
+  getReportsByDistrict,
+  getReportsByHour,
+  
 };
 
 export default adminService;

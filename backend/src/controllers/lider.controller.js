@@ -22,11 +22,12 @@ const getReportesPendientes = async (req, res) => {
 
 // Aprobar un reporte
 const aprobarReporte = async (req, res) => {
-  const { id } = req.params; // ID del reporte
+  const { id } = req.params;
+  const id_lider = req.user.id; // ID del reporte
   try {
     // --- CAMBIO CLAVE: Añadimos fecha_actualizacion ---
-    const query = "UPDATE Reportes SET estado = 'verificado', fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *";
-    const result = await db.query(query, [id]);
+    const query = "UPDATE Reportes SET estado = 'verificado', fecha_actualizacion = CURRENT_TIMESTAMP , id_lider_verificador = $1 WHERE id = $2 RETURNING *";
+    const result = await db.query(query, [id_lider, id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Reporte no encontrado.' });
     }
@@ -38,11 +39,12 @@ const aprobarReporte = async (req, res) => {
 };
 // Rechazar un reporte
 const rechazarReporte = async (req, res) => {
-  const { id } = req.params; // ID del reporte
+  const { id } = req.params;
+  const id_lider = req.user.id; 
   try {
     // --- CAMBIO CLAVE: Añadimos fecha_actualizacion ---
-    const query = "UPDATE Reportes SET estado = 'rechazado', fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *";
-    const result = await db.query(query, [id]);
+    const query = "UPDATE Reportes SET estado = 'rechazado', fecha_actualizacion = CURRENT_TIMESTAMP id_lider_verificador = $1 WHERE id = $2 RETURNING *";
+    const result = await db.query(query, [id_lider, id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Reporte no encontrado.' });
     }

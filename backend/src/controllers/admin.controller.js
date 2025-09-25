@@ -703,28 +703,53 @@ const getReportCoordinates = async (req, res) => {
   }
 };
 
+const buildDateFilter = (startDate, endDate, params, dateColumn = 'r.fecha_creacion') => {
+  if (startDate && endDate) {
+    params.push(startDate);
+    params.push(endDate);
+    return `AND ${dateColumn} BETWEEN $${params.length - 1} AND $${params.length}`;
+  }
+  return '';
+};
+
 const getReportsByCategory = async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const params = [];
+  const dateFilter = buildDateFilter(startDate, endDate, params);
+
   try {
     const query = `
       SELECT c.nombre as name, COUNT(r.id) as value
       FROM reportes r
       JOIN categorias c ON r.id_categoria = c.id
+      WHERE 1=1 ${dateFilter}
       GROUP BY c.nombre
       ORDER BY value DESC
     `;
-    const result = await db.query(query);
+    const result = await db.query(query, params);
     res.status(200).json(result.rows);
   } catch (error) {
+    console.error('Error en getReportsByCategory:', error);
     res.status(500).json({ message: 'Error al obtener reportes por categoría.' });
   }
 };
 
 const getReportsByStatus = async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const params = [];
+  const dateFilter = buildDateFilter(startDate, endDate, params);
+  
   try {
-    const query = "SELECT estado as name, COUNT(id) as value FROM reportes GROUP BY estado";
-    const result = await db.query(query);
+    const query = `
+      SELECT estado as name, COUNT(id) as value 
+      FROM reportes r 
+      WHERE 1=1 ${dateFilter} 
+      GROUP BY estado
+    `;
+    const result = await db.query(query, params);
     res.status(200).json(result.rows);
   } catch (error) {
+    console.error('Error en getReportsByStatus:', error);
     res.status(500).json({ message: 'Error al obtener reportes por estado.' });
   }
 };
@@ -740,6 +765,7 @@ const getReportsByMonth = async (req, res) => {
     const result = await db.query(query);
     res.status(200).json(result.rows);
   } catch (error) {
+    console.error('Error en getReportsByMonth:', error);
     res.status(500).json({ message: 'Error al obtener reportes por mes.' });
   }
 };
@@ -750,7 +776,140 @@ const getUsersByStatus = async (req, res) => {
     const result = await db.query(query);
     res.status(200).json(result.rows);
   } catch (error) {
+    console.error('Error en getUsersByStatus:', error);
     res.status(500).json({ message: 'Error al obtener usuarios por estado.' });
+  }
+};
+
+const getAverageVerificationTime = async (req, res) => {
+    const { startDate, endDate } = req.query;
+    const params = [];
+    // Nota: El alias 'r' es crucial para que la columna de fecha se identifique correctamente.
+    const dateFilter = buildDateFilter(startDate, endDate, params, 'r.fecha_creacion');
+
+    try {
+        const query = `
+            SELECT AVG(EXTRACT(EPOCH FROM (r.fecha_actualizacion - r.fecha_creacion))) as avg_seconds
+            FROM reportes r
+            WHERE r.estado IN ('verificado', 'rechazado') 
+            AND r.fecha_actualizacion IS NOT NULL 
+            AND r.id_lider_verificador IS NOT NULL
+            ${dateFilter}
+        `;
+        const result = await db.query(query, params);
+        
+        const avg_seconds = result.rows[0].avg_seconds;
+
+        if (avg_seconds === null || isNaN(avg_seconds)) {
+            return res.status(200).json({ avg_time_formatted: 'N/A' });
+        }
+        
+        // Convertir el promedio de segundos a un formato legible
+        const totalMinutes = Math.floor(avg_seconds / 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        
+        const formatted_avg_time = `${hours}h ${minutes}m`;
+
+        res.status(200).json({ avg_time_formatted: formatted_avg_time });
+
+    } catch (error) {
+        console.error('Error en getAverageVerificationTime:', error);
+        res.status(500).json({ message: 'Error al calcular el tiempo de verificación.' });
+    }
+};
+
+// **CORREGIDO Y MEJORADO**: Se estandarizó el filtro para usar fecha_creacion para consistencia.
+const getLeaderPerformance = async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const params = [];
+  // Se cambió el filtro a 'fecha_creacion' para que sea consistente con los otros gráficos.
+  const dateFilter = buildDateFilter(startDate, endDate, params, 'r.fecha_creacion');
+
+  try {
+    const query = `
+      SELECT u.alias as name, COUNT(r.id) as value
+      FROM reportes r
+      JOIN usuarios u ON r.id_lider_verificador = u.id
+      WHERE u.rol = 'lider_vecinal' AND r.id_lider_verificador IS NOT NULL ${dateFilter}
+      GROUP BY u.alias
+      ORDER BY value DESC
+      LIMIT 10
+    `;
+    const result = await db.query(query, params);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error en getLeaderPerformance:', error);
+    res.status(500).json({ message: 'Error al obtener rendimiento de líderes.' });
+  }
+};
+
+const getReportsByDistrict = async (req, res) => {
+    const { startDate, endDate } = req.query;
+    const params = [];
+    const dateFilter = buildDateFilter(startDate, endDate, params);
+
+    try {
+        const query = `
+        SELECT distrito as name, COUNT(id) as value
+        FROM reportes r
+        WHERE distrito IS NOT NULL AND distrito <> '' ${dateFilter}
+        GROUP BY distrito
+        ORDER BY value DESC
+        `;
+        const result = await db.query(query, params);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Error en getReportsByDistrict:', error);
+        res.status(500).json({ message: 'Error al obtener reportes por distrito.' });
+    }
+};
+
+const getReportsByHour = async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const params = [];
+  const dateFilter = buildDateFilter(startDate, endDate, params);
+
+  let dateExpression = "to_char(r.fecha_creacion, 'HH24:00')"; // Por defecto, agrupar por hora
+  let orderBy = "name ASC";
+
+  if (startDate && endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    // Calcula la diferencia en días. Se suma 1 para incluir el día final.
+    const diffDays = ((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    
+    if (diffDays > 1 && diffDays <= 7) {
+      // Si el rango es de más de un día hasta una semana, agrupa por día de la semana
+      dateExpression = "to_char(r.fecha_creacion, 'ID-Day')"; // '1-Monday', '2-Tuesday'
+    } else if (diffDays > 7) {
+      // Si el rango es mayor a una semana, agrupa por fecha
+      dateExpression = "to_char(r.fecha_creacion, 'YYYY-MM-DD')";
+    }
+  }
+  
+  try {
+    const query = `
+      SELECT 
+        ${dateExpression} as name, 
+        COUNT(r.id) as value
+      FROM reportes r
+      WHERE 1=1 ${dateFilter}
+      GROUP BY name
+      ORDER BY name ASC
+    `;
+    const result = await db.query(query, params);
+    
+    // Limpia la etiqueta del día de la semana si se usó (ej. '1-Monday' -> 'Monday')
+    const formattedResult = result.rows.map(row => {
+        const nameParts = row.name.split('-');
+        return { ...row, name: nameParts.length > 1 ? nameParts.slice(1).join('-').trim() : row.name };
+    });
+
+    res.status(200).json(formattedResult);
+  } catch (error) {
+    console.error('Error en getReportsByHour:', error);
+    res.status(500).json({ message: 'Error al obtener reportes por hora.' });
   }
 };
 
@@ -765,25 +924,6 @@ const getAverageResolutionTime = async (req, res) => {
     res.status(200).json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ message: 'Error al calcular el tiempo de resolución.' });
-  }
-};
-
-const getLeaderPerformance = async (req, res) => {
-  try {
-    // Esta consulta cuenta cuántos reportes ha moderado cada líder
-    const query = `
-      SELECT u.alias as name, COUNT(r.id) as value
-      FROM reportes r
-      JOIN usuarios u ON r.id_lider_verificador = u.id
-      WHERE u.rol = 'lider_vecinal'
-      GROUP BY u.alias
-      ORDER BY value DESC
-      LIMIT 10;
-    `;
-    const result = await db.query(query);
-    res.status(200).json(result.rows);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener rendimiento de líderes.' });
   }
 };
 
@@ -824,4 +964,7 @@ module.exports = {
   getUsersByStatus,
   getAverageResolutionTime,
   getLeaderPerformance,
+  getAverageVerificationTime,
+  getReportsByDistrict,
+  getReportsByHour
 };
