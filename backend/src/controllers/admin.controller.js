@@ -78,11 +78,37 @@ const getDashboardStats = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    // Add "telefono" to the SELECT statement
-    const query = "SELECT id, nombre, alias, email, rol, status, telefono, to_char(fecha_registro, 'DD Mon YYYY') as fecha_registro FROM usuarios ORDER BY id ASC";
-    const result = await db.query(query);
+    const { role, status, sortBy } = req.query;
+
+    let query = "SELECT id, nombre, alias, email, rol, status, telefono, puntos, to_char(fecha_registro, 'DD Mon YYYY') as fecha_registro_formateada FROM usuarios";    const whereClauses = [];
+    const queryParams = [];
+    let paramIndex = 1;
+
+    if (role) {
+      whereClauses.push(`rol = $${paramIndex++}`);
+      queryParams.push(role);
+    }
+    if (status) {
+      whereClauses.push(`status = $${paramIndex++}`);
+      queryParams.push(status);
+    }
+
+    if (whereClauses.length > 0) {
+      query += ' WHERE ' + whereClauses.join(' AND ');
+    }
+
+    let orderByClause = ' ORDER BY fecha_registro DESC'; // Por defecto, los más recientes
+    if (sortBy === 'oldest') {
+      orderByClause = ' ORDER BY fecha_registro ASC';
+    } else if (sortBy === 'name') {
+        orderByClause = ' ORDER BY nombre ASC';
+    }
+    query += orderByClause;
+
+    const result = await db.query(query, queryParams);
     res.status(200).json(result.rows);
   } catch (error) {
+    console.error("Error en getAllUsers:", error);
     res.status(500).json({ message: 'Error al obtener la lista de usuarios.' });
   }
 };
@@ -334,48 +360,51 @@ const resolveUserReport = async (req, res) => {
 
 const getAllAdminReports = async (req, res) => {
   try {
-    // --- QUERY UPDATED to include user's real name, email, description, and anonymous status ---
+    const { search, status, categoryId, sortBy, page = 1 } = req.query;
+    const limit = 20; // 20 reportes por página
+    const offset = (page - 1) * limit;
+
     let query = `
       SELECT 
-        r.id, r.titulo, r.descripcion, r.es_anonimo, 
+        r.id, r.titulo, r.foto_url, r.distrito, r.urgencia, r.tags,
+        r.codigo_reporte,
+        to_char(r.hora_incidente, 'HH24:MI') as hora_incidente,
         c.nombre as categoria, 
-        u.nombre as autor_nombre, -- Get the real name
-        u.email as autor_email,    -- Get the email
+        u.alias as autor_alias,
+        l.alias as lider_verificador_alias,
         r.estado, 
-        to_char(r.fecha_creacion, 'DD Mon YYYY') as fecha
+        to_char(r.fecha_creacion, 'DD Mon YYYY, HH24:MI') as fecha_creacion
       FROM reportes r
       LEFT JOIN usuarios u ON r.id_usuario = u.id
       LEFT JOIN categorias c ON r.id_categoria = c.id
+      LEFT JOIN usuarios l ON r.id_lider_verificador = l.id
     `;
     
-    // ... (The filtering logic below remains exactly the same)
     const whereClauses = [];
     const queryParams = [];
     let paramIndex = 1;
 
-    const { search, status, categoryId } = req.query;
-
     if (search) {
-      whereClauses.push(`(r.titulo ILIKE $${paramIndex} OR u.nombre ILIKE $${paramIndex})`); // Search by real name now
+      whereClauses.push(`(r.titulo ILIKE $${paramIndex} OR u.alias ILIKE $${paramIndex})`);
       queryParams.push(`%${search}%`);
       paramIndex++;
     }
     if (status) {
-      whereClauses.push(`r.estado = $${paramIndex}`);
+      whereClauses.push(`r.estado = $${paramIndex++}`);
       queryParams.push(status);
-      paramIndex++;
     }
     if (categoryId) {
-      whereClauses.push(`r.id_categoria = $${paramIndex}`);
+      whereClauses.push(`r.id_categoria = $${paramIndex++}`);
       queryParams.push(categoryId);
-      paramIndex++;
     }
 
     if (whereClauses.length > 0) {
       query += ' WHERE ' + whereClauses.join(' AND ');
     }
 
-    query += ' ORDER BY r.id DESC';
+    query += ` ORDER BY r.fecha_creacion ${sortBy === 'oldest' ? 'ASC' : 'DESC'}`;
+    query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    queryParams.push(limit, offset);
     
     const result = await db.query(query, queryParams);
     res.status(200).json(result.rows);
@@ -927,6 +956,49 @@ const getAverageResolutionTime = async (req, res) => {
   }
 };
 
+// Obtener detalles completos de un usuario específico (para admin)
+const getUserDetails = async (req, res) => {
+  const { id } = req.params; // ID del usuario a consultar
+
+  try {
+    // 1. Obtener datos básicos del usuario
+    const userQuery = 'SELECT id, nombre, alias, email, puntos, telefono, to_char(fecha_registro, \'DD Mon YYYY\') as fecha_registro_formateada FROM usuarios WHERE id = $1';
+    const userResult = await db.query(userQuery, [id]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+    const userDetails = userResult.rows[0];
+
+    // 2. Obtener las insignias del usuario
+    const insigniasQuery = `
+      SELECT i.nombre, i.descripcion, i.icono_url 
+      FROM Insignias i
+      JOIN Usuario_Insignias ui ON i.id = ui.id_insignia
+      WHERE ui.id_usuario = $1
+      ORDER BY i.nombre
+    `;
+    const insigniasResult = await db.query(insigniasQuery, [id]);
+    userDetails.insignias = insigniasResult.rows;
+
+    // 3. Obtener los 5 reportes más recientes del usuario
+    const reportesQuery = `
+      SELECT codigo_reporte, titulo, estado, urgencia, to_char(fecha_creacion, 'DD Mon YYYY') as fecha
+      FROM reportes 
+      WHERE id_usuario = $1
+      ORDER BY fecha_creacion DESC
+      LIMIT 5
+    `;
+    const reportesResult = await db.query(reportesQuery, [id]);
+    userDetails.reportes = reportesResult.rows;
+
+    res.status(200).json(userDetails);
+  } catch (error) {
+    console.error('Error al obtener detalles del usuario:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
 module.exports = {
   login,
   getDashboardStats,
@@ -966,5 +1038,6 @@ module.exports = {
   getLeaderPerformance,
   getAverageVerificationTime,
   getReportsByDistrict,
-  getReportsByHour
+  getReportsByHour,
+  getUserDetails,
 };

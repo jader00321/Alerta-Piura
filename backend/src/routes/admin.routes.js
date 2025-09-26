@@ -49,5 +49,6 @@ router.get('/analytics/leader-performance', adminMiddleware, adminController.get
 router.get('/analytics/verification-time', adminMiddleware, adminController.getAverageVerificationTime);
 router.get('/analytics/by-district', adminMiddleware, adminController.getReportsByDistrict);
 router.get('/analytics/by-hour', adminMiddleware, adminController.getReportsByHour);
+router.get('/users/:id/details', adminMiddleware, adminController.getUserDetails);
 
 module.exports = router;

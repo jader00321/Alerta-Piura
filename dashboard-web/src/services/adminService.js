@@ -20,8 +20,9 @@ const getStats = async () => {
   return response.data;
 };
 
-const getAllUsers = async () => {
-  const response = await axios.get(API_URL + '/users', { headers: getAuthHeader() });
+const getAllUsers = async (filters = {}) => {
+  const queryString = buildQueryString(filters);
+  const response = await axios.get(`${API_URL}/users${queryString}`, { headers: getAuthHeader() });
   return response.data;
 };
 
@@ -214,6 +215,10 @@ const getReportsByHour = async (dateRange) => {
   return response.data;
 };
 
+const getUserDetails = async (userId) => {
+  const response = await axios.get(`${API_URL}/users/${userId}/details`, { headers: getAuthHeader() });
+  return response.data;
+};
 
 const adminService = {
   getStats,
@@ -253,7 +258,7 @@ const adminService = {
   getAverageVerificationTime,
   getReportsByDistrict,
   getReportsByHour,
-  
+  getUserDetails,
 };
 
 export default adminService;
