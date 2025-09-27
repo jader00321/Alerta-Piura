@@ -50,5 +50,6 @@ router.get('/analytics/verification-time', adminMiddleware, adminController.getA
 router.get('/analytics/by-district', adminMiddleware, adminController.getReportsByDistrict);
 router.get('/analytics/by-hour', adminMiddleware, adminController.getReportsByHour);
 router.get('/users/:id/details', adminMiddleware, adminController.getUserDetails);
+router.put('/reports/:id/set-pending', adminMiddleware, adminController.adminSetReportToPending);
 
 module.exports = router;

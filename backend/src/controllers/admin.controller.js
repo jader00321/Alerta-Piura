@@ -360,20 +360,31 @@ const resolveUserReport = async (req, res) => {
 
 const getAllAdminReports = async (req, res) => {
   try {
-    const { search, status, categoryId, sortBy, page = 1 } = req.query;
-    const limit = 20; // 20 reportes por página
+    const { search, status, categoryId, sortBy, page = 1, suggestedOnly } = req.query;
+    const limit = 10;
     const offset = (page - 1) * limit;
 
+    // MEJORA: Se añaden u.email y l.email a la consulta
     let query = `
       SELECT 
         r.id, r.titulo, r.foto_url, r.distrito, r.urgencia, r.tags,
         r.codigo_reporte,
         to_char(r.hora_incidente, 'HH24:MI') as hora_incidente,
         c.nombre as categoria, 
+        r.categoria_sugerida,
+        r.es_anonimo,
+        u.nombre as autor_nombre,
         u.alias as autor_alias,
+        u.email as autor_email,
+        l.nombre as lider_verificador_nombre,
         l.alias as lider_verificador_alias,
+        l.email as lider_verificador_email,
         r.estado, 
-        to_char(r.fecha_creacion, 'DD Mon YYYY, HH24:MI') as fecha_creacion
+        to_char(r.fecha_creacion, 'DD Mon YYYY, HH24:MI') as fecha_creacion,
+        r.descripcion, 
+        r.referencia_ubicacion,
+        r.impacto,
+        r.location 
       FROM reportes r
       LEFT JOIN usuarios u ON r.id_usuario = u.id
       LEFT JOIN categorias c ON r.id_categoria = c.id
@@ -385,7 +396,7 @@ const getAllAdminReports = async (req, res) => {
     let paramIndex = 1;
 
     if (search) {
-      whereClauses.push(`(r.titulo ILIKE $${paramIndex} OR u.alias ILIKE $${paramIndex})`);
+      whereClauses.push(`(r.titulo ILIKE $${paramIndex} OR u.alias ILIKE $${paramIndex}) OR u.nombre ILIKE $${paramIndex})`);
       queryParams.push(`%${search}%`);
       paramIndex++;
     }
@@ -396,6 +407,10 @@ const getAllAdminReports = async (req, res) => {
     if (categoryId) {
       whereClauses.push(`r.id_categoria = $${paramIndex++}`);
       queryParams.push(categoryId);
+    }
+
+    if (suggestedOnly === 'true') {
+        whereClauses.push(`r.categoria_sugerida IS NOT NULL AND r.categoria_sugerida != ''`);
     }
 
     if (whereClauses.length > 0) {
@@ -414,7 +429,6 @@ const getAllAdminReports = async (req, res) => {
   }
 };
 
-// --- NEW FUNCTION to hide/publish a report ---
 const updateReportVisibility = async (req, res) => {
   const { id } = req.params;
   const { currentState } = req.body;
@@ -434,7 +448,13 @@ const updateReportVisibility = async (req, res) => {
 const getReviewRequests = async (req, res) => {
   try {
     const query = `
-      SELECT sr.id, r.titulo, u.alias as lider_alias
+      SELECT 
+        sr.id, 
+        r.titulo, 
+        r.codigo_reporte,
+        to_char(r.fecha_creacion, 'DD Mon YYYY') as fecha_reporte,
+        u.alias as lider_alias,
+        u.nombre as lider_nombre
       FROM solicitudes_revision sr
       JOIN reportes r ON sr.id_reporte = r.id
       JOIN usuarios u ON sr.id_lider = u.id
@@ -999,6 +1019,20 @@ const getUserDetails = async (req, res) => {
   }
 };
 
+const adminSetReportToPending = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query("UPDATE reportes SET estado = 'pendiente_verificacion', fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *", [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Reporte no encontrado.' });
+    }
+    res.status(200).json({ message: 'Reporte establecido como pendiente.', report: result.rows[0] });
+  } catch (error) {
+    console.error('Error in adminSetReportToPending:', error);
+    res.status(500).json({ message: 'Error al actualizar el reporte.', error: error.message });
+  }
+};
+
 module.exports = {
   login,
   getDashboardStats,
@@ -1040,4 +1074,5 @@ module.exports = {
   getReportsByDistrict,
   getReportsByHour,
   getUserDetails,
+  adminSetReportToPending,
 };

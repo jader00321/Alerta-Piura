@@ -9,7 +9,7 @@ const getAuthHeader = () => {
 
 const buildQueryString = (params) => {
   const query = Object.entries(params)
-    .filter(([, value]) => value !== undefined && value !== null)
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
     .join('&');
   return query ? `?${query}` : '';
@@ -77,35 +77,6 @@ const getReportedUsers = async () => {
 
 const resolveUserReport = async (reportId, action, userId) => {
   const response = await axios.put(API_URL + `/moderation/users/${reportId}`, { action, userId }, { headers: getAuthHeader() });
-  return response.data;
-};
-
-const getReviewRequests = async () => {
-  const response = await axios.get(API_URL + '/reports/review-requests', { headers: getAuthHeader() });
-  return response.data;
-};
-const resolveReviewRequest = async (id, action) => {
-  const response = await axios.put(API_URL + `/reports/review-requests/${id}`, { action }, { headers: getAuthHeader() });
-  return response.data;
-};
-const adminDeleteReport = async (id) => {
-  const response = await axios.delete(API_URL + `/reports/${id}`, { headers: getAuthHeader() });
-  return response.data;
-};
-
-const getAllAdminReports = async (filters = {}) => {
-  const params = new URLSearchParams(filters).toString();
-  const response = await axios.get(`${API_URL}/reports?${params}`, { headers: getAuthHeader() });
-  return response.data;
-};
-
-const updateReportVisibility = async (id, currentState) => {
-  const response = await axios.put(`${API_URL}/reports/${id}/visibility`, { currentState }, { headers: getAuthHeader() });
-  return response.data;
-};
-
-const getChatHistory = async (reportId) => {
-  const response = await axios.get(API_URL + `/reportes/${reportId}/chat`, { headers: getAuthHeader() });
   return response.data;
 };
 
@@ -215,8 +186,46 @@ const getReportsByHour = async (dateRange) => {
   return response.data;
 };
 
+const getReviewRequests = async () => {
+  const response = await axios.get(API_URL + '/reports/review-requests', { headers: getAuthHeader() });
+  return response.data;
+};
+
+const resolveReviewRequest = async (id, action) => {
+  const response = await axios.put(API_URL + `/reports/review-requests/${id}`, { action }, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const adminDeleteReport = async (id) => {
+  const response = await axios.delete(API_URL + `/reports/${id}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const updateReportVisibility = async (id, currentState) => {
+  const response = await axios.put(`${API_URL}/reports/${id}/visibility`, { currentState }, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getAllAdminReports = async (filters = {}) => {
+  const params = new URLSearchParams(filters).toString();
+  const response = await axios.get(`${API_URL}/reports?${params}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getChatHistory = async (reportId) => {
+    // La ruta correcta según tu backend es /api/reportes/:id/chat, no dentro de /admin
+    const response = await axios.get(`http://localhost:3000/api/reportes/${reportId}/chat`, { headers: getAuthHeader() });
+    return response.data;
+};
+
 const getUserDetails = async (userId) => {
   const response = await axios.get(`${API_URL}/users/${userId}/details`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const setReportToPending = async (reportId) => {
+  const url = `${API_URL}/reports/${reportId}/set-pending`;
+  const response = await axios.put(url, {}, { headers: getAuthHeader() });
   return response.data;
 };
 
@@ -259,6 +268,7 @@ const adminService = {
   getReportsByDistrict,
   getReportsByHour,
   getUserDetails,
+  setReportToPending,
 };
 
 export default adminService;
