@@ -54,5 +54,6 @@ router.put('/reports/:id/set-pending', adminMiddleware, adminController.adminSet
 router.get('/categories/with-stats', adminMiddleware, adminController.getCategoriesWithStats);
 router.put('/categories/reorder', adminMiddleware, adminController.reorderCategories);
 router.post('/categories/merge', adminMiddleware, adminController.mergeCategorySuggestion);
+router.get('/moderation/history', adminMiddleware, adminController.getModerationHistory);
 
 module.exports = router;

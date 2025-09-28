@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, ButtonGroup, Tabs, Tab } from '@mui/material';
+import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, ButtonGroup, Tabs, Tab, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import adminService from '../services/adminService';
 
 // --- Panel for Reported Comments ---
@@ -123,30 +124,69 @@ function ReportedUsersPanel() {
   );
 }
 
-// --- Main Component with Tabs ---
+function ModerationHistoryPanel() {
+  const [history, setHistory] = useState([]);
+  useEffect(() => {
+    adminService.getModerationHistory().then(setHistory);
+  }, []);
+
+  return (
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>Fecha</TableCell>
+            <TableCell>Admin</TableCell>
+            <TableCell>Acción</TableCell>
+            <TableCell>Contenido Afectado</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {history.map(log => (
+            <TableRow key={log.id}>
+              <TableCell>{new Date(log.fecha_accion).toLocaleString()}</TableCell>
+              <TableCell>{log.admin_alias}</TableCell>
+              <TableCell>{log.accion.replace('_', ' ').toUpperCase()}</TableCell>
+              <TableCell>"{log.contenido_afectado}"</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  );
+}
+
 function ModerationPage() {
   const [tabIndex, setTabIndex] = useState(0);
-
-  const handleTabChange = (event, newValue) => {
-    setTabIndex(newValue);
-  };
+  const handleTabChange = (event, newValue) => setTabIndex(newValue);
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-        Panel de Moderación
-      </Typography>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>Panel de Moderación</Typography>
+      
+      <Accordion sx={{ mb: 3 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography>Guía de Procesos de Moderación</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="h6">Pasos para Moderar Comentarios</Typography>
+          <Typography variant="body2" paragraph>1. Lee el comentario y el motivo del reporte. 2. Verifica el contexto (si es necesario, visita el reporte). 3. Decide si el comentario viola las normas. 4. Toma una acción: Desestimar o Eliminar.</Typography>
+          <Typography variant="h6">Pasos para Moderar Usuarios</Typography>
+          <Typography variant="body2" paragraph>1. Revisa el motivo del reporte. 2. Considera el historial del usuario (si ha sido reportado antes). 3. Evalúa la gravedad de la falta. 4. Toma una acción: Desestimar o Suspender.</Typography>
+        </AccordionDetails>
+      </Accordion>
+
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs value={tabIndex} onChange={handleTabChange}>
           <Tab label="Comentarios Reportados" />
           <Tab label="Usuarios Reportados" />
+          <Tab label="Historial de Acciones" />
         </Tabs>
       </Box>
       
-      {/* Conditionally render the content based on the selected tab */}
       {tabIndex === 0 && <ReportedCommentsPanel />}
       {tabIndex === 1 && <ReportedUsersPanel />}
-
+      {tabIndex === 2 && <ModerationHistoryPanel />}
     </Box>
   );
 }

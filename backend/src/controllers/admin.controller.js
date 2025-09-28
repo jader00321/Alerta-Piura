@@ -273,27 +273,31 @@ const getReportedComments = async (req, res) => {
   }
 };
 
-// Resolver un reporte de comentario (desestimar o eliminar)
 const resolveCommentReport = async (req, res) => {
-  const { id } = req.params; // ID del reporte de comentario (de la tabla comentario_reportes)
-  const { action } = req.body; // 'desestimar' o 'eliminar_comentario'
+  const { id } = req.params;
+  const { action } = req.body;
+  const adminId = req.user.id; // Asumimos que el admin está logueado
 
   const client = await db.getClient();
   try {
     await client.query('BEGIN');
+    const adminResult = await client.query('SELECT alias FROM usuarios WHERE id = $1', [adminId]);
+    const adminAlias = adminResult.rows[0].alias;
+
+    const reportResult = await client.query('SELECT c.comentario, cr.motivo FROM comentario_reportes cr JOIN comentarios c ON cr.id_comentario = c.id WHERE cr.id = $1', [id]);
+    const { comentario, motivo } = reportResult.rows[0];
 
     if (action === 'eliminar_comentario') {
-      // Primero obtenemos el ID del comentario original
       const getCommentIdQuery = 'SELECT id_comentario FROM comentario_reportes WHERE id = $1';
       const commentIdResult = await client.query(getCommentIdQuery, [id]);
-      const id_comentario = commentIdResult.rows[0].id_comentario;
-      // Luego eliminamos el comentario de la tabla 'comentarios'
-      await client.query('DELETE FROM comentarios WHERE id = $1', [id_comentario]);
+      await client.query('DELETE FROM comentarios WHERE id = $1', [commentIdResult.rows[0].id_comentario]);
     }
 
-    // Finalmente, marcamos el reporte como resuelto
-    const updateReportQuery = "UPDATE comentario_reportes SET estado = 'resuelto' WHERE id = $1";
-    await client.query(updateReportQuery, [id]);
+    await client.query("UPDATE comentario_reportes SET estado = 'resuelto' WHERE id = $1", [id]);
+    
+    // REGISTRAR EN EL LOG
+    const logQuery = `INSERT INTO moderation_log (id_admin, admin_alias, accion, entidad_tipo, contenido_afectado, motivo_reporte) VALUES ($1, $2, $3, 'comentario', $4, $5)`;
+    await client.query(logQuery, [adminId, adminAlias, action, comentario, motivo]);
 
     await client.query('COMMIT');
     res.status(200).json({ message: 'Acción de moderación completada.' });
@@ -330,22 +334,29 @@ const getReportedUsers = async (req, res) => {
   }
 };
 
-// Resolve a user report (dismiss or suspend user)
 const resolveUserReport = async (req, res) => {
-  const { id } = req.params; // ID of the user report
-  const { action, userId } = req.body; // 'desestimar' or 'suspender_usuario'
+  const { id } = req.params;
+  const { action, userId } = req.body;
+  const adminId = req.user.id;
 
   const client = await db.getClient();
   try {
     await client.query('BEGIN');
+    const adminResult = await client.query('SELECT alias FROM usuarios WHERE id = $1', [adminId]);
+    const adminAlias = adminResult.rows[0].alias;
 
+    const reportResult = await client.query('SELECT u.alias as user_alias, ur.motivo FROM usuario_reportes ur JOIN usuarios u ON ur.id_usuario_reportado = u.id WHERE ur.id = $1', [id]);
+    const { user_alias, motivo } = reportResult.rows[0];
+    
     if (action === 'suspender_usuario') {
-      // Set the user's status in the 'usuarios' table to 'suspendido'
       await client.query("UPDATE usuarios SET status = 'suspendido' WHERE id = $1", [userId]);
     }
 
-    // Mark the report itself as resolved
     await client.query("UPDATE usuario_reportes SET estado = 'resuelto' WHERE id = $1", [id]);
+
+    // REGISTRAR EN EL LOG
+    const logQuery = `INSERT INTO moderation_log (id_admin, admin_alias, accion, entidad_tipo, contenido_afectado, motivo_reporte) VALUES ($1, $2, $3, 'usuario', $4, $5)`;
+    await client.query(logQuery, [adminId, adminAlias, action, user_alias, motivo]);
 
     await client.query('COMMIT');
     res.status(200).json({ message: 'Acción de moderación de usuario completada.' });
@@ -356,6 +367,15 @@ const resolveUserReport = async (req, res) => {
   } finally {
     client.release();
   }
+};
+
+const getModerationHistory = async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM moderation_log ORDER BY fecha_accion DESC');
+        res.status(200).json(result.rows);
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener el historial.' });
+    }
 };
 
 const getAllAdminReports = async (req, res) => {
@@ -1165,4 +1185,5 @@ module.exports = {
   getCategoriesWithStats,
   reorderCategories,
   mergeCategorySuggestion,
+  getModerationHistory,
 };

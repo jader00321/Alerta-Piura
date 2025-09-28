@@ -244,6 +244,11 @@ const mergeCategorySuggestion = async (sourceSuggestionName, targetCategoryId) =
   return response.data;
 };
 
+const getModerationHistory = async () => {
+  const response = await axios.get(API_URL + '/moderation/history', { headers: getAuthHeader() });
+  return response.data;
+};
+
 const adminService = {
   getStats,
   getAllUsers,
@@ -287,6 +292,7 @@ const adminService = {
   getCategoriesWithStats,
   reorderCategories,
   mergeCategorySuggestion,
+  getModerationHistory,
 };
 
 export default adminService;
