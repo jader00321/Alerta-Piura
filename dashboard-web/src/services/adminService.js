@@ -95,18 +95,20 @@ const runPrediction = async (categoryName, increasePercent) => {
   return response.data;
 };
 
-const getSmsLog = async () => {
-  const response = await axios.get(API_URL + '/sms-log', { headers: getAuthHeader() });
+const getSmsLog = async (filters = {}) => {
+  const queryString = buildQueryString(filters);
+  const response = await axios.get(`${API_URL}/sms-log${queryString}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getNotificationHistory = async (filters = {}) => {
+  const queryString = buildQueryString(filters);
+  const response = await axios.get(`${API_URL}/notifications-history${queryString}`, { headers: getAuthHeader() });
   return response.data;
 };
 
 const sendNotification = async (userIds, title, body) => {
   const response = await axios.post(API_URL + '/users/notify', { userIds, title, body }, { headers: getAuthHeader() });
-  return response.data;
-};
-
-const getNotificationHistory = async () => {
-  const response = await axios.get(API_URL + '/notifications-history', { headers: getAuthHeader() });
   return response.data;
 };
 

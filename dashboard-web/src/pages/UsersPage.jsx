@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Paper, Grid, Typography, Select, MenuItem, FormControl, InputLabel, ButtonGroup, Button, Card, CardHeader, CardContent, CardActions, Chip, IconButton, Avatar, Tooltip, Drawer, List, ListItem, ListItemText, ListItemIcon, Divider, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField } from '@mui/material';
-import { Person as PersonIcon, Email as EmailIcon, CalendarToday as CalendarTodayIcon, MoreVert as MoreVertIcon, Phone as PhoneIcon, AdminPanelSettings as AdminIcon, Group as GroupIcon, CheckCircle as CheckCircleIcon, Block as BlockIcon, Star as StarIcon, EmojiEvents as BadgeIcon } from '@mui/icons-material';
+import { Person as PersonIcon, Email as EmailIcon, CalendarToday as CalendarTodayIcon, MoreVert as MoreVertIcon, Phone as PhoneIcon, AdminPanelSettings as AdminIcon, Group as GroupIcon, CheckCircle as CheckCircleIcon, Block as BlockIcon, Star as StarIcon, Notifications as NotificationsIcon } from '@mui/icons-material';
 import adminService from '../services/adminService';
 import HoldToConfirmButton from '../components/HoldToConfirmButton';
+import { useDebounce } from '../hooks/useDebounce';
 
 // --- Componentes de Diseño Mejorados ---
 
@@ -65,26 +66,36 @@ const UserCard = ({ user, onStatusChange, onDetailOpen }) => (
 function UsersPage() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({ role: '', status: '', sortBy: 'newest' });
+    // MEJORA: Añadimos 'search' al estado de los filtros
+    const [filters, setFilters] = useState({ search: '', role: '', status: '', sortBy: 'newest' });
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const [userDetails, setUserDetails] = useState(null);
     const [detailLoading, setDetailLoading] = useState(false);
-
-    // Estados para los modales de confirmación de rol
     const [promoModal, setPromoModal] = useState({ open: false, type: '', data: null });
     const [adminPassword, setAdminPassword] = useState('');
     const [confirmText, setConfirmText] = useState('');
 
+    // NUEVO: Estados para la funcionalidad de notificación
+    const [notificationModalOpen, setNotificationModalOpen] = useState(false);
+    const [notificationData, setNotificationData] = useState({ title: '', body: '' });
+
+    // Usamos debounce para el campo de búsqueda para no hacer peticiones en cada tecleo
+    const debouncedSearch = useDebounce(filters.search, 500);
 
     const fetchUsers = useCallback(() => {
         setLoading(true);
-        const activeFilters = Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== ''));
+        const activeFilters = { 
+            role: filters.role,
+            status: filters.status,
+            sortBy: filters.sortBy,
+            search: debouncedSearch 
+        };
         adminService.getAllUsers(activeFilters)
             .then(data => setUsers(data))
             .catch(err => console.error("Error fetching users:", err))
             .finally(() => setLoading(false));
-    }, [filters]);
+    }, [filters.role, filters.status, filters.sortBy, debouncedSearch]);
 
     useEffect(() => {
         fetchUsers();
@@ -99,6 +110,30 @@ function UsersPage() {
         setFilters(prev => ({ ...prev, sortBy: sortByValue }));
     };
 
+    const handleSendNotification = async () => {
+        if (!notificationData.title || !notificationData.body) {
+            alert('El título y el cuerpo de la notificación son requeridos.');
+            return;
+        }
+
+        const userIds = users.map(user => user.id);
+        if (userIds.length === 0) {
+            alert('No hay usuarios a quienes enviar la notificación.');
+            return;
+        }
+
+        try {
+            await adminService.sendNotification(userIds, notificationData.title, notificationData.body);
+            alert(`Notificación enviada a ${userIds.length} usuario(s).`);
+            setNotificationModalOpen(false);
+            setNotificationData({ title: '', body: '' });
+        } catch (error) {
+            console.error("Fallo al enviar la notificación:", error);
+            const message = error.response?.data?.message || 'Error al enviar la notificación.';
+            alert(message);
+        }
+    };
+
     const handleStatusChange = (userId, currentStatus) => {
         const newStatus = currentStatus === 'activo' ? 'suspendido' : 'activo';
         adminService.updateUserStatus(userId, newStatus).then(fetchUsers);
@@ -109,23 +144,20 @@ function UsersPage() {
         setDrawerOpen(true);
         setDetailLoading(true);
         setUserDetails(null); 
-
         adminService.getUserDetails(user.id)
-            .then(data => {
-                setUserDetails(data); // Guarda los detalles completos
-            })
+            .then(data => setUserDetails(data))
             .catch(err => console.error("Error fetching user details", err))
-            .finally(() => setDetailLoading(false)); // Desactiva el spinner
+            .finally(() => setDetailLoading(false));
     };
 
     const handleRoleChange = (newRole) => {
         if (!selectedUser || newRole === selectedUser.rol) return;
-        setDrawerOpen(false); // Cierra el drawer para abrir el modal
+        setDrawerOpen(false);
         if (newRole === 'admin') {
             setPromoModal({ open: true, type: 'admin', data: { userId: selectedUser.id, newRole } });
         } else if (newRole === 'lider_vecinal') {
             setPromoModal({ open: true, type: 'lider', data: { userId: selectedUser.id, newRole } });
-        } else { // para ciudadano no se necesita confirmación extra
+        } else {
             adminService.updateUserRole(selectedUser.id, newRole).then(fetchUsers);
         }
     };
@@ -150,7 +182,15 @@ function UsersPage() {
         <Box>
             <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>Gestión de Usuarios</Typography>
             
-            <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', minHeight: '80px' }}>
+            <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', minHeight: '80px', justifyContent: 'center',maxWidth: '1400px'}}>
+                <TextField 
+                    label="Buscar por nombre o email"
+                    name="search"
+                    value={filters.search}
+                    onChange={handleFilterChange}
+                    size="small"
+                    sx={{ flexGrow: 1, minWidth: '200px' }}
+                />
                 <FormControl sx={{ minWidth: 150 }} size="small">
                     <InputLabel>Rol</InputLabel>
                     <Select name="role" value={filters.role} label="Rol" onChange={handleFilterChange}>
@@ -168,6 +208,14 @@ function UsersPage() {
                         <MenuItem value="suspendido">Suspendido</MenuItem>
                     </Select>
                 </FormControl>
+                <Button 
+                    variant="contained" 
+                    startIcon={<NotificationsIcon />} 
+                    onClick={() => setNotificationModalOpen(true)}
+                    sx={{ ml: 'auto' }}
+                >
+                    Notificar
+                </Button>
                 <ButtonGroup size="small" sx={{ ml: 'auto' }}>
                     <Button variant={filters.sortBy === 'newest' ? 'contained' : 'outlined'} onClick={() => handleSortChange('newest')}>Más Recientes</Button>
                     <Button variant={filters.sortBy === 'oldest' ? 'contained' : 'outlined'} onClick={() => handleSortChange('oldest')}>Más Antiguos</Button>
@@ -286,6 +334,40 @@ function UsersPage() {
                 <DialogActions>
                     <Button onClick={closePromoModal}>Cancelar</Button>
                     <Button onClick={handleConfirmPromotion} variant="contained" color="error" disabled={confirmText !== 'PROMOVER' || !adminPassword}>Confirmar Promoción</Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={notificationModalOpen} onClose={() => setNotificationModalOpen(false)} fullWidth maxWidth="sm">
+                <DialogTitle>Enviar Notificación a {users.length} Usuario(s)</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ mb: 2 }}>
+                        El mensaje se enviará a todos los usuarios actualmente visibles en la pantalla.
+                        Si has aplicado filtros, solo ellos recibirán el mensaje.
+                    </DialogContentText>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Título de la Notificación"
+                        type="text"
+                        fullWidth
+                        variant="outlined"
+                        value={notificationData.title}
+                        onChange={(e) => setNotificationData(prev => ({ ...prev, title: e.target.value }))}
+                    />
+                    <TextField
+                        margin="dense"
+                        label="Cuerpo del Mensaje"
+                        type="text"
+                        fullWidth
+                        multiline
+                        rows={4}
+                        variant="outlined"
+                        value={notificationData.body}
+                        onChange={(e) => setNotificationData(prev => ({ ...prev, body: e.target.value }))}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setNotificationModalOpen(false)}>Cancelar</Button>
+                    <Button onClick={handleSendNotification} variant="contained">Enviar</Button>
                 </DialogActions>
             </Dialog>
 

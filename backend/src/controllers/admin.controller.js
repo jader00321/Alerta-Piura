@@ -78,11 +78,20 @@ const getDashboardStats = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const { role, status, sortBy } = req.query;
+    // AÑADIMOS 'search' a los posibles filtros
+    const { role, status, sortBy, search } = req.query;
 
-    let query = "SELECT id, nombre, alias, email, rol, status, telefono, puntos, to_char(fecha_registro, 'DD Mon YYYY') as fecha_registro_formateada FROM usuarios";    const whereClauses = [];
+    let query = "SELECT id, nombre, alias, email, rol, status, telefono, puntos, to_char(fecha_registro, 'DD Mon YYYY') as fecha_registro_formateada FROM usuarios";
+    const whereClauses = [];
     const queryParams = [];
     let paramIndex = 1;
+
+    // AÑADIMOS la lógica para el filtro de búsqueda
+    if (search) {
+      whereClauses.push(`(nombre ILIKE $${paramIndex} OR email ILIKE $${paramIndex} OR alias ILIKE $${paramIndex})`);
+      queryParams.push(`%${search}%`);
+      paramIndex++;
+    }
 
     if (role) {
       whereClauses.push(`rol = $${paramIndex++}`);
@@ -601,10 +610,77 @@ const runPredictionSimulation = async (req, res) => {
 
 const getSimulatedSmsLog = async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM simulated_sms_log ORDER BY fecha_envio DESC');
+    const { search, page = 1 } = req.query;
+    const limit = 20;
+    const offset = (page - 1) * limit;
+
+    let query = `
+      SELECT 
+        log.id, log.contacto_telefono, log.mensaje, log.fecha_envio,
+        u.alias as usuario_sos_alias
+      FROM simulated_sms_log log
+      LEFT JOIN usuarios u ON log.id_usuario_sos = u.id
+    `;
+    const whereClauses = [];
+    const queryParams = [];
+    let paramIndex = 1;
+
+    if (search) {
+      whereClauses.push(`(log.mensaje ILIKE $${paramIndex} OR log.contacto_telefono ILIKE $${paramIndex} OR u.alias ILIKE $${paramIndex})`);
+      queryParams.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    if (whereClauses.length > 0) {
+      query += ' WHERE ' + whereClauses.join(' AND ');
+    }
+
+    query += ` ORDER BY log.fecha_envio DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    queryParams.push(limit, offset);
+
+    const result = await db.query(query, queryParams);
     res.status(200).json(result.rows);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener el registro de SMS.' });
+  }
+};
+
+
+// REEMPLAZA la función getNotificationHistory con esta versión mejorada
+const getNotificationHistory = async (req, res) => {
+  try {
+    const { search, page = 1 } = req.query;
+    const limit = 20;
+    const offset = (page - 1) * limit;
+
+    let query = `
+      SELECT 
+        n.id, n.id_usuario_receptor, n.titulo, n.cuerpo, n.leido, n.fecha_envio, 
+        u.alias as receptor, u.email as receptor_email
+      FROM notificaciones n
+      JOIN usuarios u ON n.id_usuario_receptor = u.id
+    `;
+    const whereClauses = [];
+    const queryParams = [];
+    let paramIndex = 1;
+
+    if (search) {
+      whereClauses.push(`(n.titulo ILIKE $${paramIndex} OR n.cuerpo ILIKE $${paramIndex} OR u.alias ILIKE $${paramIndex})`);
+      queryParams.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    if (whereClauses.length > 0) {
+      query += ' WHERE ' + whereClauses.join(' AND ');
+    }
+
+    query += ` ORDER BY n.fecha_envio DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    queryParams.push(limit, offset);
+
+    const result = await db.query(query, queryParams);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener historial de notificaciones.' });
   }
 };
 
@@ -630,23 +706,6 @@ const sendNotification = async (req, res) => {
     res.status(500).json({ message: 'Error al enviar la notificación.' });
   } finally {
     client.release();
-  }
-};
-
-const getNotificationHistory = async (req, res) => {
-  try {
-    // --- QUERY UPDATED to JOIN with usuarios and get the email ---
-    const query = `
-      SELECT n.id, n.titulo, n.cuerpo, n.leido, n.fecha_envio, 
-             u.alias as receptor, u.email as receptor_email
-      FROM notificaciones n
-      JOIN usuarios u ON n.id_usuario_receptor = u.id
-      ORDER BY n.fecha_envio DESC
-    `;
-    const result = await db.query(query);
-    res.status(200).json(result.rows);
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener historial de notificaciones.' });
   }
 };
 
