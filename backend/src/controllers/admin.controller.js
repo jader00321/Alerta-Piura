@@ -176,7 +176,7 @@ const updateUserStatus = async (req, res) => {
 // Obtener todas las categorías oficiales
 const getAllCategories = async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM categorias ORDER BY nombre ASC');
+    const result = await db.query('SELECT * FROM categorias ORDER BY orden ASC');
     res.status(200).json(result.rows);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener categorías.' });
@@ -396,7 +396,7 @@ const getAllAdminReports = async (req, res) => {
     let paramIndex = 1;
 
     if (search) {
-      whereClauses.push(`(r.titulo ILIKE $${paramIndex} OR u.alias ILIKE $${paramIndex}) OR u.nombre ILIKE $${paramIndex})`);
+      whereClauses.push(`(r.titulo ILIKE $${paramIndex} OR u.alias ILIKE $${paramIndex} OR u.nombre ILIKE $${paramIndex})`);
       queryParams.push(`%${search}%`);
       paramIndex++;
     }
@@ -1033,6 +1033,93 @@ const adminSetReportToPending = async (req, res) => {
   }
 };
 
+const getCategoriesWithStats = async (req, res) => {
+  try {
+    // MEJORA: La consulta ahora usa agregación condicional para contar reportes por estado
+    const query = `
+      SELECT 
+        c.id, 
+        c.nombre, 
+        c.icono_url, 
+        c.orden,
+        COUNT(r.id) FILTER (WHERE r.estado = 'verificado') as reportes_activos,
+        COUNT(r.id) FILTER (WHERE r.estado = 'pendiente_verificacion') as reportes_pendientes,
+        COUNT(r.id) FILTER (WHERE r.estado = 'rechazado') as reportes_rechazados
+      FROM categorias c
+      LEFT JOIN reportes r ON c.id = r.id_categoria
+      GROUP BY c.id
+      ORDER BY c.orden ASC, c.nombre ASC;
+    `;
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error fetching categories with stats:", error);
+    res.status(500).json({ message: 'Error al obtener categorías.' });
+  }
+};
+
+const reorderCategories = async (req, res) => {
+  const { orderedIds } = req.body; // Se espera un array de IDs en el nuevo orden
+  if (!Array.isArray(orderedIds)) {
+    return res.status(400).json({ message: 'Se esperaba un array de IDs de categorías.' });
+  }
+
+  const client = await db.getClient();
+  try {
+    await client.query('BEGIN');
+    // Usamos Promise.all para ejecutar todas las actualizaciones en paralelo
+    await Promise.all(orderedIds.map((categoryId, index) => {
+      const newOrder = index + 1;
+      return client.query('UPDATE categorias SET orden = $1 WHERE id = $2', [newOrder, categoryId]);
+    }));
+    await client.query('COMMIT');
+    res.status(200).json({ message: 'Categorías reordenadas exitosamente.' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error("Error reordering categories:", error);
+    res.status(500).json({ message: 'Error al reordenar las categorías.' });
+  } finally {
+    client.release();
+  }
+};
+
+// NUEVA FUNCIÓN PARA FUSIONAR CATEGORÍAS
+const mergeCategorySuggestion = async (req, res) => {
+  const { sourceSuggestionName, targetCategoryId } = req.body;
+  if (!sourceSuggestionName || !targetCategoryId) {
+    return res.status(400).json({ message: 'Faltan parámetros para la fusión.' });
+  }
+  
+  const client = await db.getClient();
+  try {
+    await client.query('BEGIN');
+    // 1. Encontrar el ID de la categoría "Otro"
+    const otroCategoryResult = await client.query("SELECT id FROM categorias WHERE nombre = 'Otro'");
+    if (otroCategoryResult.rows.length === 0) {
+      throw new Error('La categoría "Otro" no fue encontrada.');
+    }
+    const otroCategoryId = otroCategoryResult.rows[0].id;
+
+    // 2. Actualizar todos los reportes que coincidan con la sugerencia
+    const updateResult = await client.query(
+      `UPDATE reportes 
+       SET id_categoria = $1, categoria_sugerida = NULL 
+       WHERE id_categoria = $2 AND categoria_sugerida = $3`,
+      [targetCategoryId, otroCategoryId, sourceSuggestionName]
+    );
+
+    await client.query('COMMIT');
+    res.status(200).json({ message: `Sugerencia '${sourceSuggestionName}' fusionada exitosamente. ${updateResult.rowCount} reportes actualizados.` });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error("Error merging category:", error);
+    res.status(500).json({ message: 'Error al fusionar la categoría.' });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   login,
   getDashboardStats,
@@ -1062,6 +1149,7 @@ module.exports = {
   getLatestPendingReports,
   adminAprobarReporte,
   adminRechazarReporte,
+  adminSetReportToPending, 
   getSosDashboardData,
   getReportCoordinates,
   getReportsByCategory,
@@ -1074,5 +1162,7 @@ module.exports = {
   getReportsByDistrict,
   getReportsByHour,
   getUserDetails,
-  adminSetReportToPending,
+  getCategoriesWithStats,
+  reorderCategories,
+  mergeCategorySuggestion,
 };

@@ -63,7 +63,7 @@ const corsOptions = {
   allowedHeaders: "Authorization, Content-Type",
 };
 app.use(cors(corsOptions));
-
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/api/healthcheck', (req, res) => {

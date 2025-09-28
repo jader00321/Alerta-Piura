@@ -51,5 +51,8 @@ router.get('/analytics/by-district', adminMiddleware, adminController.getReports
 router.get('/analytics/by-hour', adminMiddleware, adminController.getReportsByHour);
 router.get('/users/:id/details', adminMiddleware, adminController.getUserDetails);
 router.put('/reports/:id/set-pending', adminMiddleware, adminController.adminSetReportToPending);
+router.get('/categories/with-stats', adminMiddleware, adminController.getCategoriesWithStats);
+router.put('/categories/reorder', adminMiddleware, adminController.reorderCategories);
+router.post('/categories/merge', adminMiddleware, adminController.mergeCategorySuggestion);
 
 module.exports = router;

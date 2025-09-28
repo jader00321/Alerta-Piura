@@ -51,7 +51,7 @@ function ReportsManagementPage() {
         ]).then(([newReports, requests]) => {
             setReports(isNewFilter ? newReports : [...reports, ...newReports]);
             setReviewRequests(requests);
-            setHasMore(newReports.length === 20);
+            setHasMore(newReports.length === 10);
             if(isNewFilter) setPage(1);
         }).catch(console.error).finally(() => setLoading(false));
     }, [page, debouncedSearch, filters, reports, showOnlySuggested]);

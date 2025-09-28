@@ -56,7 +56,6 @@ const getAllReports = async (req, res) => {
 
 const createReport = async (req, res) => {
   const id_usuario = req.user.id;
-  // Get all the new fields from the request body
   const { 
     id_categoria, titulo, descripcion, es_anonimo, categoria_sugerida,
     urgencia, hora_incidente, tags, impacto, referencia_ubicacion, distrito 
@@ -68,47 +67,60 @@ const createReport = async (req, res) => {
     return res.status(400).json({ message: 'Categoría, título y ubicación son requeridos.' });
   }
 
-  // --- NEW: Generate a Unique Report Code ---
-  const year = new Date().getFullYear();
-  const reportCountResult = await db.query('SELECT COUNT(*) FROM reportes');
-  const nextId = parseInt(reportCountResult.rows[0].count, 10) + 1;
-  const codigo_reporte = `AP-${year}-${nextId.toString().padStart(5, '0')}`;
-
+  // Usaremos una transacción para asegurar que todas las operaciones se completen
   const client = await db.getClient();
   try {
     await client.query('BEGIN');
 
+    // 1. Insertamos el reporte SIN el código, pero pedimos que nos DEVUELVA el nuevo 'id'
     const reporteQuery = `
       INSERT INTO Reportes (
         id_usuario, id_categoria, titulo, descripcion, location, es_anonimo, 
         categoria_sugerida, foto_url, urgencia, hora_incidente, tags, 
-        impacto, referencia_ubicacion, distrito, codigo_reporte
+        impacto, referencia_ubicacion, distrito
       )
-      VALUES ($1, $2, $3, $4, ST_SetSRID(ST_GeomFromGeoJSON($5), 4326), $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-      RETURNING *;
+      VALUES ($1, $2, $3, $4, ST_SetSRID(ST_GeomFromGeoJSON($5), 4326), $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING id;
     `;
     const reporteValues = [
       id_usuario, id_categoria, titulo, descripcion, JSON.stringify(location), 
       es_anonimo || false, categoria_sugerida, foto_url, urgencia, hora_incidente, 
-      tags, impacto, referencia_ubicacion, distrito, codigo_reporte
+      tags, impacto, referencia_ubicacion, distrito
     ];
     const result = await client.query(reporteQuery, reporteValues);
+    const newReportId = result.rows[0].id; // ¡Aquí tenemos el ID único garantizado!
 
+    // 2. Ahora, construimos el código del reporte usando el ID único
+    const year = new Date().getFullYear();
+    const codigo_reporte = `AP-${year}-${newReportId.toString().padStart(5, '0')}`;
+
+    // 3. Actualizamos la fila que acabamos de crear para añadirle su código
+    await client.query('UPDATE Reportes SET codigo_reporte = $1 WHERE id = $2', [codigo_reporte, newReportId]);
+
+    // 4. El resto de la lógica (sumar puntos, otorgar insignias) se mantiene
     const puntosQuery = 'UPDATE Usuarios SET puntos = puntos + 10 WHERE id = $1';
     await client.query(puntosQuery, [id_usuario]);
     
     await checkAndAwardBadges(client, id_usuario);
 
+    // 5. Si todo fue exitoso, confirmamos la transacción
     await client.query('COMMIT');
+    
     res.status(201).json({
       message: 'Reporte creado exitosamente y +10 puntos obtenidos.',
-      reporte: result.rows[0],
+      reporte: { id: newReportId, codigo_reporte }, // Devolvemos el nuevo ID y código
     });
   } catch (error) {
+    // Si algo falla, revertimos todos los cambios
     await client.query('ROLLBACK');
     console.error('Error al crear el reporte:', error);
+    // Verificamos si es el error de llave duplicada para dar un mensaje más específico
+    if (error.code === '23505') {
+        return res.status(409).json({ message: `Error de unicidad: ${error.detail}` });
+    }
     res.status(500).json({ message: 'Error interno del servidor.' });
   } finally {
+    // Liberamos el cliente de la base de datos
     client.release();
   }
 };

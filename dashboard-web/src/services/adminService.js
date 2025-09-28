@@ -229,6 +229,21 @@ const setReportToPending = async (reportId) => {
   return response.data;
 };
 
+const getCategoriesWithStats = async () => {
+  const response = await axios.get(API_URL + '/categories/with-stats', { headers: getAuthHeader() });
+  return response.data;
+};
+
+const reorderCategories = async (orderedIds) => {
+  const response = await axios.put(API_URL + '/categories/reorder', { orderedIds }, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const mergeCategorySuggestion = async (sourceSuggestionName, targetCategoryId) => {
+  const response = await axios.post(API_URL + '/categories/merge', { sourceSuggestionName, targetCategoryId }, { headers: getAuthHeader() });
+  return response.data;
+};
+
 const adminService = {
   getStats,
   getAllUsers,
@@ -269,6 +284,9 @@ const adminService = {
   getReportsByHour,
   getUserDetails,
   setReportToPending,
+  getCategoriesWithStats,
+  reorderCategories,
+  mergeCategorySuggestion,
 };
 
 export default adminService;
