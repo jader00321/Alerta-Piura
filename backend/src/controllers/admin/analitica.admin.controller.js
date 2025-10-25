@@ -1,31 +1,24 @@
 // backend/src/controllers/admin/analitica.admin.controller.js
-const db = require('../../config/db'); // <-- Adjusted path
+const db = require('../../config/db');
 
 const getDynamicDateGrouping = (startDate, endDate) => {
     if (!startDate || !endDate) {
-        // Sin filtro (o filtro 'Todos'), agrupar por mes
-        // Usamos 'r.fecha_creacion' asumiendo que 'r' será el alias
         return { sql: "to_char(r.fecha_creacion, 'YYYY-MM')", type: 'month' };
     }
     
     try {
         const start = new Date(startDate);
         const end = new Date(endDate);
-        // Añadir 1 para incluir el día final en el cálculo
         const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24) + 1;
 
         if (diffDays <= 2) {
-            // 2 días o menos (ej. "Hoy"), agrupar por hora
             return { sql: "to_char(r.fecha_creacion, 'YYYY-MM-DD HH24:00')", type: 'hour' };
         } else if (diffDays <= 60) {
-            // Entre 3 y 60 días (ej. "Semana" o "Mes"), agrupar por día
             return { sql: "to_char(r.fecha_creacion, 'YYYY-MM-DD')", type: 'day' };
         } else {
-            // Más de 60 días, agrupar por mes
             return { sql: "to_char(r.fecha_creacion, 'YYYY-MM')", type: 'month' };
         }
     } catch (e) {
-        // Fallback seguro
         return { sql: "to_char(r.fecha_creacion, 'YYYY-MM')", type: 'month' };
     }
 };
@@ -39,48 +32,45 @@ const buildDateFilter = (startDate, endDate, params, dateColumn = 'r.fecha_creac
     return '';
 };
 const getDashboardStats = async (req, res) => {
-  // ... (Esta función se mantiene sin cambios, no usa filtros de fecha) ...
   try {
     const [
-      userCount, premiumUserCount, // <-- Premium Users
-      reportesPendientes, reportesVerificados, reportesRechazados, reportesOcultos, // <-- Rechazados/Ocultos
+      userCount, premiumUserCount,
+      reportesPendientes, reportesVerificados, reportesRechazados, reportesOcultos,
       comentariosReportados, usuariosReportados,
       activeSosAlerts,
-      officialCategoriesCount, // <-- Official Categories
-      suggestedCategoriesCount, // <-- Suggested Categories
-      pendingRoleRequestsCount // <-- Role Requests
+      officialCategoriesCount, 
+      suggestedCategoriesCount, 
+      pendingRoleRequestsCount 
     ] = await Promise.all([
       db.query('SELECT COUNT(*) FROM usuarios'),
-      // Contar usuarios con plan activo
       db.query(`SELECT COUNT(*) FROM usuarios WHERE id_plan_suscripcion IS NOT NULL AND fecha_fin_suscripcion > NOW()`),
       db.query("SELECT COUNT(*) FROM reportes WHERE estado = 'pendiente_verificacion'"),
       db.query("SELECT COUNT(*) FROM reportes WHERE estado = 'verificado'"),
-      db.query("SELECT COUNT(*) FROM reportes WHERE estado = 'rechazado'"), // <-- Nuevo
-      db.query("SELECT COUNT(*) FROM reportes WHERE estado = 'oculto'"), // <-- Nuevo
+      db.query("SELECT COUNT(*) FROM reportes WHERE estado = 'rechazado'"), 
+      db.query("SELECT COUNT(*) FROM reportes WHERE estado = 'oculto'"),
       db.query("SELECT COUNT(*) FROM comentario_reportes WHERE estado = 'pendiente'"),
       db.query("SELECT COUNT(*) FROM usuario_reportes WHERE estado = 'pendiente'"),
       db.query("SELECT COUNT(*) FROM sos_alerts WHERE estado = 'activo'"),
-      db.query("SELECT COUNT(*) FROM categorias WHERE nombre != 'Otro'"), // <-- Nuevo
-      // Contar sugerencias únicas que NO son categorías oficiales
+      db.query("SELECT COUNT(*) FROM categorias WHERE nombre != 'Otro'"),
       db.query(`SELECT COUNT(DISTINCT LOWER(categoria_sugerida)) FROM reportes
                 WHERE categoria_sugerida IS NOT NULL AND categoria_sugerida != ''
-                AND LOWER(categoria_sugerida) NOT IN (SELECT LOWER(nombre) FROM categorias)`), // <-- Nuevo
-      db.query("SELECT COUNT(*) FROM solicitudes_rol WHERE estado = 'pendiente'") // <-- Nuevo
+                AND LOWER(categoria_sugerida) NOT IN (SELECT LOWER(nombre) FROM categorias)`), 
+      db.query("SELECT COUNT(*) FROM solicitudes_rol WHERE estado = 'pendiente'") 
     ]);
 
     res.status(200).json({
       totalUsuarios: parseInt(userCount.rows[0].count, 10),
-      usuariosPremium: parseInt(premiumUserCount.rows[0].count, 10), // <-- Nuevo
+      usuariosPremium: parseInt(premiumUserCount.rows[0].count, 10), 
       reportesPendientes: parseInt(reportesPendientes.rows[0].count, 10),
       reportesVerificados: parseInt(reportesVerificados.rows[0].count, 10),
-      reportesRechazados: parseInt(reportesRechazados.rows[0].count, 10), // <-- Nuevo
-      reportesOcultos: parseInt(reportesOcultos.rows[0].count, 10), // <-- Nuevo
+      reportesRechazados: parseInt(reportesRechazados.rows[0].count, 10),
+      reportesOcultos: parseInt(reportesOcultos.rows[0].count, 10),
       comentariosReportados: parseInt(comentariosReportados.rows[0].count, 10),
       usuariosReportados: parseInt(usuariosReportados.rows[0].count, 10),
       alertasSosActivas: parseInt(activeSosAlerts.rows[0].count, 10),
-      categoriasOficiales: parseInt(officialCategoriesCount.rows[0].count, 10), // <-- Nuevo
-      categoriasSugeridas: parseInt(suggestedCategoriesCount.rows[0].count, 10), // <-- Nuevo
-      solicitudesRolPendientes: parseInt(pendingRoleRequestsCount.rows[0].count, 10), // <-- Nuevo
+      categoriasOficiales: parseInt(officialCategoriesCount.rows[0].count, 10), 
+      categoriasSugeridas: parseInt(suggestedCategoriesCount.rows[0].count, 10), 
+      solicitudesRolPendientes: parseInt(pendingRoleRequestsCount.rows[0].count, 10),
     });
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
@@ -88,12 +78,9 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-// --- MODIFICADO ---
 const getReportsGroupedByStatus = async (req, res) => {
-    // 1. Añadir recepción de query params
     const { startDate, endDate } = req.query;
     const params = [];
-    // 2. Usar el helper de filtro (sin alias 'r', usa nombre de tabla)
     const dateFilter = buildDateFilter(startDate, endDate, params, 'reportes.fecha_creacion');
 
     try {
@@ -112,7 +99,6 @@ const getReportsGroupedByStatus = async (req, res) => {
             GROUP BY estado
             ORDER BY estado; -- Opcional: ordenar
         `;
-        // 4. Pasar params a la consulta
         const result = await db.query(query, params);
         res.status(200).json(result.rows);
     } catch (error) {
@@ -121,24 +107,20 @@ const getReportsGroupedByStatus = async (req, res) => {
     }
 };
 
-// --- MODIFICADO ---
 const getReportsByDay = async (req, res) => {
   const { startDate, endDate } = req.query;
   const params = [];
 
-  // Lógica para determinar el rango
   let startRange, endRange;
   if (startDate && endDate) {
       startRange = new Date(startDate);
       endRange = new Date(endDate);
   } else {
-      // Default: últimos 7 días si no hay rango
       endRange = new Date();
       startRange = new Date();
       startRange.setDate(endRange.getDate() - 6);
   }
 
-  // Asegurar que las fechas estén en formato YYYY-MM-DD para la query
   const startParam = startRange.toISOString().split('T')[0];
   const endParam = endRange.toISOString().split('T')[0];
 
@@ -166,7 +148,6 @@ const getReportsByDay = async (req, res) => {
         d.day ASC; -- Ordena cronológicamente
     `;
     const result = await db.query(query, params);
-    // Devuelve las filas [{ date: 'YYYY-MM-DD', count: N }, ...]
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Error fetching reports by day:", error);
@@ -175,7 +156,6 @@ const getReportsByDay = async (req, res) => {
 };
 
 const getHeatmapData = async (req, res) => {
-    // ... (getHeatmapData function code remains the same) ...
       try {
     const query = `SELECT ST_Y(location) as lat, ST_X(location) as lon FROM reportes WHERE estado = 'verificado' AND location IS NOT NULL`;
     const result = await db.query(query);
@@ -187,7 +167,6 @@ const getHeatmapData = async (req, res) => {
   }
 };
 const getReportCoordinates = async (req, res) => {
-    // ... (getReportCoordinates function code remains the same) ...
       try {
     const query = `SELECT ST_Y(location) as lat, ST_X(location) as lon FROM reportes WHERE estado = 'verificado' AND location IS NOT NULL`;
     const result = await db.query(query);
@@ -198,12 +177,10 @@ const getReportCoordinates = async (req, res) => {
   }
 };
 
-// --- ESTA FUNCIÓN YA ESTABA BIEN (ACEPTA FILTROS) ---
 const getReportsByCategory = async (req, res) => {
-    // ... (getReportsByCategory function code remains the same) ...
       const { startDate, endDate } = req.query;
   const params = [];
-  const dateFilter = buildDateFilter(startDate, endDate, params); // Usa alias 'r' por defecto
+  const dateFilter = buildDateFilter(startDate, endDate, params); 
   try {
     const query = `SELECT c.nombre as name, COUNT(r.id) as value FROM reportes r JOIN categorias c ON r.id_categoria = c.id WHERE 1=1 ${dateFilter} GROUP BY c.nombre ORDER BY value DESC`;
     const result = await db.query(query, params);
