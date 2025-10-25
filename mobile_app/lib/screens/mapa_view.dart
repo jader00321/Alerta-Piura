@@ -26,7 +26,8 @@ class MapaView extends StatefulWidget {
   State<MapaView> createState() => _MapaViewState();
 }
 
-class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
+// --- YA NO SE NECESITA 'with TickerProviderStateMixin' ---
+class _MapaViewState extends State<MapaView> {
   final LatLng _initialCenter = const LatLng(-5.19449, -80.63282);
   final ReporteService _reporteService = ReporteService();
   final MapController _mapController = MapController();
@@ -41,52 +42,47 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
   bool _isHeatmapVisible = false;
   Future<List<LatLng>>? _heatmapFuture;
 
-  // ignore: unused_field
+  // --- Estado de SOS Simplificado ---
   int? _activeAlertId; 
   bool _isSosActive = false;
   int _sosRemainingSeconds = 0;
-  Timer? _sosHoldTimer;
-  // late AnimationController _glowController; // No lo estabas usando, lo comenté
+  
+  // --- ELIMINADOS ---
+  // Timer? _sosHoldTimer;
+  // double _sosHoldProgress = 0.0;
+  // late AnimationController _glowController;
 
   @override
   void initState() {
     super.initState();
     _loadReportes(); // Carga inicial
-    // _glowController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+    
+    // --- ELIMINADA LA INICIALIZACIÓN DEL _glowController ---
 
     FlutterBackgroundService().on('update').listen((event) {
-      if (!mounted || event == null) return;
-      
-      final action = event['action'] as String?;
-      print("MAPA_VIEW: Evento recibido del servicio: $action");
-
-      switch (action) {
-        case 'updateTimer': 
-          if (mounted) setState(() => _sosRemainingSeconds = event['seconds']);
-          break;
-        case 'sosStarted': 
-          if (mounted) setState(() { 
-            _isSosActive = true; 
-            _activeAlertId = event['alertId']; 
-            _sosRemainingSeconds = event['seconds'];
-          }); 
-          break;
-        case 'sosFinished': 
-          if (mounted) setState(() { 
-            _isSosActive = false; 
-            _activeAlertId = null; 
-            _sosRemainingSeconds = 0; 
-          }); 
-          break;
-        case 'connectionLost': 
-          if (mounted && ScaffoldMessenger.maybeOf(context) != null) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Conexión perdida...'), 
-              backgroundColor: Colors.orange,
-            ));
-          }
-          break;
-      }
+       if (!mounted || event == null) return;
+       final action = event['action'] as String?;
+       print("MAPA_VIEW: Evento recibido del servicio: $action");
+       switch (action) {
+         case 'updateTimer':
+           if (mounted) setState(() => _sosRemainingSeconds = event['seconds']);
+           break;
+         case 'sosStarted':
+           if (mounted) setState(() { 
+             _isSosActive = true; // Asegurarse de que el estado esté sincronizado
+             _activeAlertId = event['alertId']; 
+             _sosRemainingSeconds = event['seconds']; 
+           });
+           break;
+         case 'sosFinished':
+           if (mounted) setState(() { _isSosActive = false; _activeAlertId = null; _sosRemainingSeconds = 0; });
+           break;
+         case 'connectionLost':
+           if (mounted && ScaffoldMessenger.maybeOf(context) != null) {
+             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Conexión perdida...'), backgroundColor: Colors.orange,));
+           }
+           break;
+       }
     });
   }
 
@@ -94,57 +90,43 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
   void dispose() {
     _debounce?.cancel();
     _riesgoDebounce?.cancel();
-    _sosHoldTimer?.cancel();
-    // _glowController.dispose();
+    // --- ELIMINADOS LOS DISPOSE DE TIMERS Y CONTROLADORES DE SOS ---
     _mapController.dispose();
     super.dispose();
   }
 
-  // --- FUNCIÓN _loadReportes CORREGIDA ---
+  // --- FUNCIÓN _loadReportes (SIN CAMBIOS) ---
   void _loadReportes() {
-    // 1. Obtener Búsqueda y Estado
-    final String search = _searchQuery; // Usar el estado actual
+    final String search = _searchQuery; 
     final String estado;
-    // Traducir estado de UI a estado de API ('pendiente_verificacion' o 'verificado')
     if (_activeFilters.estado == 'Pendiente') {
       estado = 'pendiente_verificacion';
     } else if (_activeFilters.estado == 'Verificado' || _activeFilters.estado == 'Todos' || _activeFilters.estado == null) {
-      // Por defecto o si selecciona 'Todos', mostrar verificados
       estado = 'verificado'; 
     } else {
-       estado = 'verificado'; // Fallback seguro
+       estado = 'verificado';
     }
-    
-    const int limit = 100; // Límite por defecto
-
-    // 2. Construir mapa de filtros opcionales (categoriaId, dias)
-    //    Estos nombres DEBEN coincidir con lo que ReporteService espera internamente
+    const int limit = 100;
     final apiFilters = <String, String>{};
     if (_activeFilters.categoriaId != null) {
-      // ReporteService espera 'categoriaId'
       apiFilters['categoriaId'] = _activeFilters.categoriaId.toString();
     }
     if (_activeFilters.rangoFechas == 'Últimos 7 días') {
-      // ReporteService espera 'dias'
       apiFilters['dias'] = '7';
     } else if (_activeFilters.rangoFechas == 'Últimos 30 días') {
-      // ReporteService espera 'dias'
       apiFilters['dias'] = '30';
     }
-    // Si _activeFilters.rangoFechas es 'Cualquier fecha' o null, no se añade el filtro 'dias'
-
-    // 3. Llamar al servicio con todos los parámetros
     setState(() {
       _reportesFuture = _reporteService.getAllReports(
-        filters: apiFilters.isNotEmpty ? apiFilters : null, // Pasar filtros si los hay
-        search: search,   // Pasar término de búsqueda
-        estado: estado,   // Pasar estado traducido
-        limit: limit,     // Pasar límite
+        filters: apiFilters.isNotEmpty ? apiFilters : null,
+        search: search,
+        estado: estado,
+        limit: limit,
       );
     });
   }
-  // --- FIN FUNCIÓN CORREGIDA ---
   
+  // --- OTRAS FUNCIONES (SIN CAMBIOS) ---
   Future<void> _fetchRiesgoZona() async {
     if (!mounted) return;
     setState(() => _isLoadingRisk = true);
@@ -169,9 +151,9 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
       _debounce = Timer(const Duration(milliseconds: 700), () {
           if (mounted && query.trim() != _searchQuery) {
             setState(() { 
-              _searchQuery = query.trim(); // Actualizar estado de búsqueda
+              _searchQuery = query.trim();
             });
-            _loadReportes(); // Volver a cargar con la nueva búsqueda y filtros actuales
+            _loadReportes(); 
           }
       });
   }
@@ -185,8 +167,8 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
               filtrosIniciales: _activeFilters,
               onAplicarFiltros: (newFilters) {
                   if (mounted) {
-                    setState(() => _activeFilters = newFilters); // Actualizar filtros
-                    _loadReportes(); // Volver a cargar con los nuevos filtros y búsqueda actual
+                    setState(() => _activeFilters = newFilters);
+                    _loadReportes(); 
                   }
               },
           ),
@@ -225,41 +207,42 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
       });
   }
 
-  void _onSosPressStart(LongPressStartDetails details) {
-      _sosHoldTimer = Timer(const Duration(seconds: 2), () async {
-          print("SOS Long press completado. Invocando servicio...");
-          final prefs = await SharedPreferences.getInstance();
-          
-          final durationInMinutes = prefs.getDouble('sosDuration') ?? 10.0;
-          final durationInSeconds = durationInMinutes.toInt() * 60;
-          
-          final contact = {
-            'nombre': prefs.getString('contactNombre'),
-            'telefono': prefs.getString('contactTelefono'),
-            'mensaje': prefs.getString('contactMensaje'),
-          };
+  // --- ELIMINADAS _onSosPressStart Y _onSosPressEnd ---
 
-          FlutterBackgroundService().invoke('startSosTracking', { 
-            'durationInSeconds': durationInSeconds,
-            'emergencyContact': contact
-          });
+  // --- NUEVA FUNCIÓN DE ACTIVACIÓN (LLAMADA POR UN SIMPLE TAP) ---
+  Future<void> _activateSos() async {
+    if (!mounted) return;
 
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Alerta SOS activada.'), 
-              backgroundColor: Colors.red,
-            ));
-          }
-      });
+    // 1. Actualización Optimizada de UI
+    setState(() {
+      _isSosActive = true; 
+    });
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('Alerta SOS activada.'),
+      backgroundColor: Colors.red,
+    ));
+
+    // 2. Invocación del Servicio en Segundo Plano
+    final prefs = await SharedPreferences.getInstance();
+    final durationInMinutes = prefs.getDouble('sosDuration') ?? 10.0;
+    final durationInSeconds = durationInMinutes.toInt() * 60;
+    final contact = {
+      'nombre': prefs.getString('contactNombre'),
+      'telefono': prefs.getString('contactTelefono'),
+      'mensaje': prefs.getString('contactMensaje'),
+    };
+
+    FlutterBackgroundService().invoke('startSosTracking', {
+      'durationInSeconds': durationInSeconds,
+      'emergencyContact': contact
+    });
   }
 
-  void _onSosPressEnd(LongPressEndDetails details) { 
-    _sosHoldTimer?.cancel(); 
-  }
 
+  // --- FUNCIÓN DE DESACTIVACIÓN (SIN CAMBIOS, SIGUE SIENDO VÁLIDA) ---
   void _deactivateSosFromUI() {
       showDialog(context: context, builder: (ctx) => AlertDialog(
-          title: const Text('Finalizar Alerta SOS'), 
+          title: const Text('Finalizar Alerta SOS'),
           content: const Text('¿Estás seguro que deseas finalizar tu alerta?'),
           actions: [
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
@@ -268,11 +251,13 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
                   onPressed: () {
                       FlutterBackgroundService().invoke('stopSosFromUI');
                       Navigator.pop(ctx);
-                  }, 
+                       // El estado _isSosActive se actualizará desde el listener del servicio
+                  },
                   child: const Text('Sí, Finalizar')),
           ],
       ));
   }
+  // --- FIN FUNCIONES SOS ---
 
 
   @override
@@ -327,11 +312,16 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
             Navigator.pushNamed(context, '/login');
           }
         },
+        // --- PARÁMETROS DE SOS SIMPLIFICADOS ---
         isSosActive: _isSosActive,
         sosRemainingSeconds: _sosRemainingSeconds,
-        onSosPressStart: _onSosPressStart,
-        onSosPressEnd: _onSosPressEnd,
+        onActivateSos: _activateSos, // <-- NUEVA FUNCIÓN
         onDeactivateSos: _deactivateSosFromUI,
+        // --- ELIMINADOS ---
+        // sosHoldProgress: _sosHoldProgress,
+        // sosActiveAnimation: _glowController,
+        // onSosPressStart: _onSosPressStart,
+        // onSosPressEnd: _onSosPressEnd,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );

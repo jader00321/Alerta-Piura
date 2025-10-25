@@ -30,7 +30,7 @@ class TarjetaDetalleBoleta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bool isApproved = boleta.estadoTransaccion == 'APROBADO';
+    final bool isApproved = boleta.estadoTransaccion == 'Aprobado';
 
     return Card(
       elevation: 4,
@@ -44,11 +44,14 @@ class TarjetaDetalleBoleta extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Boleta de Venta', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Boleta de Venta', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold), softWrap: true,),
+                const SizedBox(width: 4),
                 Chip(
                   label: Text(boleta.estadoTransaccion),
                   backgroundColor: isApproved ? Colors.green.shade100 : Colors.red.shade100,
                   labelStyle: TextStyle(color: isApproved ? Colors.green.shade800 : Colors.red.shade800, fontWeight: FontWeight.bold),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // Ajustar padding
+                  visualDensity: VisualDensity.compact,
                 ),
               ],
             ),
@@ -56,7 +59,7 @@ class TarjetaDetalleBoleta extends StatelessWidget {
               'ID Transacción: ${boleta.idTransaccionPasarela}',
               style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
             ),
-            const Divider(height: 32),
+            const Divider(height: 30),
 
             // --- Detalles del Cliente ---
             Text('Facturado a:', style: theme.textTheme.titleMedium),
@@ -64,7 +67,7 @@ class TarjetaDetalleBoleta extends StatelessWidget {
             _buildDetailRow(context, 'Cliente', boleta.nombreUsuario),
             _buildDetailRow(context, 'Email', boleta.emailUsuario),
             
-            const Divider(height: 32),
+            const Divider(height: 30),
 
             // --- Detalles del Producto ---
             Text('Descripción del Servicio:', style: theme.textTheme.titleMedium),
@@ -72,14 +75,14 @@ class TarjetaDetalleBoleta extends StatelessWidget {
             _buildDetailRow(context, 'Plan Contratado', boleta.nombrePlan),
             _buildDetailRow(context, 'Fecha de Transacción', boleta.fechaCompleta),
             
-            const Divider(height: 32),
+            const Divider(height: 30),
 
             // --- Detalles del Pago ---
             Text('Método de Pago:', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             _buildDetailRow(context, 'Tarjeta', '${boleta.tipoTarjeta} terminada en **** ${boleta.ultimosCuatroDigitos}'),
             
-            const Divider(height: 32),
+            const Divider(height: 30),
 
             // --- Total ---
             _buildDetailRow(context, 'Subtotal', 'S/ ${boleta.montoPagado}'),
