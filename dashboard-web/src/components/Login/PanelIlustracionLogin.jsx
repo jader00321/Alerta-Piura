@@ -3,6 +3,11 @@ import React from 'react';
 import { Box } from '@mui/material';
 import loginBg from '../../assets/login-bg.png'; // Ajusta la ruta a tu imagen
 
+/**
+ * PanelIlustracionLogin - Componente de panel visual para la página de login
+ * @param {Object} props - Propiedades del componente
+ * @returns {JSX.Element}
+ */
 function PanelIlustracionLogin() {
   return (
     <Box

@@ -6,13 +6,29 @@ import { io } from 'socket.io-client';
 // directamente a la base de tu servidor (ej. http://localhost:3000)
 const URL = import.meta.env.VITE_API_URL_SOCKET || 'http://localhost:3000';
 
+/**
+ * Clase SocketService: Servicio singleton para gestionar conexiones WebSocket en tiempo real.
+ * Utiliza Socket.IO para conectar al backend, manejar autenticación JWT,
+ * unirse/salir de salas de chat, enviar/recibir mensajes, y gestionar eventos.
+ * 
+ * Funcionalidades principales:
+ * - Conexión autenticada con token JWT.
+ * - Gestión de salas para chats de reportes.
+ * - Envío y recepción de mensajes en tiempo real.
+ * - Listeners para eventos del servidor (conexión, errores, autenticación).
+ * - Desconexión y limpieza de listeners.
+ * 
+ * Uso típico: Importar la instancia singleton y llamar métodos como connect(), joinRoom(), etc.
+ */
 class SocketService {
-  socket = null; // Instancia del socket
-  isAuthenticated = false; // Flag simple para saber si el backend confirmó la auth
+  socket = null; // Instancia del socket de Socket.IO
+  isAuthenticated = false; // Flag para indicar si el backend confirmó la autenticación
 
   /**
-   * Conecta (o reconecta) al servidor WebSocket, pasando el token para autenticación inmediata.
-   * @param {string} token - El token JWT del administrador.
+   * Conecta (o reconecta) al servidor WebSocket, pasando el token JWT para autenticación inmediata.
+   * Si ya hay un socket conectado y autenticado, no hace nada.
+   * 
+   * @param {string} token - El token JWT del administrador para autenticar la conexión.
    */
   connect(token) {
     // Si ya existe un socket y está conectado, no hagas nada
@@ -58,6 +74,7 @@ class SocketService {
 
   /**
    * Configura los listeners esenciales para la conexión, errores y autenticación.
+   * Estos listeners se configuran una vez por instancia de socket.
    */
   _setupBaseListeners() {
     if (!this.socket) return;
@@ -117,7 +134,7 @@ class SocketService {
   }
 
   /**
-   * Desconecta el socket actual.
+   * Desconecta el socket actual y resetea el estado.
    */
   disconnect() {
     if (this.socket) {
@@ -130,8 +147,10 @@ class SocketService {
 
   /**
    * Emite un evento al servidor si el socket está conectado y autenticado.
-   * @param {string} eventName - El nombre del evento.
-   * @param {object} data - Los datos a enviar.
+   * Si no está listo, registra una advertencia en consola.
+   * 
+   * @param {string} eventName - El nombre del evento a emitir.
+   * @param {object} data - Los datos a enviar con el evento.
    */
   emit(eventName, data) {
     // Verifica conexión Y autenticación antes de emitir
@@ -144,8 +163,10 @@ class SocketService {
   }
 
   /**
-   * Se une a una sala de chat específica.
-   * @param {string|number} roomId - El ID de la sala (usualmente el ID del reporte).
+   * Se une a una sala de chat específica (usualmente para un reporte).
+   * Emite 'join-chat-room' al servidor.
+   * 
+   * @param {string|number} roomId - El ID de la sala (e.g., ID del reporte).
    */
   joinRoom(roomId) {
     if(roomId) {
@@ -159,6 +180,8 @@ class SocketService {
 
   /**
    * Sale de una sala de chat específica.
+   * Emite 'leave-chat-room' al servidor.
+   * 
    * @param {string|number} roomId - El ID de la sala.
    */
   leaveRoom(roomId) {
@@ -175,8 +198,10 @@ class SocketService {
   }
 
   /**
-   * Envía un mensaje de chat.
-   * @param {object} messageData - Datos del mensaje ({ id_reporte, message_text }).
+   * Envía un mensaje de chat al servidor.
+   * Emite 'send-message' con los datos del mensaje.
+   * 
+   * @param {object} messageData - Datos del mensaje (e.g., { id_reporte, message_text }).
    */
   sendMessage(messageData) {
       console.log(`SocketService: Enviando mensaje:`, messageData);
@@ -186,7 +211,9 @@ class SocketService {
 
   /**
    * Registra un listener para un evento del servidor.
-   * @param {string} eventName - El nombre del evento.
+   * Remueve listeners anteriores para el mismo evento y callback para evitar duplicados.
+   * 
+   * @param {string} eventName - El nombre del evento a escuchar.
    * @param {Function} callback - La función a ejecutar cuando se reciba el evento.
    */
   on(eventName, callback) {
@@ -203,8 +230,10 @@ class SocketService {
 
   /**
    * Elimina un listener para un evento del servidor.
+   * Si no se proporciona callback, elimina todos los listeners para ese evento.
+   * 
    * @param {string} eventName - El nombre del evento.
-   * @param {Function} [callback] - La función específica a eliminar (opcional). Si no se provee, elimina todos los listeners para ese evento.
+   * @param {Function} [callback] - La función específica a eliminar (opcional).
    */
   off(eventName, callback) {
     if (this.socket) {
@@ -214,6 +243,6 @@ class SocketService {
   }
 }
 
-// Exportamos una única instancia (Singleton)
+// Exportamos una única instancia (Singleton) para usar en toda la app
 const socketService = new SocketService();
 export default socketService;

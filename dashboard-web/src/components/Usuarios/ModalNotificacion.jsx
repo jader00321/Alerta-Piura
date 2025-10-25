@@ -13,11 +13,25 @@ import SendIcon from '@mui/icons-material/Send';
 import InfoIcon from '@mui/icons-material/Info';
 import PersonIcon from '@mui/icons-material/Person';
 
+/**
+ * ModalNotificacion - Componente modal para enviar notificaciones a usuarios
+ * @param {Object} props - Propiedades del componente
+ * @param {boolean} props.open - Estado de apertura del modal
+ * @param {function} props.onClose - Callback cuando se cierra el modal
+ * @param {function} props.onSubmit - Callback para enviar la notificación
+ * @param {number} props.targetUserCount - Número de usuarios objetivo (para notificaciones masivas)
+ * @param {boolean} props.isSending - Estado de envío para mostrar loading
+ * @param {string} props.targetUserName - Nombre del usuario objetivo (para notificaciones individuales)
+ * @returns {JSX.Element}
+ */
 function ModalNotificacion({ open, onClose, onSubmit, targetUserCount, isSending, targetUserName }) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [error, setError] = useState('');
 
+  /**
+   * Efecto para resetear el formulario cuando se cierra el modal
+   */
   useEffect(() => {
     if (!open) {
       setTitle('');
@@ -26,6 +40,10 @@ function ModalNotificacion({ open, onClose, onSubmit, targetUserCount, isSending
     }
   }, [open]);
 
+  /**
+   * Maneja el envío de la notificación
+   * Valida los campos y llama al callback del padre
+   */
   const handleSend = () => {
     setError('');
     if (title.trim() === '' || body.trim() === '') {

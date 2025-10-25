@@ -17,7 +17,14 @@ import {
 // --- IMPORT ACTUALIZADO ---
 import BotonConfirmacionMantenida from '../Comunes/BotonConfirmacionMantenida';
 
-// Helper para Pestañas (Sin cambios)
+/**
+ * TabPanel - Componente para contener el contenido de cada pestaña
+ * @param {Object} props - Propiedades del componente
+ * @param {ReactNode} props.children - Contenido del panel
+ * @param {number} props.value - Valor actual de la pestaña
+ * @param {number} props.index - Índice de este panel
+ * @returns {JSX.Element}
+ */
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
   return (
@@ -33,7 +40,14 @@ function TabPanel(props) {
   );
 }
 
-// Helper para InfoItems (Sin cambios)
+/**
+ * InfoItem - Componente reutilizable para mostrar información con icono
+ * @param {Object} props - Propiedades del componente
+ * @param {ReactNode} props.icon - Icono a mostrar
+ * @param {string} props.label - Etiqueta del campo
+ * @param {string} props.value - Valor del campo
+ * @returns {JSX.Element}
+ */
 const InfoItem = ({ icon, label, value }) => (
   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2.5 }}>
     {React.cloneElement(icon, { color: 'action', sx: { mt: 0.5 } })}
@@ -52,7 +66,20 @@ const InfoItem = ({ icon, label, value }) => (
   </Box>
 );
 
-// --- COMPONENTE RENOMBRADO ---
+/**
+ * DrawerDetalleUsuario - Componente de drawer para mostrar detalles completos de un usuario
+ * @param {Object} props - Propiedades del componente
+ * @param {boolean} props.open - Estado de apertura del drawer
+ * @param {function} props.onClose - Callback cuando se cierra el drawer
+ * @param {Object} props.selectedUser - Usuario seleccionado para mostrar
+ * @param {Object} props.userDetails - Detalles adicionales del usuario
+ * @param {boolean} props.detailLoading - Estado de carga de detalles
+ * @param {function} props.onRoleChange - Callback para cambiar el rol del usuario
+ * @param {function} props.onStatusChange - Callback para cambiar estado (suspender/reactivar)
+ * @param {function} props.onSendNotification - Callback para enviar notificación
+ * @param {function} props.onAssignZone - Callback para asignar zonas a líderes
+ * @returns {JSX.Element}
+ */
 function DrawerDetalleUsuario({ 
   open, 
   onClose, 
@@ -67,10 +94,18 @@ function DrawerDetalleUsuario({
 }) {
   const [tabIndex, setTabIndex] = useState(0);
 
+  /**
+   * Maneja el cambio de pestaña
+   * @param {Object} event - Evento del cambio
+   * @param {number} newValue - Nuevo índice de pestaña
+   */
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
   };
 
+  /**
+   * Maneja el cierre del drawer
+   */
   const handleClose = () => {
     setTabIndex(0); 
     onClose();

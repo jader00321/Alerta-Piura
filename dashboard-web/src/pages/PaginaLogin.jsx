@@ -9,12 +9,21 @@ import { useAuth } from '../context/AuthContext';
 import PanelIlustracionLogin from '../components/Login/PanelIlustracionLogin';
 import FormularioLogin from '../components/Login/FormularioLogin';
 
+/**
+ * PaginaLogin - Página de inicio de sesión para administradores
+ * @returns {JSX.Element}
+ */
 function PaginaLogin() {
   //const navigate = useNavigate();
   const { login } = useAuth();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Maneja el proceso de inicio de sesión
+   * @param {string} email - Correo electrónico del administrador
+   * @param {string} password - Contraseña del administrador
+   */
   const handleLoginSubmit = async (email, password) => {
     setError('');
     setLoading(true);

@@ -2,6 +2,16 @@
 import React from 'react';
 import { Grid, Paper, Typography, Box, Skeleton } from '@mui/material'; // Added Skeleton for loading
 
+/**
+ * TarjetaEstadistica - Componente para mostrar estadísticas individuales con icono y valor
+ * @param {Object} props - Propiedades del componente
+ * @param {string} props.title - Título de la estadística
+ * @param {string|number} props.value - Valor de la estadística
+ * @param {ReactNode} props.icon - Icono a mostrar
+ * @param {string} [props.color='primary'] - Color del tema para el icono y borde
+ * @param {boolean} props.loading - Estado de carga para mostrar skeletons
+ * @returns {JSX.Element}
+ */
 function TarjetaEstadistica({ title, value, icon, color = 'primary', loading }) {
   return (
     // Ajusta los breakpoints (lg={2.4}) para que quepan 5 en una fila en pantallas grandes

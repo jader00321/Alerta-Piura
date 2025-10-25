@@ -4,21 +4,34 @@ import { jwtDecode } from 'jwt-decode';
 // Removed unused import: authService - Assuming logout handles storage/redirect, not socket disconnection directly here
 import socketService from '../services/socketService'; // Ensure path is correct
 
+/**
+ * AuthContext - Context para manejar la autenticación en la aplicación
+ * @type {React.Context}
+ */
 const AuthContext = createContext(null);
 
-// Keep the exported hook - this is correct
+/**
+ * useAuth - Hook personalizado para acceder al contexto de autenticación
+ * @returns {Object} Objeto con estado y funciones de autenticación
+ */
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);
 
-// Remove the internal, unused definition
-// const useAuth = () => null; // <-- REMOVED THIS LINE
-
+/**
+ * AuthProvider - Proveedor del contexto de autenticación
+ * @param {Object} props - Propiedades del componente
+ * @param {ReactNode} props.children - Componentes hijos
+ * @returns {JSX.Element}
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Effect to check token on initial load
+  /**
+   * Efecto para verificar el token al cargar la aplicación
+   * Valida el token JWT almacenado y conecta el socket si es válido
+   */
   useEffect(() => {
     const token = localStorage.getItem('admin_token');
     if (token) {
@@ -47,7 +60,10 @@ export const AuthProvider = ({ children }) => {
    
   }, []); // Empty dependency array means this runs only once on mount
 
-
+  /**
+   * Maneja el proceso de login del usuario
+   * @param {string} token - Token JWT recibido del servidor
+   */
   const handleLogin = (token) => {
     localStorage.setItem('admin_token', token);
     try {
@@ -64,6 +80,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Maneja el proceso de logout del usuario
+   * Limpia el almacenamiento local, estado y desconecta el socket
+   */
   const handleLogout = () => {
     console.log("AuthContext: Logging out.");
     localStorage.removeItem('admin_token');
@@ -72,6 +92,10 @@ export const AuthProvider = ({ children }) => {
     socketService.disconnect(); // Disconnect socket on logout
   };
 
+  /**
+   * Valor del contexto que se provee a los componentes hijos
+   * @type {Object}
+   */
   const value = {
     user,
     isAuthenticated,
