@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/auth_service.dart';
 
+// Importamos los nuevos widgets que hemos creado
+import 'package:mobile_app/widgets/registro/register_header.dart';
+import 'package:mobile_app/widgets/registro/register_form_fields.dart';
+import 'package:mobile_app/widgets/registro/register_actions.dart';
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -10,58 +15,66 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  
+  // Los controladores se mantienen en la pantalla principal para gestionar el estado
   final _nombreController = TextEditingController();
   final _aliasController = TextEditingController();
   final _emailController = TextEditingController();
+  final _telefonoController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _telefonoController = TextEditingController();
-
-  bool _obscurePassword = true;
+  
   bool _isLoading = false;
   final AuthService _authService = AuthService();
 
   @override
   void dispose() {
-    // Limpiamos los controladores para liberar memoria cuando la pantalla se destruye.
     _nombreController.dispose();
     _aliasController.dispose();
     _emailController.dispose();
+    _telefonoController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _telefonoController.dispose();
     super.dispose();
   }
 
+  // La lógica de envío del formulario permanece en la pantalla principal
   Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+    if (_formKey.currentState!.validate() && !_isLoading) {
+      setState(() => _isLoading = true);
       
-      final response = await _authService.register(
-        nombre: _nombreController.text,
-        alias: _aliasController.text.isNotEmpty ? _aliasController.text : null,
-        email: _emailController.text,
-        password: _passwordController.text,
-        telefono: _telefonoController.text.isNotEmpty ? _telefonoController.text : null,
-      );
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response['data']['message']),
-            backgroundColor: response['statusCode'] == 201 ? Colors.green : Colors.red,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
-          ),
+      try {
+        final response = await _authService.register(
+          nombre: _nombreController.text.trim(),
+          alias: _aliasController.text.trim().isNotEmpty ? _aliasController.text.trim() : null,
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          telefono: _telefonoController.text.trim().isNotEmpty ? _telefonoController.text.trim() : null,
         );
-        if (response['statusCode'] == 201) {
-          Navigator.pop(context);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['data']['message']),
+              backgroundColor: response['statusCode'] == 201 ? Colors.green : Colors.red,
+            ),
+          );
+          if (response['statusCode'] == 201) {
+            Navigator.pop(context);
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error de conexión. Inténtalo de nuevo.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
         }
       }
     }
@@ -70,69 +83,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear Cuenta')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nombreController,
-                decoration: const InputDecoration(labelText: 'Nombre Completo'),
-                validator: (value) => value!.isEmpty ? 'El nombre es requerido' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _aliasController,
-                decoration: const InputDecoration(labelText: 'Alias (Opcional)'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Correo Electrónico'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) => value!.isEmpty || !value.contains('@') ? 'Ingresa un correo válido' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _telefonoController,
-                decoration: const InputDecoration(labelText: 'Teléfono (Opcional)'),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                decoration: InputDecoration(
-                  labelText: 'Contraseña',
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
+      appBar: AppBar(
+        title: const Text('Crear Cuenta'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Usamos el widget de cabecera
+                const RegisterHeader(),
+                const SizedBox(height: 32),
+
+                // 2. Usamos el widget de campos del formulario, pasándole los controladores
+                RegisterFormFields(
+                  nombreController: _nombreController,
+                  aliasController: _aliasController,
+                  emailController: _emailController,
+                  telefonoController: _telefonoController,
+                  passwordController: _passwordController,
+                  confirmPasswordController: _confirmPasswordController,
                 ),
-                validator: (value) => value!.length < 6 ? 'La contraseña debe tener al menos 6 caracteres' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: _obscurePassword,
-                decoration: const InputDecoration(labelText: 'Confirmar Contraseña'),
-                validator: (value) => value != _passwordController.text ? 'Las contraseñas no coinciden' : null,
-              ),
-              const SizedBox(height: 24),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _submitForm,
-                      child: const Text('Registrarse'),
-                    ),
-            ],
+                const SizedBox(height: 32),
+
+                // 3. Usamos el widget de acciones
+                RegisterActions(
+                  isLoading: _isLoading,
+                  onSubmit: _submitForm,
+                ),
+              ],
+            ),
           ),
         ),
       ),

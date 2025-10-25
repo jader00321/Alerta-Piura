@@ -2,13 +2,11 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
-    // --- APPLY FIREBASE PLUGIN ---
-    //id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.example.mobile_app"
-    compileSdk = flutter.compileSdkVersion.toInt()
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -23,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.mobile_app"
-        minSdk = flutter.minSdkVersion.toInt()
+        minSdk = flutter.minSdkVersion // Mantenemos 21, que es compatible
         targetSdk = flutter.targetSdkVersion.toInt()
         versionCode = flutter.versionCode.toInt()
         versionName = flutter.versionName
@@ -37,11 +35,7 @@ android {
 }
 
 dependencies {
-    // --- ADD FIREBASE BOM & MESSAGING DEPENDENCIES ---
-    //implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
-    //implementation("com.google.firebase:firebase-messaging")
-
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

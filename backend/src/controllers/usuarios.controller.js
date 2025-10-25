@@ -3,7 +3,7 @@ const db = require('../config/db');
 // Reportar una cuenta de usuario
 const reportarUsuario = async (req, res) => {
     const { id: id_usuario_reportado } = req.params;
-    const { id: id_reportador } = req.user;
+    const { userId: id_reportador } = req.user;
     const { motivo } = req.body;
 
     if (!motivo) {

@@ -1,9 +1,17 @@
+// lib/screens/reporte_detalle_screen.dart
 import 'package:flutter/material.dart';
-import 'package:mobile_app/api/lider_service.dart';
+//import 'package:mobile_app/api/lider_service.dart'; // Necesario para reportar usuario
 import 'package:mobile_app/api/reporte_service.dart';
+import 'package:mobile_app/api/seguimiento_service.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+// Importar los widgets de layout
+import 'package:mobile_app/widgets/reporte_detalle/layout_detalle_reporte.dart';
+// Importar widgets existentes
+import 'package:mobile_app/widgets/esqueletos/esqueleto_reporte_detalle.dart';
+import 'package:mobile_app/api/perfil_service.dart';
+import 'package:mobile_app/screens/pantalla_editar_reporte_autor.dart';
 
 class ReporteDetalleScreen extends StatefulWidget {
   final int reporteId;
@@ -14,17 +22,24 @@ class ReporteDetalleScreen extends StatefulWidget {
 }
 
 class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
+  // --- SERVICIOS ---
   final ReporteService _reporteService = ReporteService();
-  final LiderService _liderService = LiderService();
-  late Future<ReporteDetallado> _reporteFuture;
-  final _comentarioController = TextEditingController();
-  bool _isPostingComment = false;
-  bool _dataChanged = false;
+  final PerfilService _perfilService = PerfilService();
+  final SeguimientoService _seguimientoService = SeguimientoService();
 
+  // --- ESTADO ---
+  late Future<ReporteDetallado> _reporteFuture;
+  final TextEditingController _comentarioController = TextEditingController();
+  bool _isPostingComment = false;
+  bool _isLoadingFollow = true;
+  bool _isFollowing = false;
+  bool _dataChanged = false; // Flag para notificar a la pantalla anterior
+
+  // --- CICLO DE VIDA ---
   @override
   void initState() {
     super.initState();
-    _reporteFuture = _reporteService.getReporteById(widget.reporteId);
+    _loadReporteData();
   }
 
   @override
@@ -33,41 +48,141 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
     super.dispose();
   }
 
-  void _loadReporte() {
-    setState(() {
-      _reporteFuture = _reporteService.getReporteById(widget.reporteId);
-      _dataChanged = true;
-    });
+  void setStateIfMounted(VoidCallback fn) {
+    if (mounted) {
+      setState(fn);
+    }
+  }
+
+  // --- LÓGICA DE DATOS ---
+  Future<void> _loadReporteData({bool keepFollowState = false}) async {
+    final reporteLoader = _reporteService.getReporteById(widget.reporteId);
+    if(mounted) setState(() { _reporteFuture = reporteLoader; });
+
+    if (!keepFollowState) {
+      await _verificarEstadoSeguimiento();
+    }
+    try {
+       await reporteLoader;
+    } catch(e) {
+      print("Error en _loadReporteData al esperar reporte: $e");
+    }
+  }
+
+  Future<void> _verificarEstadoSeguimiento() async {
+    // ... (sin cambios) ...
+    if (!mounted) return;
+    final isAuthenticated = context.read<AuthNotifier>().isAuthenticated;
+    if (!isAuthenticated) {
+      setStateIfMounted(() => _isLoadingFollow = false);
+      return;
+    }
+    setStateIfMounted(() => _isLoadingFollow = true);
+    try {
+      final following = await _seguimientoService.verificarSeguimiento(widget.reporteId);
+      if (mounted) {
+        setStateIfMounted(() {
+          _isFollowing = following;
+          _isLoadingFollow = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setStateIfMounted(() => _isLoadingFollow = false);
+      print("Error verificando seguimiento: $e");
+    }
+  }
+
+  // --- HANDLERS (CALLBACKS) ---
+  Future<void> _toggleFollow() async {
+    // ... (sin cambios) ...
+    if (!mounted || _isLoadingFollow) return;
+    final isAuthenticated = context.read<AuthNotifier>().isAuthenticated;
+    if (!isAuthenticated) {
+      Navigator.pushNamed(context, '/login');
+      return;
+    }
+
+    setStateIfMounted(() => _isLoadingFollow = true);
+    String message = 'Error al procesar la solicitud.';
+    bool success = false;
+    try {
+      if (_isFollowing) {
+        success = await _seguimientoService.dejarDeSeguirReporte(widget.reporteId);
+        if(success) message = 'Has dejado de seguir este reporte.';
+      } else {
+        success = await _seguimientoService.seguirReporte(widget.reporteId);
+         if(success) message = 'Ahora sigues este reporte.';
+      }
+
+      if (success && mounted) {
+        _dataChanged = true;
+        setStateIfMounted(() {
+          _isFollowing = !_isFollowing;
+          _isLoadingFollow = false;
+        });
+         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.green));
+      } else if(mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
+         setStateIfMounted(() => _isLoadingFollow = false);
+      }
+    } catch (e) {
+      if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error de conexión.'), backgroundColor: Colors.red));
+          setStateIfMounted(() => _isLoadingFollow = false);
+      }
+    }
+  }
+
+  Future<void> _onSupportReport() async {
+    // ... (sin cambios) ...
+    final response = await _reporteService.apoyarReporte(widget.reporteId);
+    if (mounted) {
+      final message = response['message'] ?? 'Acción procesada.';
+      final success = response['statusCode'] == 200 || response['statusCode'] == 201;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(message),
+          backgroundColor: success ? Colors.green : Colors.red,
+      ));
+      if(success){
+         _dataChanged = true;
+         _loadReporteData(keepFollowState: true); // Recargar datos
+      }
+    }
+  }
+
+  Future<void> _onSupportComment(int commentId) async {
+    // ... (sin cambios) ...
+    final response = await _reporteService.apoyarComentario(commentId);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(response['message'])));
+      _loadReporteData(keepFollowState: true); // Recargar datos
+    }
   }
 
   Future<void> _postComentario() async {
-    if (_comentarioController.text.trim().isEmpty) return;
-    setState(() => _isPostingComment = true);
-    final success = await _reporteService.createComentario(widget.reporteId, _comentarioController.text);
-    if (success) {
-      _comentarioController.clear();
-      FocusScope.of(context).unfocus();
-      _loadReporte();
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al enviar comentario')));
-      }
-    }
-    setState(() => _isPostingComment = false);
-  }
+    // ... (sin cambios) ...
+     if (_comentarioController.text.trim().isEmpty || _isPostingComment) return;
+    setStateIfMounted(() => _isPostingComment = true);
 
-  Future<void> _moderarReporte(bool aprobar) async {
-    final success = aprobar
-        ? await _liderService.aprobarReporte(widget.reporteId)
-        : await _liderService.rechazarReporte(widget.reporteId);
-    if (mounted && success) {
-      Navigator.pop(context, true);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al moderar el reporte')));
+    final success = await _reporteService.createComentario(
+        widget.reporteId, _comentarioController.text.trim());
+
+    if (mounted) {
+      if (success) {
+        _comentarioController.clear();
+        _dataChanged = true;
+        _loadReporteData(keepFollowState: true); // Recargar datos
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al enviar comentario.'), backgroundColor: Colors.red),
+        );
+      }
+      setStateIfMounted(() => _isPostingComment = false);
     }
   }
 
   void _showEditCommentDialog(int commentId, String currentText) {
+    // ... (sin cambios) ...
     final textController = TextEditingController(text: currentText);
     showDialog(
       context: context,
@@ -79,10 +194,9 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
           ElevatedButton(
             onPressed: () async {
               if (textController.text.isNotEmpty) {
-                await _reporteService.editarComentario(commentId, textController.text);
-                _dataChanged = true;
-                _loadReporte();
                 Navigator.pop(ctx);
+                await _reporteService.editarComentario(commentId, textController.text);
+                _loadReporteData(keepFollowState: true);
               }
             },
             child: const Text('Guardar'),
@@ -93,7 +207,8 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
   }
 
   void _showConfirmDeleteDialog(int commentId) {
-    showDialog(
+    // ... (sin cambios) ...
+     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar Comentario'),
@@ -103,10 +218,9 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             onPressed: () async {
-              await _reporteService.eliminarComentario(commentId);
-              _dataChanged = true;
-              _loadReporte();
               Navigator.pop(ctx);
+              await _reporteService.eliminarComentario(commentId);
+              _loadReporteData(keepFollowState: true);
             },
             child: const Text('Eliminar'),
           ),
@@ -116,28 +230,21 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
   }
 
   void _showReportCommentDialog(int commentId) {
+    // ... (sin cambios) ...
     final textController = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Reportar Comentario'),
-        content: TextField(
-          controller: textController,
-          decoration: const InputDecoration(hintText: 'Motivo del reporte...'),
-        ),
+        content: TextField(controller: textController, decoration: const InputDecoration(hintText: 'Motivo del reporte...')),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () async {
               if (textController.text.isNotEmpty) {
-                await _reporteService.reportarComentario(commentId, textController.text);
                 Navigator.pop(ctx);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Gracias, tu reporte ha sido enviado.'),
-                    behavior: SnackBarBehavior.floating
-                  ));
-                }
+                await _reporteService.reportarComentario(commentId, textController.text);
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gracias, tu reporte ha sido enviado.')));
               }
             },
             child: const Text('Reportar'),
@@ -148,310 +255,170 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
   }
 
   void _showReportUserDialog(int userId, String userAlias) {
-    final textController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Reportar a $userAlias'),
-        content: TextField(
-          controller: textController,
-          decoration: const InputDecoration(hintText: 'Motivo del reporte...'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            onPressed: () async {
-              if (textController.text.isNotEmpty) {
-                await _liderService.reportarUsuario(userId, textController.text);
-                Navigator.pop(ctx);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Gracias, el usuario ha sido reportado.'),
-                    behavior: SnackBarBehavior.floating
-                  ));
-                }
-              }
-            },
-            child: const Text('Reportar Usuario'),
-          ),
-        ],
-      ),
+  // Obtener el ID del usuario actual
+  final authNotifier = context.read<AuthNotifier>();
+  final currentUserId = authNotifier.userId;
+
+  // Validar que no se reporte a sí mismo
+  if (currentUserId == userId) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No puedes reportarte a ti mismo.'), backgroundColor: Colors.orange),
     );
+    return;
   }
 
+  final textController = TextEditingController();
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text('Reportar a $userAlias'),
+      content: TextField(controller: textController, decoration: const InputDecoration(hintText: 'Motivo del reporte...')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+          onPressed: () async {
+            final motivo = textController.text.trim();
+            if (motivo.isNotEmpty) {
+              Navigator.pop(ctx); // Cerrar dialogo ANTES de la llamada async
+              try {
+                // *** LLAMAR AL SERVICIO CORRECTO ***
+                final response = await _perfilService.reportarUsuario(userId, motivo); // Usa PerfilService
+                // *** FIN LLAMADA ***
+
+                if (mounted) {
+                  final message = response['message'] ?? 'Error desconocido';
+                  final success = response['statusCode'] == 201;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(message),
+                    backgroundColor: success ? Colors.green : Colors.red,
+                  ));
+                }
+              } catch (e) {
+                 if (mounted) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                     SnackBar(content: Text('Error al reportar usuario: $e'), backgroundColor: Colors.red)
+                   );
+                 }
+              }
+            }
+          },
+          child: const Text('Reportar Usuario'),
+        ),
+      ],
+    ),
+  );
+}
+
+  // --- NUEVOS HANDLERS PARA BOTONES DE AUTOR ---
+  Future<void> _handleEditReportAuthor(ReporteDetallado reporte) async {
+  // Navega a la nueva pantalla de edición
+  final result = await Navigator.push<bool>(
+     context,
+     MaterialPageRoute(builder: (context) => PantallaEditarReporteAutor(reporteInicial: reporte)),
+  );
+  // Si la pantalla de edición devolvió true (cambios guardados), recarga los datos
+  if (result == true && mounted) {
+     _loadReporteData(keepFollowState: true); // Mantiene estado de 'Seguir'
+  }
+}
+
+  void _handleChatAuthor(ReporteDetallado reporte) {
+    // Reutilizar la navegación existente al chat
+     Navigator.pushNamed(context, '/chat', arguments: {
+       'reporteId': reporte.id,
+       'reporteTitulo': reporte.titulo,
+     });
+  }
+  // --- FIN NUEVOS HANDLERS ---
+
+  // --- BUILD METHOD ---
   @override
   Widget build(BuildContext context) {
-    final authNotifier = Provider.of<AuthNotifier>(context);
+    final authNotifier = context.watch<AuthNotifier>();
 
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) {
-        if (!didPop) {
-          Navigator.pop(context, _dataChanged);
-        }
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, _dataChanged); // Notifica si hubo cambios
+        return false; // Previene el pop automático
       },
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Detalle del Reporte')),
-        body: FutureBuilder<ReporteDetallado>(
-          future: _reporteFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            }
-            if (!snapshot.hasData) {
-              return const Center(child: Text('Reporte no encontrado.'));
-            }
+      child: FutureBuilder<ReporteDetallado>(
+        future: _reporteFuture,
+        builder: (context, snapshot) {
+          Widget body;
+          ReporteDetallado? reporte; // Hacerlo nullable
 
-            final reporte = snapshot.data!;
-            return Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    children: [
-                      // Image Section
-                      if (reporte.fotoUrl != null)
-                        Image.network(
-                          reporte.fotoUrl!,
-                          height: 250,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, progress) {
-                            return progress == null
-                                ? child
-                                : const SizedBox(height: 250, child: Center(child: CircularProgressIndicator()));
-                          },
-                        )
-                      else
-                        Container(
-                          height: 200,
-                          color: Theme.of(context).colorScheme.surfaceVariant,
-                          child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 50)),
-                        ),
-
-                      // Header Section
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Chip(
-                              label: Text(reporte.categoria),
-                              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(reporte.titulo, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 8),
-                            Text('Publicado por ${reporte.autor} • ${reporte.fechaCreacion}', style: Theme.of(context).textTheme.bodySmall),
-                            const SizedBox(height: 16),
-                            if (reporte.descripcion != null && reporte.descripcion!.isNotEmpty) Text(reporte.descripcion!),
-                          ],
-                        ),
-                      ),
-                      
-                      // Actions Bar
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          children: [
-                            TextButton.icon(
-                              icon: const Icon(Icons.thumb_up_alt_outlined),
-                              label: Text('${reporte.apoyosCount} Apoyos'),
-                              onPressed: () async {
-                                if (!authNotifier.isAuthenticated) {
-                                  Navigator.pushNamed(context, '/login');
-                                  return;
-                                }
-                                final response = await _reporteService.apoyarReporte(reporte.id);
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text(response['message']),
-                                    behavior: SnackBarBehavior.floating,
-                                    margin: const EdgeInsets.all(16),
-                                  ));
-                                  _dataChanged = true;
-                                  _loadReporte();
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 16),
-                            TextButton.icon(
-                              icon: const Icon(Icons.comment_outlined),
-                              label: Text('${reporte.comentarios.length} Comentarios'),
-                              onPressed: () {},
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(thickness: 1, height: 1),
-
-                      // Comments Section
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-                        child: Text('Comentarios', style: Theme.of(context).textTheme.titleLarge),
-                      ),
-                      if (reporte.comentarios.isEmpty)
-                        const Center(child: Padding(padding: EdgeInsets.all(16), child: Text('No hay comentarios.')))
-                      else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: reporte.comentarios.length,
-                          itemBuilder: (context, index) {
-                            final c = reporte.comentarios[index];
-                            final bool isOwner = c.autor == authNotifier.userAlias;
-                            final bool isLider = authNotifier.userRole == 'lider_vecinal';
-
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(c.autor, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                            const SizedBox(height: 4),
-                                            Text(c.fechaCreacion, style: Theme.of(context).textTheme.bodySmall),
-                                          ],
-                                        ),
-                                      ),
-                                      if (authNotifier.isAuthenticated)
-                                        SizedBox(
-                                          width: 48,
-                                          height: 48,
-                                          child: PopupMenuButton<String>(
-                                            tooltip: 'Más opciones',
-                                            onSelected: (value) {
-                                              if (value == 'editar') _showEditCommentDialog(c.id, c.comentario);
-                                              if (value == 'eliminar') _showConfirmDeleteDialog(c.id);
-                                              if (value == 'reportar_comentario') _showReportCommentDialog(c.id);
-                                              if (value == 'reportar_usuario') _showReportUserDialog(c.idUsuario, c.autor);
-                                            },
-                                            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                                              if (isOwner) const PopupMenuItem<String>(value: 'editar', child: Text('Editar')),
-                                              if (isOwner || isLider) const PopupMenuItem<String>(value: 'eliminar', child: Text('Eliminar')),
-                                              if (!isOwner) const PopupMenuItem<String>(value: 'reportar_comentario', child: Text('Reportar Comentario')),
-                                              if (isLider && !isOwner) const PopupMenuItem<String>(value: 'reportar_usuario', child: Text('Reportar Usuario')),
-                                            ],
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(c.comentario),
-                                  Row(
-                                    children: [
-                                      TextButton.icon(
-                                        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                                        icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
-                                        label: Text(c.apoyosCount.toString()),
-                                        onPressed: () async {
-                                          if (!authNotifier.isAuthenticated) {
-                                            Navigator.pushNamed(context, '/login');
-                                            return;
-                                          }
-                                          final response = await _reporteService.apoyarComentario(c.id);
-                                          if (mounted) {
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                              content: Text(response['message']),
-                                              behavior: SnackBarBehavior.floating,
-                                              margin: const EdgeInsets.all(16),
-                                            ));
-                                          }
-                                          _dataChanged = true;
-                                          _loadReporte();
-                                        },
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-                // --- CONDITIONAL COMMENT INPUT AREA ---
-                if (authNotifier.isAuthenticated)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      boxShadow: [BoxShadow(blurRadius: 5, color: Colors.black.withOpacity(0.1))]
-                    ),
-                    child: SafeArea(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _comentarioController,
-                              decoration: const InputDecoration(hintText: 'Escribe un comentario...', border: InputBorder.none),
-                              enabled: !_isPostingComment,
-                            ),
-                          ),
-                          _isPostingComment
-                              ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator()))
-                              : IconButton(icon: const Icon(Icons.send), onPressed: _postComentario),
-                        ],
-                      ),
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.login),
-                      label: const Text('Inicia sesión para comentar o apoyar'),
-                      onPressed: () => Navigator.pushNamed(context, '/login'),
-                    ),
-                  ),
-              ],
+          // Manejo de estados de carga y error
+          if (snapshot.connectionState == ConnectionState.waiting && !_dataChanged) {
+            body = const EsqueletoReporteDetalle();
+          } else if (snapshot.hasError) {
+            body = Center(child: Padding(padding: const EdgeInsets.all(16), child: Text('Error al cargar el reporte: ${snapshot.error}')));
+          } else if (!snapshot.hasData) {
+            body = const Center(child: Text('Reporte no encontrado.'));
+          } else {
+            // Tenemos datos
+            reporte = snapshot.data!;
+            body = LayoutDetalleReporte(
+              reporte: reporte,
+              authNotifier: authNotifier,
+              onRefresh: () => _loadReporteData(keepFollowState: true),
+              onSupportReport: _onSupportReport,
+              onSupportComment: _onSupportComment,
+              onPostComment: _postComentario,
+              onEditComment: _showEditCommentDialog,
+              onDeleteComment: _showConfirmDeleteDialog,
+              onReportComment: _showReportCommentDialog,
+              onReportUser: _showReportUserDialog,
+              comentarioController: _comentarioController,
+              isPostingComment: _isPostingComment,
             );
-          },
-        ),
-        bottomNavigationBar: FutureBuilder<ReporteDetallado>(
-          future: _reporteFuture,
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) return const SizedBox.shrink();
-            final reporte = snapshot.data!;
-            // The _userRole is loaded in initState, check against it
-            if (authNotifier.userRole == 'lider_vecinal' && reporte.estado == 'pendiente_verificacion') {
-              return BottomAppBar(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.check_circle_outline),
-                        label: const Text('Aprobar'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                        onPressed: () => _moderarReporte(true),
-                      ),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.cancel_outlined),
-                        label: const Text('Rechazar'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                        onPressed: () => _moderarReporte(false),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-            return const SizedBox.shrink();
           }
-        ),
+
+          // Construcción del Scaffold principal
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Detalles del Reporte'),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context, _dataChanged),
+              ),
+              // --- ACTIONS MODIFICADOS ---
+              actions: [
+                // Botón Seguir (solo si hay datos, está verificado y user logueado)
+                if (reporte != null && reporte.estado == 'verificado' && authNotifier.isAuthenticated)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: _isLoadingFollow
+                        ? const Center(child: Padding( padding: EdgeInsets.all(14.0), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))))
+                        : TextButton.icon(
+                            onPressed: _toggleFollow,
+                            icon: Icon(_isFollowing ? Icons.bookmark_added : Icons.bookmark_add_outlined),
+                            label: Text(_isFollowing ? 'Siguiendo' : 'Seguir'),
+                            style: TextButton.styleFrom( foregroundColor: Colors.white ),
+                          ),
+                  ),
+
+                // NUEVO: Botones para Autor si está Pendiente y hay datos
+                if (reporte != null &&
+                    reporte.estado == 'pendiente_verificacion' &&
+                    authNotifier.userId == reporte.idAutor) ...[
+                  IconButton(
+                    icon: const Icon(Icons.edit_note_outlined),
+                    onPressed: () => _handleEditReportAuthor(reporte!), // Llamar al nuevo handler
+                    tooltip: 'Editar Mi Reporte',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    onPressed: () => _handleChatAuthor(reporte!), // Llamar al nuevo handler
+                    tooltip: 'Abrir Chat',
+                  ),
+                ],
+              ],
+              // --- FIN ACTIONS MODIFICADOS ---
+            ),
+            body: body, // El body es el FutureBuilder o estado correspondiente
+          );
+        },
       ),
     );
   }

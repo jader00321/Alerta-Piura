@@ -1,3 +1,4 @@
+// lib/models/perfil_model.dart
 import 'package:mobile_app/models/insignia_model.dart';
 
 class Perfil {
@@ -7,6 +8,8 @@ class Perfil {
   final int puntos;
   final String? telefono;
   final List<Insignia> insignias;
+  final String? nombrePlan;
+  final DateTime? fechaFinSuscripcion;
 
   Perfil({
     required this.nombre,
@@ -15,6 +18,8 @@ class Perfil {
     required this.puntos,
     this.telefono,
     required this.insignias,
+    this.nombrePlan, 
+    this.fechaFinSuscripcion, 
   });
 
   factory Perfil.fromJson(Map<String, dynamic> json) {
@@ -28,6 +33,10 @@ class Perfil {
       puntos: json['puntos'],
       telefono: json['telefono'],
       insignias: insigniasList,
+      nombrePlan: json['nombre_plan'],
+      fechaFinSuscripcion: json['fecha_fin_suscripcion'] != null
+          ? DateTime.parse(json['fecha_fin_suscripcion'])
+          : null,
     );
   }
 }

@@ -1,0 +1,97 @@
+// lib/screens/pantalla_agregar_metodo_pago.dart
+
+import 'package:flutter/material.dart';
+import 'package:mobile_app/api/metodo_pago_service.dart';
+import 'package:mobile_app/widgets/pago/formulario_pago.dart';
+
+class PantallaAgregarMetodoPago extends StatefulWidget {
+  const PantallaAgregarMetodoPago({super.key});
+  @override
+  State<PantallaAgregarMetodoPago> createState() => _PantallaAgregarMetodoPagoState();
+}
+
+class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
+  final _formKey = GlobalKey<FormState>(); // El FormKey vive aquí
+  final _numeroTarjetaController = TextEditingController();
+  final _fechaExpController = TextEditingController();
+  final _cvcController = TextEditingController();
+  final _nombreTitularController = TextEditingController();
+  bool _esPredeterminado = false;
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _numeroTarjetaController.dispose();
+    _fechaExpController.dispose();
+    _cvcController.dispose();
+    _nombreTitularController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _guardarMetodo() async {
+    if (!_formKey.currentState!.validate() || _isLoading) return;
+    setState(() => _isLoading = true);
+
+    final datosTarjeta = {
+      'nombreTitular': _nombreTitularController.text,
+      'numeroTarjeta': _numeroTarjetaController.text.replaceAll(' ', ''),
+      'fechaExp': _fechaExpController.text,
+      'cvc': _cvcController.text,
+      'es_predeterminado': _esPredeterminado,
+    };
+
+    final success = await MetodoPagoService().crearMetodo(datosTarjeta);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(success ? 'Tarjeta guardada con éxito.' : 'Error al guardar la tarjeta.'),
+        backgroundColor: success ? Colors.green : Colors.red,
+      ));
+      if (success) Navigator.pop(context, true); // Devuelve true para refrescar la lista
+    }
+
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Añadir Método de Pago')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        // ESTE ES EL ÚNICO FORMULARIO
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FormularioPago(
+                nombreTitularController: _nombreTitularController,
+                numeroTarjetaController: _numeroTarjetaController,
+                fechaExpController: _fechaExpController,
+                cvcController: _cvcController,
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('Establecer como método predeterminado'),
+                value: _esPredeterminado,
+                onChanged: (val) => setState(() => _esPredeterminado = val),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _guardarMetodo,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: _isLoading
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                    : const Text('Guardar Tarjeta'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

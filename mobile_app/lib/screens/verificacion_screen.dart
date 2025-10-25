@@ -1,228 +1,232 @@
+// lib/screens/verificacion_screen.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/lider_service.dart';
-import 'package:mobile_app/models/reporte_moderacion_model.dart';
-import 'package:mobile_app/models/reporte_pendiente_model.dart';
+import 'package:mobile_app/widgets/verificacion/lista_reportes_verificacion.dart';
+import 'package:mobile_app/widgets/verificacion/mis_reportes_moderacion_view.dart';
 
-class VerificacionScreen extends StatelessWidget {
-  const VerificacionScreen({super.key});
+class VerificacionScreen extends StatefulWidget {
+  final PageController mainPageController;
+  const VerificacionScreen({
+    super.key,
+    required this.mainPageController,
+  });
+
+  @override
+  State<VerificacionScreen> createState() => _VerificacionScreenState();
+}
+
+class _VerificacionScreenState extends State<VerificacionScreen> with TickerProviderStateMixin {
+  final LiderService _liderService = LiderService();
+  TabController? _tabController;
+  bool _isLoadingStats = true;
+  Map<String, int?> _stats = {'pendientes': null, 'historial': null, 'misReportes': null};
+  final int _tabLength = 3;
+
+  final GlobalKey<ListaReportesVerificacionState> _pendientesKey = GlobalKey<ListaReportesVerificacionState>();
+  final GlobalKey<ListaReportesVerificacionState> _historialKey = GlobalKey<ListaReportesVerificacionState>();
+  final GlobalKey<MisReportesModeracionViewState> _misReportesKey = GlobalKey<MisReportesModeracionViewState>();
+
+  List<String> _zonasAsignadas = [];
+  bool _isLoadingZonas = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabLength, vsync: this);
+    _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadInitialData() async {
+    await Future.wait([
+      _loadStats(isRefresh: true),
+      _loadZonasAsignadas(),
+    ]);
+  }
+
+  Future<void> _loadStats({bool isRefresh = false}) async {
+    if (!isRefresh && !_isLoadingStats && _stats.values.every((v) => v != null)) return;
+    if (mounted) setState(() => _isLoadingStats = true);
+    try {
+      final fetchedStats = await _liderService.getModeracionStats();
+      if (mounted) {
+        setState(() {
+          _stats = fetchedStats.map((key, value) => MapEntry(key, value));
+          _isLoadingStats = false;
+        });
+      }
+    } catch (e) {
+      print("Error cargando stats de moderación: $e");
+      if (mounted) {
+        setState(() { _isLoadingStats = false; _stats = {'pendientes': null, 'historial': null, 'misReportes': null}; });
+        ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text('Error al cargar contadores: $e'), backgroundColor: Colors.red), );
+      }
+    }
+  }
+
+  Future<void> _loadZonasAsignadas() async {
+     if (mounted) setStateIfMounted(() => _isLoadingZonas = true); // Usar helper
+    try {
+      final zonas = await _liderService.getMisZonasAsignadas();
+      if (mounted) {
+        setStateIfMounted(() { // Usar helper
+          _zonasAsignadas = zonas;
+          _isLoadingZonas = false;
+        });
+      }
+    } catch (e) {
+      print("Error cargando zonas asignadas: $e");
+      if (mounted) setStateIfMounted(() => _isLoadingZonas = false); // Usar helper
+    }
+  }
+
+   // Helper para evitar llamar a setState si el widget se desmontó
+  void setStateIfMounted(VoidCallback fn) {
+    if (mounted) {
+      setState(fn);
+    }
+  }
+
+
+  Future<void> _handleTabRefresh() async {
+    if (!mounted) return;
+    setStateIfMounted(() => _isLoadingStats = true); // Indicador general
+
+    int? newCount;
+    String currentTabKey = '';
+    Future<int>? refreshFuture;
+
+    switch (_tabController?.index) {
+        case 0: refreshFuture = _pendientesKey.currentState?.refreshData(); currentTabKey = 'pendientes'; break;
+        case 1: refreshFuture = _historialKey.currentState?.refreshData(); currentTabKey = 'historial'; break;
+        case 2: refreshFuture = _misReportesKey.currentState?.refreshData(); currentTabKey = 'misReportes'; break;
+    }
+
+    try {
+      // Ejecutar refresh de pestaña Y recarga de zonas en paralelo
+      final results = await Future.wait([
+        _loadZonasAsignadas(), // Recargar zonas asignadas
+        if (refreshFuture != null) refreshFuture else Future.value(null), // Refresh de pestaña
+      ]);
+
+      newCount = results[1] as int?;
+
+      if (mounted && currentTabKey.isNotEmpty) {
+        setStateIfMounted(() { // Usar helper
+          _stats[currentTabKey] = newCount;
+          _isLoadingStats = false;
+        });
+      } else if (mounted) {
+         setStateIfMounted(() => _isLoadingStats = false); // Usar helper
+      }
+    } catch (e) {
+       print("Error durante refresh: $e");
+       if (mounted) {
+          setStateIfMounted(() => _isLoadingStats = false); // Usar helper
+          ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text('Error al refrescar: $e'), backgroundColor: Colors.red), );
+       }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3, // Now we have 3 tabs
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Panel de Moderación'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.pending_actions), text: 'Pendientes'),
-              Tab(icon: Icon(Icons.history), text: 'Historial'),
-              Tab(icon: Icon(Icons.flag_outlined), text: 'Mis Reportes'), // New Tab
-            ],
-          ),
+    String countText(String key) {
+       final count = _stats[key];
+       // Mostrar '...' si está cargando O si el count es null (falló la carga inicial)
+       return (_isLoadingStats && count == null) ? '...' : (count?.toString() ?? '-');
+    }
+
+    final List<Tab> tabs = [
+      Tab( child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [ const Icon(Icons.pending_actions_outlined), const SizedBox(width: 8), Text('Pendientes (${countText('pendientes')})'), ]), ),
+      Tab( child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [ const Icon(Icons.history_outlined), const SizedBox(width: 8), Text('Historial (${countText('historial')})'), ]), ),
+      Tab( child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [ const Icon(Icons.flag_outlined), const SizedBox(width: 8), Text('Mis Reportes (${countText('misReportes')})'), ]), ),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false, // Quitar flecha de back
+        flexibleSpace: _VerificacionHeader(
+          isLoadingZonas: _isLoadingZonas,
+          zonasAsignadas: _zonasAsignadas,
         ),
-        body: TabBarView(
+        toolbarHeight: 80, // Ajustar según diseño final del header
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: tabs,
+          isScrollable: MediaQuery.of(context).size.width < 600,
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          ListaReportesVerificacion(key: _pendientesKey, isHistory: false),
+          ListaReportesVerificacion(key: _historialKey, isHistory: true),
+          MisReportesModeracionView(key: _misReportesKey),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _isLoadingStats ? null : _handleTabRefresh,
+        tooltip: 'Refrescar',
+        child: _isLoadingStats ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2,) : const Icon(Icons.refresh),
+      ),
+    );
+  }
+}
+
+// --- CORRECCIÓN: Header con más espacio y texto multilínea ---
+class _VerificacionHeader extends StatelessWidget {
+  final bool isLoadingZonas;
+  final List<String> zonasAsignadas;
+
+  const _VerificacionHeader({
+    required this.isLoadingZonas,
+    required this.zonasAsignadas,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    String zonasText;
+    if (isLoadingZonas) { zonasText = 'Cargando zonas...'; }
+    else if (zonasAsignadas.isEmpty) { zonasText = 'Sin zonas asignadas'; }
+    else if (zonasAsignadas.contains('*')) { zonasText = 'Gestionando: Todas las Zonas'; }
+    else { zonasText = 'Gestionando: ${zonasAsignadas.join(', ')}'; }
+
+    return SafeArea(
+      child: Container(
+        // --- CORRECCIÓN: Usar Padding en lugar de Margin ---
+        padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 12.0), // Más espacio abajo (bottom: 12.0)
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tab for pending reports
-            _ReportesListView(
-              fetcher: LiderService().getReportesPendientes,
-              emptyMessage: 'No hay reportes pendientes.',
+            Text(
+              'Panel de Moderación',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.appBarTheme.titleTextStyle?.color ?? (theme.brightness == Brightness.dark ? Colors.white : Colors.black), // Color adaptable
+                fontWeight: FontWeight.bold
+              ),
             ),
-            // Tab for moderation history
-            _ReportesListView(
-              fetcher: LiderService().getReportesModerados,
-              emptyMessage: 'No hay reportes en el historial.',
-              isHistory: true,
+            const SizedBox(height: 4),
+            // --- CORRECCIÓN: Permitir múltiples líneas ---
+            Text(
+              zonasText,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: (theme.appBarTheme.titleTextStyle?.color ?? (theme.brightness == Brightness.dark ? Colors.white : Colors.black)).withOpacity(0.8), // Color adaptable
+              ),
+              // Quitar maxLines y overflow para permitir wrap
             ),
-            // View for the new tab
-            const _MisReportesModeracionView(),
+            const SizedBox(height: 8),
+            // --- FIN CORRECCIÓN ---
           ],
         ),
       ),
     );
   }
 }
-
-// Reusable widget for "Pendientes" and "Historial" lists
-class _ReportesListView extends StatefulWidget {
-  final Future<List<ReportePendiende>> Function() fetcher;
-  final String emptyMessage;
-  final bool isHistory;
-
-  const _ReportesListView({
-    required this.fetcher,
-    required this.emptyMessage,
-    this.isHistory = false,
-  });
-
-  @override
-  State<_ReportesListView> createState() => _ReportesListViewState();
-}
-
-class _ReportesListViewState extends State<_ReportesListView> with AutomaticKeepAliveClientMixin {
-  late Future<List<ReportePendiende>> _listFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _listFuture = widget.fetcher();
-  }
-
-  @override
-  bool get wantKeepAlive => true;
-
-  Icon _getStatusIcon(String status) {
-    switch (status) {
-      case 'verificado':
-        return const Icon(Icons.check_circle, color: Colors.green);
-      case 'rechazado':
-        return const Icon(Icons.cancel, color: Colors.red);
-      default:
-        return const Icon(Icons.hourglass_empty, color: Colors.orange);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return FutureBuilder<List<ReportePendiende>>(
-      future: _listFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return const Center(child: Text('Error al cargar los datos.'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text(widget.emptyMessage));
-        }
-
-        final reportes = snapshot.data!;
-        return RefreshIndicator(
-          onRefresh: () async {
-            setState(() {
-              _listFuture = widget.fetcher();
-            });
-          },
-          child: ListView.builder(
-            itemCount: reportes.length,
-            itemBuilder: (context, index) {
-              final reporte = reportes[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: ListTile(
-                  leading: widget.isHistory ? _getStatusIcon(reporte.estado) : null,
-                  title: Text(reporte.titulo),
-                  subtitle: Text('${reporte.categoria} - ${reporte.fecha}'),
-                  trailing: widget.isHistory
-                      ? TextButton(
-                          child: const Text('Solicitar Revisión'),
-                          onPressed: () async {
-                            final success = await LiderService().solicitarRevision(reporte.id);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text(success ? 'Solicitud enviada al administrador. Ve a Mi Actividad para revisar tu solicitud' : 'Error al enviar la solicitud.'),
-                                behavior: SnackBarBehavior.floating,
-                              ));
-                            }
-                          },
-                        )
-                      : const Icon(Icons.chevron_right),
-                  onTap: () async {
-                    final routeName = widget.isHistory ? '/reporte_detalle' : '/verificacion_detalle';
-                    final result = await Navigator.pushNamed(context, routeName, arguments: reporte.id);
-                    
-                    if (result == true) {
-                      setState(() {
-                        _listFuture = widget.fetcher();
-                      });
-                    }
-                  },
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-}
-
-// New widget for the "Mis Reportes" tab
-class _MisReportesModeracionView extends StatefulWidget {
-  const _MisReportesModeracionView();
-
-  @override
-  State<_MisReportesModeracionView> createState() => _MisReportesModeracionViewState();
-}
-
-class _MisReportesModeracionViewState extends State<_MisReportesModeracionView> with AutomaticKeepAliveClientMixin {
-  final LiderService _liderService = LiderService();
-  late Future<List<ReporteModeracion>> _listFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _listFuture = _fetchCombinedReports();
-  }
-
-  Future<List<ReporteModeracion>> _fetchCombinedReports() async {
-    final commentReports = await _liderService.getMisComentariosReportados();
-    final userReports = await _liderService.getMisUsuariosReportados();
-    final combinedList = [...commentReports, ...userReports];
-    combinedList.sort((a, b) => b.sortDate.compareTo(a.sortDate));
-    return combinedList;
-  }
-
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return FutureBuilder<List<ReporteModeracion>>(
-      future: _listFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return const Center(child: Text('Error al cargar tus reportes.'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No has realizado ningún reporte de moderación.'));
-        }
-
-        final reportes = snapshot.data!;
-        return RefreshIndicator(
-           onRefresh: () async {
-            setState(() {
-              _listFuture = _fetchCombinedReports();
-            });
-          },
-          child: ListView.builder(
-            itemCount: reportes.length,
-            itemBuilder: (context, index) {
-              final reporte = reportes[index];
-              final isCommentReport = reporte.tipo == TipoReporteModeracion.comentario;
-              
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: ListTile(
-                  leading: Icon(isCommentReport ? Icons.chat_bubble_outline : Icons.person_outline),
-                  title: Text('Reporte de ${isCommentReport ? "Comentario" : "Usuario"}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('"${reporte.contenido}"\nMotivo: ${reporte.motivo}\nFecha: ${reporte.fecha}'),
-                  trailing: Chip(
-                    label: Text(reporte.estado),
-                    backgroundColor: reporte.estado == 'pendiente' ? Colors.orange.shade100 : Colors.green.shade100,
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-}
+// --- FIN CORRECCIÓN ---
