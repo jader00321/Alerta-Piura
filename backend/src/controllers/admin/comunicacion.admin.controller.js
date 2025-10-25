@@ -1,16 +1,12 @@
 // backend/src/controllers/admin/comunicacion.admin.controller.js
-const db = require('../../config/db'); // <-- Adjusted path
-const socketNotificationService = require('../../services/socketNotificationService'); // <-- Adjusted path
-
-// backend/src/controllers/admin/comunicacion.admin.controller.js
+const db = require('../../config/db');
+const socketNotificationService = require('../../services/socketNotificationService');
 
 const getSimulatedSmsLog = async (req, res) => {
   try {
     const { search, page = 1, userId, startDate, endDate } = req.query;
     const limit = 20;
     const offset = (page - 1) * limit;
-
-    // --- MODIFICACIÓN: Añadir más campos del usuario y log ---
     let query = `
       SELECT 
         log.id, log.contacto_telefono, log.mensaje, log.fecha_envio,
