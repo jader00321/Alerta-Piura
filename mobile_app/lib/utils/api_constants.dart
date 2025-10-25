@@ -4,8 +4,8 @@ import 'dart:io';
 class ApiConstants {
   // Verificamos si la plataforma es Android para usar la IP especial.
   // Para iOS y otras plataformas, 'localhost' funciona correctamente.
-  //static String baseUrl = Platform.isAndroid ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
-  static String baseUrl = Platform.isAndroid ? 'http://192.168.100.5:3000' : 'http://localhost:3000';
+  static String baseUrl = Platform.isAndroid ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+  //static String baseUrl = Platform.isAndroid ? 'http://192.168.100.5:3000' : 'http://localhost:3000';
   // Endpoints específicos de nuestra API
   static String registerEndpoint = '/api/auth/register';
   static String loginEndpoint = '/api/auth/login';

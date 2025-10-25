@@ -103,7 +103,7 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
                     _buildSectionHeader('Estado del Reporte'),
                     Wrap(
                       spacing: 8.0,
-                      children: ['Todos', 'Verificado', 'Pendiente'].map((status) {
+                      children: [ 'Verificado', 'Pendiente'].map((status) {
                         return ChoiceChip(
                           label: Text(status),
                           selected: _filtrosSeleccionados.estado == status,

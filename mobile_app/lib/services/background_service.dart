@@ -1,20 +1,17 @@
 // lib/services/background_service.dart
 import 'dart:async';
+//import 'dart:ui';
+//import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:mobile_app/api/sos_service.dart';
-import 'package:mobile_app/services/notification_service.dart'; // Para el canal
+import 'package:mobile_app/services/notification_service.dart';
 
-// --- PUNTO DE ENTRADA DEL ISOLATE DE SEGUNDO PLANO ---
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
-  // DartPluginRegistrant.ensureInitialized() se llama automáticamente
-  
-  // Crear una instancia de la lógica del servicio
   final SosTrackingService trackingService = SosTrackingService(service);
 
-  // Escuchar invocaciones desde la UI
   service.on('startSosTracking').listen((payload) {
     if (payload != null) {
       trackingService.startTracking(
@@ -31,9 +28,13 @@ void onStart(ServiceInstance service) async {
   service.on('serverForceStop').listen((payload) {
     trackingService.stopTracking(byUser: false);
   });
+
+  // --- NUEVO: Responder a la consulta de estado ---
+  service.on('getSosStatus').listen((payload) {
+    trackingService.sendStatusToUI();
+  });
 }
 
-// --- LÓGICA PRINCIPAL DEL SERVICIO DE SEGUIMIENTO ---
 class SosTrackingService {
   final ServiceInstance service;
   final SosService _apiService = SosService();
@@ -42,39 +43,50 @@ class SosTrackingService {
   Timer? _countdownTimer;
   int? _alertId;
   int _remainingSeconds = 0;
+  bool _isActive = false; // Estado interno para saber si está corriendo
 
   SosTrackingService(this.service) {
     _init();
   }
 
   void _init() async {
-    // Configurar notificación persistente
-    final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+     // ... (inicialización de notificaciones sin cambios) ...
+     final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     await flutterLocalNotificationsPlugin.initialize(
       const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'), // Asegúrate que este ícono exista
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         iOS: DarwinInitializationSettings(),
       ),
     );
   }
 
+  // --- NUEVO: Enviar estado actual a la UI ---
+  void sendStatusToUI() {
+    service.invoke('currentSosStatus', {
+      'action': 'currentSosStatus', // Importante incluir la acción
+      'isActive': _isActive,
+      'alertId': _alertId,
+      'seconds': _remainingSeconds,
+    });
+     print("BG_SERVICE: Estado actual enviado a UI -> isActive: $_isActive, alertId: $_alertId, remaining: $_remainingSeconds");
+  }
+
+
   Future<void> startTracking({
     required int durationInSeconds,
     Map<String, dynamic>? emergencyContact,
   }) async {
-    // Evitar doble activación
-    if (_alertId != null) return;
+    if (_isActive) {
+       print("BG_SERVICE: Intento de iniciar SOS cuando ya está activo.");
+       return; // Ya está activo, no hacer nada
+    }
 
     print("BG_SERVICE: Iniciando seguimiento SOS...");
     _remainingSeconds = durationInSeconds;
+    _isActive = true; // Marcar como activo internamente
 
     try {
-      // 1. Obtener ubicación inicial
-      Position pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      // 2. Activar alerta en el backend
+      Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
       _alertId = await _apiService.activateSos(
         lat: pos.latitude,
         lon: pos.longitude,
@@ -84,71 +96,79 @@ class SosTrackingService {
 
       if (_alertId == null) {
         print("BG_SERVICE: Error al activar SOS en el backend.");
-        service.invoke('sosFinished'); // Notifica a la UI que falló
+        _isActive = false; // Falló la activación
+        service.invoke('sosFinished', {'action': 'sosFinished', 'error': 'Failed to activate on backend'});
         return;
       }
 
       print("BG_SERVICE: Alerta activada con ID: $_alertId");
-
-      // 3. Notificar a la UI que el SOS comenzó
       service.invoke('sosStarted', {
-        'action': 'sosStarted', // <-- Añadir acción
+        'action': 'sosStarted',
         'alertId': _alertId,
         'seconds': _remainingSeconds,
       });
-      _updateNotification('SOS Activo', 'Enviando ubicación... Tiempo restante: $_remainingSeconds s');
+      _updateNotification('SOS Activo', 'Enviando ubicación...');
 
 
-      // 4. Iniciar temporizador de cuenta regresiva (cada segundo)
+      // --- Timer de cuenta regresiva ---
       _countdownTimer?.cancel();
       _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!_isActive) { // Doble chequeo por si se detuvo mientras esperaba el tick
+            timer.cancel();
+            return;
+        }
         _remainingSeconds--;
-        
-        // Notificar a la UI del tiempo restante
+         print("BG_SERVICE: Tick Countdown - Remaining: $_remainingSeconds"); // LOGGING
+
         service.invoke('updateTimer', {
-          'action': 'updateTimer', // <-- Añadir acción
+          'action': 'updateTimer',
           'seconds': _remainingSeconds
         });
         _updateNotification('SOS Activo', 'Tiempo restante: ${(_remainingSeconds ~/ 60)}m ${(_remainingSeconds % 60)}s');
 
         if (_remainingSeconds <= 0) {
           print("BG_SERVICE: Tiempo de SOS finalizado.");
-          stopTracking(byUser: true); // El tiempo se acabó, desactivar
+          stopTracking(byUser: true); // Desactivar porque se acabó el tiempo
         }
       });
 
-      // 5. Iniciar temporizador de envío de ubicación (cada 15 segundos)
+      // --- Timer de envío de ubicación ---
       _locationTimer?.cancel();
       _locationTimer = Timer.periodic(const Duration(seconds: 15), (timer) async {
-        if (_alertId == null) {
+        if (!_isActive || _alertId == null) { // Usar _isActive y verificar _alertId
           timer.cancel();
           return;
         }
         try {
-          Position newPos = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-          );
-          await _apiService.addLocationUpdate(
+          Position newPos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+          bool success = await _apiService.addLocationUpdate(
             alertId: _alertId!,
             lat: newPos.latitude,
             lon: newPos.longitude,
           );
-          print("BG_SERVICE: Ubicación actualizada enviada.");
+           print("BG_SERVICE: Ubicación actualizada enviada (Success: $success).");
         } catch (e) {
           print("BG_SERVICE: Error al enviar ubicación: $e");
-          service.invoke('connectionLost', {'action': 'connectionLost'}); // <-- Añadir acción
+          service.invoke('connectionLost', {'action': 'connectionLost'});
         }
       });
 
     } catch (e) {
       print("BG_SERVICE: Error fatal al iniciar SOS: $e");
-      service.invoke('sosFinished', {'action': 'sosFinished'}); // <-- Añadir acción
+      _isActive = false; // Marcar como inactivo si falla
+      service.invoke('sosFinished', {'action': 'sosFinished', 'error': e.toString()});
     }
   }
 
   Future<void> stopTracking({bool byUser = false}) async {
+     if (!_isActive) {
+        print("BG_SERVICE: Intento de detener SOS cuando no está activo.");
+        return; // No estaba activo, no hacer nada
+     }
+
     print("BG_SERVICE: Deteniendo seguimiento... (Iniciado por usuario: $byUser)");
-    
+    _isActive = false; // Marcar como inactivo
+
     // Detener temporizadores
     _countdownTimer?.cancel();
     _locationTimer?.cancel();
@@ -156,9 +176,10 @@ class SosTrackingService {
     _locationTimer = null;
 
     final int? alertIdToDeactivate = _alertId;
-    _alertId = null; // Marcar como nulo inmediatamente
+    _alertId = null;
     _remainingSeconds = 0;
 
+    // Notificar al backend SOLO si fue detenido por el usuario O por tiempo agotado
     if (byUser && alertIdToDeactivate != null) {
       try {
         await _apiService.deactivateSos(alertIdToDeactivate);
@@ -168,12 +189,15 @@ class SosTrackingService {
       }
     }
 
-    service.invoke('sosFinished', {'action': 'sosFinished'}); // <-- Añadir acción
+    // Notificar a la UI que terminó y detener el servicio
+    service.invoke('sosFinished', {'action': 'sosFinished'});
     service.stopSelf();
+     print("BG_SERVICE: Servicio detenido.");
   }
 
   void _updateNotification(String title, String body) {
-    FlutterLocalNotificationsPlugin().show(
+    // ... (lógica de notificación sin cambios) ...
+     FlutterLocalNotificationsPlugin().show(
       NotificationService.SOS_NOTIFICATION_ID,
       title,
       body,
@@ -187,25 +211,17 @@ class SosTrackingService {
           ongoing: true,
           autoCancel: false,
         ),
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
+        iOS: DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
       ),
     );
   }
 }
 
-// --- FUNCIÓN DE INICIALIZACIÓN (para main.dart) ---
+// --- FUNCIÓN DE INICIALIZACIÓN (sin cambios) ---
 Future<void> initializeBackgroundService() async {
-  final service = FlutterBackgroundService();
-
-  // --- CORRECCIÓN ---
-  // El canal SOS_CHANNEL_ID ahora se crea en NotificationService.initialize()
-  // No es necesario crearlo aquí.
-  // --- FIN CORRECCIÓN ---
-
+  // ... (código existente sin cambios) ...
+   final service = FlutterBackgroundService();
+  // El canal SOS_CHANNEL_ID se crea en NotificationService.initialize()
   await service.configure(
     androidConfiguration: AndroidConfiguration(
       onStart: onStart,
@@ -216,9 +232,6 @@ Future<void> initializeBackgroundService() async {
       initialNotificationContent: 'Esperando activación.',
       foregroundServiceNotificationId: NotificationService.SOS_NOTIFICATION_ID,
     ),
-    iosConfiguration: IosConfiguration(
-      autoStart: false,
-      onForeground: onStart,
-    ),
+    iosConfiguration: IosConfiguration(autoStart: false, onForeground: onStart,),
   );
 }
