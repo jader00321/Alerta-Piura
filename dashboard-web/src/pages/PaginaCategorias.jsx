@@ -1,4 +1,3 @@
-// src/pages/PaginaCategorias.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Grid, Alert, AlertTitle, CircularProgress, Stack} from '@mui/material'; // Quitamos imports no usados
 import { DragIndicator as DragIndicatorIcon, InfoOutlined as InfoIcon } from '@mui/icons-material'; // Iconos necesarios
@@ -12,6 +11,33 @@ import ListaCategoriasOficiales from '../components/Categorias/ListaCategoriasOf
 import ModalFusionarSugerencia from '../components/Categorias/ModalFusionarSugerencia';
 import ModalConfirmacion from '../components/Comunes/ModalConfirmacion'; // Importar modal genérico
 
+/**
+ * @file src/pages/PaginaCategorias.jsx
+ * @component PaginaCategorias
+ *
+ * @description
+ * Renderiza la página principal de "Gestión de Categorías".
+ *
+ * Esta página orquesta toda la lógica para administrar las categorías de reportes.
+ * Carga dos conjuntos de datos:
+ * 1. Sugerencias de categorías hechas por usuarios (`suggestions`).
+ * 2. Categorías oficiales con estadísticas (`categories`).
+ *
+ * Utiliza un layout de dos columnas:
+ * - **Izquierda:** Muestra `PanelSugerencias` (para aprobar o fusionar) y
+ * `FormularioCrearCategoria` (para crear nuevas).
+ * - **Derecha:** Muestra `ListaCategoriasOficiales` (para reordenar y eliminar).
+ *
+ * Maneja la lógica de estado para:
+ * - Carga de página (`loading`) y carga de acciones (`loadingAction`).
+ * - Errores generales (`error`).
+ * - Apertura y gestión de `ModalFusionarSugerencia` y `ModalConfirmacion`.
+ * - Llamadas al `adminService` para todas las operaciones CRUD y de reordenamiento.
+ * - Lógica de reordenamiento (Drag and Drop) para la lista oficial.
+ * - Lógica de negocio (ej. no permitir eliminar categorías con reportes asociados).
+ *
+ * @returns {JSX.Element} La página de gestión de categorías.
+ */
 function PaginaCategorias() {
   const [suggestions, setSuggestions] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -24,6 +50,11 @@ function PaginaCategorias() {
   const [confirmModal, setConfirmModal] = useState({ open: false, title: '', content: '', onConfirm: () => {} });
 
   // --- Fetch Data ---
+  /**
+   * Carga los datos de sugerencias y categorías oficiales desde el servicio.
+   * Maneja el estado de carga y errores.
+   * @param {boolean} [showLoading=true] - Indica si se debe mostrar el spinner de carga principal.
+   */
   const fetchData = useCallback(async (showLoading = true) => {
     if(showLoading) setLoading(true);
     setError('');
@@ -46,11 +77,19 @@ function PaginaCategorias() {
     }
   }, []); // Dependencias vacías, la función no cambia
 
+  // Carga inicial
   useEffect(() => {
     fetchData(true); // Carga inicial con spinner
   }, [fetchData]);
 
   // --- Handlers ---
+
+  /**
+   * Manejador para el evento onDragEnd de react-beautiful-dnd.
+   * Realiza una actualización optimista del estado y llama al servicio para
+   * guardar el nuevo orden.
+   * @param {object} result - El objeto de resultado de react-beautiful-dnd.
+   */
   const handleDragEnd = (result) => {
     if (!result.destination) return;
     const items = Array.from(categories);
@@ -67,13 +106,24 @@ function PaginaCategorias() {
       });
   };
 
+  /**
+   * Abre el modal de fusión para una sugerencia específica.
+   * @param {object} suggestion - La sugerencia a fusionar.
+   */
   const handleOpenMergeModal = (suggestion) => {
       setMergeModal({ open: true, suggestion: suggestion });
   };
+  
+  /** Cierra el modal de fusión. */
   const handleCloseMergeModal = () => {
        setMergeModal({ open: false, suggestion: null });
   };
 
+  /**
+   * Confirma la acción de fusionar (llamada desde el modal).
+   * @param {string} suggestionName - El nombre de la sugerencia a fusionar.
+   * @param {number} targetCatId - El ID de la categoría oficial destino.
+   */
   const handleMergeConfirm = async (suggestionName, targetCatId) => {
     setLoadingAction(true); // Activa loading específico
     try {
@@ -87,6 +137,10 @@ function PaginaCategorias() {
     }
   };
 
+  /**
+   * Maneja la creación de una nueva categoría (desde el formulario).
+   * @param {string} categoryName - El nombre de la nueva categoría.
+   */
   const handleCreate = async (categoryName) => {
     setLoadingAction(true);
     try {
@@ -100,6 +154,12 @@ function PaginaCategorias() {
     }
   };
 
+  /**
+   * Maneja la solicitud de eliminación de una categoría oficial.
+   * Muestra un modal de confirmación o un aviso si la categoría
+   * tiene reportes asociados.
+   * @param {object} category - La categoría a eliminar.
+   */
   const handleDelete = (category) => {
      // Verifica si hay reportes asociados ANTES de mostrar confirmación
      const totalReports = (category.reportes_activos || 0) + (category.reportes_pendientes || 0) + (category.reportes_rechazados || 0);
@@ -135,6 +195,10 @@ function PaginaCategorias() {
     });
   };
 
+  /**
+   * Maneja la aprobación de una sugerencia (la crea como oficial).
+   * @param {string} suggestionName - El nombre de la sugerencia a aprobar/crear.
+   */
   const handleApprove = async (suggestionName) => {
     setLoadingAction(true);
     try {
@@ -152,12 +216,12 @@ function PaginaCategorias() {
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>Gestión de Categorías</Typography>
 
       <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 4, textAlign: 'left' }}>
-            <AlertTitle>Centro de Control de Categorías</AlertTitle>
-            Organiza las categorías de reportes. El orden de las "Categorías Oficiales" se refleja en la app móvil.
-            <ul>
-                <li><strong>Sugerencias:</strong> Aprueba para crear una nueva categoría oficial o Fusiona para mover sus reportes a una existente.</li>
-                <li><strong>Oficiales:</strong> Arrastra (<DragIndicatorIcon sx={{ verticalAlign: 'middle', fontSize: '1rem' }} />) para reordenar (excepto "Otro").</li>
-            </ul>
+          <AlertTitle>Centro de Control de Categorías</AlertTitle>
+          Organiza las categorías de reportes. El orden de las "Categorías Oficiales" se refleja en la app móvil.
+          <ul>
+              <li><strong>Sugerencias:</strong> Aprueba para crear una nueva categoría oficial o Fusiona para mover sus reportes a una existente.</li>
+              <li><strong>Oficiales:</strong> Arrastra (<DragIndicatorIcon sx={{ verticalAlign: 'middle', fontSize: '1rem' }} />) para reordenar (excepto "Otro").</li>
+          </ul>
         </Alert>
 
         {/* Mostrar error general si existe */}
@@ -166,28 +230,28 @@ function PaginaCategorias() {
       <Grid container spacing={12}> {/* Aumentar espaciado */}
           {/* --- Columna Izquierda: Sugerencias y Creación --- */}
           <Grid item xs={12} md={5} lg={4}> {/* Ajustar breakpoints */}
-              <Stack spacing={4}> {/* Espaciado entre paneles */}
-                  <PanelSugerencias
-                      suggestions={suggestions}
-                      loading={loading && suggestions.length === 0} // Loading si no hay datos iniciales
-                      onApprove={handleApprove}
-                      onMerge={handleOpenMergeModal}
-                  />
-                  <FormularioCrearCategoria
-                      onCreate={handleCreate}
-                      loading={loadingAction} // Usar loading específico
-                  />
-              </Stack>
+            <Stack spacing={4}> {/* Espaciado entre paneles */}
+                <PanelSugerencias
+                    suggestions={suggestions}
+                    loading={loading && suggestions.length === 0} // Loading si no hay datos iniciales
+                    onApprove={handleApprove}
+                    onMerge={handleOpenMergeModal}
+                />
+                <FormularioCrearCategoria
+                    onCreate={handleCreate}
+                    loading={loadingAction} // Usar loading específico
+                />
+            </Stack>
           </Grid>
 
           {/* --- Columna Derecha: Categorías Oficiales --- */}
           <Grid item xs={12} md={7} lg={8}> {/* Ajustar breakpoints */}
-              <ListaCategoriasOficiales
-                  categories={categories}
-                  loading={loading && categories.length === 0} // Loading si no hay datos iniciales
-                  onDragEnd={handleDragEnd}
-                  onDelete={handleDelete}
-              />
+            <ListaCategoriasOficiales
+                categories={categories}
+                loading={loading && categories.length === 0} // Loading si no hay datos iniciales
+                onDragEnd={handleDragEnd}
+                onDelete={handleDelete}
+            />
           </Grid>
       </Grid>
 

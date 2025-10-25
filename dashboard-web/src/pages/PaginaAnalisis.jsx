@@ -20,7 +20,10 @@ import ModalSeleccionPDF from '../components/Analisis/ModalSeleccionPDF';
 // --- NUEVO ---
 import ModalSeleccionExcel from '../components/Analisis/ModalSeleccionExcel';
 
-
+/**
+ * PaginaAnalisis - Página principal de análisis y reportes del sistema
+ * @returns {JSX.Element}
+ */
 function PaginaAnalisis() {
   const { isAuthenticated, user } = useAuth();
   
@@ -43,7 +46,11 @@ function PaginaAnalisis() {
       approvalRate: useRef(),
   };
 
-  // La configuración se usa para ambos modales
+  /**
+   * Configuración de secciones para los modales de exportación
+   * Define los títulos y referencias de cada sección del dashboard
+   * @type {Object}
+   */
   const sectionsConfig = {
       'avgTimeCard': { title: "Tiempo Promedio (KPI)", ref: refs.avgTimeCard }, // Título corto para modal
       'reportTrend': { title: "Tendencia de Reportes", ref: refs.reportTrend },
@@ -65,7 +72,10 @@ function PaginaAnalisis() {
 
   // --- Handlers de Descarga ---
   
-  // PDF: Se confirma desde el modal
+  /**
+   * Maneja la confirmación de descarga PDF
+   * Actualiza títulos dinámicos y ejecuta la descarga
+   */
   const onConfirmDownloadPDF = () => {
     // Actualizar títulos dinámicos antes de pasar
     const dynamicConfig = { ...sectionsConfig };
@@ -83,7 +93,10 @@ function PaginaAnalisis() {
     setModalPdfOpen(false); // Cierra el modal
   };
 
-  // Excel: Se confirma desde el modal
+  /**
+   * Maneja la confirmación de descarga Excel
+   * Ejecuta la exportación de datos a formato Excel
+   */
   const onConfirmDownloadExcel = () => {
     handleDownloadExcel({
         analyticsData,
@@ -116,9 +129,17 @@ function PaginaAnalisis() {
 
   return (
     <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+        {/* Modal de carga global */}
         <Modal open={isGenerating || (loading && !analyticsData)}>
-            {/* ... (Modal de Carga) ... */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'white', bgcolor: 'rgba(0, 0, 0, 0.7)'}}>
+            <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100%', 
+                color: 'white', 
+                bgcolor: 'rgba(0, 0, 0, 0.7)'
+            }}>
                 <CircularProgress color="inherit" />
                 <Typography sx={{ mt: 2 }}>
                     {isGenerating ? "Generando archivo..." : "Cargando datos..."}
@@ -126,6 +147,7 @@ function PaginaAnalisis() {
             </Box>
         </Modal>
 
+        {/* Header de la página */}
         <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>Análisis Avanzado</Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
            Explora tendencias y métricas detalladas de la plataforma.
@@ -140,6 +162,7 @@ function PaginaAnalisis() {
             loading={loading}
         />
 
+        {/* Indicador de filtro activo */}
         {!loading && filterState.filterName && (
             <Alert severity="info" sx={{ mb: 3 }}>
                 Mostrando datos para: <strong>{filterState.filterName}</strong>
@@ -164,7 +187,7 @@ function PaginaAnalisis() {
             </Box>
         )}
 
-        {/* Modal para PDF */}
+        {/* Modal para selección de PDF */}
          <ModalSeleccionPDF
              open={modalPdfOpen}
              onClose={handleClosePdfModal}
@@ -174,7 +197,7 @@ function PaginaAnalisis() {
              sectionsConfig={sectionsConfig}
          />
          
-         {/* --- NUEVO: Modal para Excel --- */}
+         {/* --- NUEVO: Modal para selección de Excel --- */}
          <ModalSeleccionExcel
              open={modalExcelOpen}
              onClose={handleCloseExcelModal}

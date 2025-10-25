@@ -14,6 +14,11 @@ import {
 } from '@mui/icons-material';
 import adminService from '../../services/adminService';
 
+/**
+ * PanelComentariosReportados - Componente para moderar comentarios reportados por usuarios
+ * @param {Object} props - Propiedades del componente
+ * @returns {JSX.Element}
+ */
 function PanelComentariosReportados() {
   const [reportedComments, setReportedComments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,6 +26,9 @@ function PanelComentariosReportados() {
   const [isResolving, setIsResolving] = useState(null);
   const theme = useTheme();
 
+  /**
+   * Obtiene la lista de comentarios reportados del servicio
+   */
   const fetchReportedComments = () => {
     setIsLoading(true);
     setError(null);
@@ -37,6 +45,11 @@ function PanelComentariosReportados() {
     fetchReportedComments();
   }, []);
 
+  /**
+   * Maneja la resolución de un reporte (desestimar o eliminar comentario)
+   * @param {string} reportId - ID del reporte a resolver
+   * @param {string} action - Acción a realizar ('desestimar' o 'eliminar_comentario')
+   */
   const handleResolve = (reportId, action) => {
     setIsResolving(reportId);
     adminService.resolveCommentReport(reportId, action)
@@ -80,13 +93,13 @@ function PanelComentariosReportados() {
           variant="outlined" 
           sx={{ opacity: isResolving === report.id ? 0.6 : 1 }}
         >
-          {/* --- FIX: Layout de Stack Vertical --- */}
+          {/* FIX: Layout de Stack Vertical */}
           <Stack>
-            {/* --- Contenido del Comentario --- */}
-            <Box sx={{ p: 2.5 }}> {/* <-- Más padding */}
+            {/* Contenido del Comentario */}
+            <Box sx={{ p: 2.5 }}> {/* Más padding */}
               <Stack spacing={2}>
                 <Box>
-                  {/* --- FIX: Aumento de fuente --- */}
+                  {/* FIX: Aumento de fuente */}
                   <Typography variant="body1" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <ReportIcon fontSize="small" /> 
                     <strong>Motivo del Reporte:</strong> {report.motivo}
@@ -108,9 +121,9 @@ function PanelComentariosReportados() {
                     borderLeft: `4px solid ${theme.palette.error.main}`
                   }}
                 >
-                  {/* --- FIX: Aumento de fuente --- */}
+                  {/* FIX: Aumento de fuente */}
                   <Typography 
-                    variant="h6" // <-- Más grande
+                    variant="h6" // Más grande
                     sx={{ fontStyle: 'italic', wordBreak: 'break-word', fontWeight: 500 }}
                   >
                     "{report.comentario}"
@@ -124,7 +137,7 @@ function PanelComentariosReportados() {
             
             <Divider />
 
-            {/* --- Acciones (Ahora debajo) --- */}
+            {/* Acciones (Ahora debajo) */}
             <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
               <Button 
                 color="success" 

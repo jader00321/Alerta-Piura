@@ -28,7 +28,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-// Reusable DetailItem (keep as before)
+/**
+ * DetailItem - Componente reutilizable para mostrar items de detalle
+ * @param {Object} props - Propiedades del componente
+ * @param {ReactNode} props.icon - Icono a mostrar
+ * @param {string} props.primary - Texto primario (etiqueta)
+ * @param {string|ReactNode} props.secondary - Texto secundario (valor)
+ * @param {boolean} props.secondaryIsNode - Si el secondary es un nodo React
+ * @returns {JSX.Element}
+ */
 const DetailItem = ({ icon, primary, secondary, secondaryIsNode = false }) => (
     <Stack direction="row" spacing={1.5} alignItems="flex-start" sx={{ py: 0.8 }}>
         <Box sx={{ mt: 0.3 }}>{React.cloneElement(icon, { fontSize: 'small', color: 'action' })}</Box>
@@ -47,8 +55,12 @@ const DetailItem = ({ icon, primary, secondary, secondaryIsNode = false }) => (
     </Stack>
 );
 
-
-// Header Status Chip (keep as before)
+/**
+ * HeaderStatusChip - Componente para mostrar el estado del reporte en el header
+ * @param {Object} props - Propiedades del componente
+ * @param {string} props.status - Estado del reporte
+ * @returns {JSX.Element}
+ */
 const HeaderStatusChip = ({ status }) => {
     const statusInfo = {
         verificado: { label: 'Verificado', color: 'success', icon: <VisibilityIcon /> },
@@ -76,7 +88,16 @@ const HeaderStatusChip = ({ status }) => {
            />;
 };
 
-
+/**
+ * DrawerDetalleReporte - Componente de drawer para mostrar detalles completos de un reporte
+ * @param {Object} props - Propiedades del componente
+ * @param {Object} props.report - Objeto del reporte a mostrar
+ * @param {boolean} props.open - Estado de apertura del drawer
+ * @param {function} props.onClose - Callback cuando se cierra el drawer
+ * @param {function} props.onActionCompleted - Callback cuando se completa una acción
+ * @param {function} props.onOpenChat - Callback para abrir chat con el usuario
+ * @returns {JSX.Element}
+ */
 function DrawerDetalleReporte({ report, open, onClose, onActionCompleted, onOpenChat }) {
     const [confirmModal, setConfirmModal] = useState({ open: false, action: null, title: '', content: '' });
     const [statusToChange, setStatusToChange] = useState('');
@@ -98,10 +119,19 @@ function DrawerDetalleReporte({ report, open, onClose, onActionCompleted, onOpen
     const locationCoords = (report?.location?.coordinates) ? [report.location.coordinates[1], report.location.coordinates[0]] : null;
     const googleMapsUrl = locationCoords ? `https://www.google.com/maps?q=${locationCoords[0]},${locationCoords[1]}` : null;
 
+    /**
+     * Maneja el click en una acción de moderación
+     * @param {string} action - Tipo de acción a realizar
+     * @param {string} title - Título del modal de confirmación
+     * @param {string} content - Contenido del modal de confirmación
+     */
     const handleActionClick = (action, title, content) => {
         setConfirmModal({ open: true, action, title, content });
     };
 
+    /**
+     * Maneja la confirmación de una acción de moderación
+     */
     const handleConfirmAction = () => {
         if (!report) return; // Guard clause
         const action = confirmModal.action;

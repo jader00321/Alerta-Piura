@@ -15,30 +15,52 @@ import SelectorUsuarioNotificaciones from '../components/Notificaciones/Selector
 import FiltrosNotificaciones from '../components/Notificaciones/FiltrosNotificaciones';
 import DetallesUsuarioNotificaciones from '../components/Notificaciones/DetallesUsuarioNotificaciones'; // <-- Import User Details panel
 
+/**
+ * Componente PaginaHistorialNotificaciones: Página para visualizar y gestionar el historial de notificaciones enviadas.
+ * Incluye filtros por usuario, rango de fechas y búsqueda, paginación infinita,
+ * conteo de notificaciones duplicadas, y un panel lateral con detalles del usuario seleccionado.
+ * 
+ * Funcionalidades principales:
+ * - Carga paginada del historial con filtros aplicados.
+ * - Búsqueda debounced para evitar llamadas excesivas.
+ * - Selección de usuario para ver detalles y filtrar.
+ * - Acciones como reenviar o eliminar notificaciones.
+ * - Indicadores de carga y mensajes informativos.
+ */
 function PaginaHistorialNotificaciones() {
-  const [history, setHistory] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false); // Default to false until data is fetched
-  const [loading, setLoading] = useState(false);
-  const [loadingUserDetails, setLoadingUserDetails] = useState(false); // Separate loading for user details
-  const [searchFilter, setSearchFilter] = useState('');
-  const debouncedSearch = useDebounce(searchFilter, 1000);
+  // Estados para el historial y paginación
+  const [history, setHistory] = useState([]); // Lista de notificaciones del historial
+  const [page, setPage] = useState(1); // Página actual para paginación
+  const [hasMore, setHasMore] = useState(false); // Indica si hay más páginas disponibles
+  const [loading, setLoading] = useState(false); // Indicador de carga para el historial
+  const [loadingUserDetails, setLoadingUserDetails] = useState(false); // Indicador de carga para detalles de usuario
+
+  // Estados para filtros y búsqueda
+  const [searchFilter, setSearchFilter] = useState(''); // Texto de búsqueda
+  const debouncedSearch = useDebounce(searchFilter, 1000); // Búsqueda debounced para optimización
 
   // --- Estado para los filtros ---
-  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null); // ID del usuario seleccionado para filtrar
   // --- FIX: Default Date Range (Last 30 days) ---
   const [dateRange, setDateRange] = useState({
-    startDate: dayjs().subtract(30, 'day').format('YYYY-MM-DD'),
-    endDate: dayjs().format('YYYY-MM-DD'),
+    startDate: dayjs().subtract(30, 'day').format('YYYY-MM-DD'), // Fecha de inicio por defecto (30 días atrás)
+    endDate: dayjs().format('YYYY-MM-DD'), // Fecha de fin por defecto (hoy)
   });
   // --- FIX: Initialize activeFiltersApplied based on default dates ---
-  const [activeFiltersApplied, setActiveFiltersApplied] = useState(true); // True because dates are set by default
-  const [selectedUserDetails, setSelectedUserDetails] = useState(null); // State for user summary
+  const [activeFiltersApplied, setActiveFiltersApplied] = useState(true); // True porque las fechas están activas por defecto
+  const [selectedUserDetails, setSelectedUserDetails] = useState(null); // Detalles del usuario seleccionado
 
-  // --- LÓGICA DE CARGA ---
+  /**
+   * Función para cargar el historial de notificaciones desde el backend.
+   * Maneja paginación y reseteo de lista si es un nuevo conjunto de filtros.
+   * 
+   * @param {number} currentPage - Página a cargar.
+   * @param {Object} filters - Filtros aplicados (search, userId, startDate, endDate).
+   * @param {boolean} isNewFilterSet - Si es true, resetea la lista y página a 1.
+   */
   const fetchHistory = useCallback(async (currentPage, filters, isNewFilterSet) => {
     setLoading(true);
-    setActiveFiltersApplied(true); // Mark filters as active when fetching
+    setActiveFiltersApplied(true); // Marca que hay filtros activos
     const combinedFilters = {
       search: filters.search || '',
       userId: filters.userId || null,
@@ -49,10 +71,10 @@ function PaginaHistorialNotificaciones() {
 
     try {
       const newHistory = await adminService.getNotificationHistory(combinedFilters);
-      const PAGE_SIZE = 20;
-      setHistory(isNewFilterSet ? newHistory : prev => [...prev, ...newHistory]);
-      setHasMore(newHistory.length === PAGE_SIZE);
-      if (isNewFilterSet) setPage(1);
+      const PAGE_SIZE = 20; // Tamaño de página fijo
+      setHistory(isNewFilterSet ? newHistory : prev => [...prev, ...newHistory]); // Agrega o resetea la lista
+      setHasMore(newHistory.length === PAGE_SIZE); // Verifica si hay más páginas
+      if (isNewFilterSet) setPage(1); // Resetea página si es nuevo filtro
     } catch (error) {
       console.error("Error fetching notification history:", error);
       setHistory([]);
@@ -62,32 +84,39 @@ function PaginaHistorialNotificaciones() {
     }
   }, []);
 
-  // --- EFECTO PARA DISPARAR LA BÚSQUEDA/FILTRADO ---
+  /**
+   * useEffect para disparar la carga del historial cuando cambian los filtros.
+   * Solo carga si hay filtros activos (usuario, fechas o búsqueda).
+   * Si no hay filtros, limpia el estado.
+   */
   useEffect(() => {
-    // Determine if any filter is actually active besides potentially empty defaults
+    // Determina si algún filtro está activo (además de defaults vacíos)
     const isUserSelected = !!selectedUserId;
     const areDatesSelected = !!(dateRange.startDate || dateRange.endDate);
     const isSearchActive = !!debouncedSearch;
 
     if (isUserSelected || areDatesSelected || isSearchActive) {
-      // Fetch page 1 whenever a filter changes
+      // Carga página 1 cuando cambia un filtro
       fetchHistory(1, {
         search: debouncedSearch,
         userId: selectedUserId,
         startDate: dateRange.startDate,
         endDate: dateRange.endDate
-      }, true); // `true` for new filter set
+      }, true); // `true` para nuevo conjunto de filtros
     } else {
-      // If NO filters are active, clear everything
+      // Si NO hay filtros activos, limpia todo
       setActiveFiltersApplied(false);
       setHistory([]);
       setPage(1);
       setHasMore(false);
-      setSelectedUserDetails(null); // Also clear user details
+      setSelectedUserDetails(null); // También limpia detalles de usuario
     }
   }, [selectedUserId, dateRange, debouncedSearch, fetchHistory]);
 
-  // --- Handler para cargar más ---
+  /**
+   * Handler para cargar más notificaciones (paginación infinita).
+   * Solo carga si hay más páginas y no está cargando.
+   */
   const handleLoadMore = () => {
     if (hasMore && !loading && activeFiltersApplied) {
       const nextPage = page + 1;
@@ -97,59 +126,86 @@ function PaginaHistorialNotificaciones() {
         userId: selectedUserId,
         startDate: dateRange.startDate,
         endDate: dateRange.endDate
-      }, false);
+      }, false); // `false` para agregar a la lista existente
     }
   };
 
-  // --- Fetch User Summary when user is selected ---
+  /**
+   * useEffect para cargar detalles del usuario cuando se selecciona uno.
+   * Limpia detalles si no hay usuario seleccionado.
+   */
   useEffect(() => {
     if (selectedUserId) {
       setLoadingUserDetails(true);
-      setSelectedUserDetails(null); // Clear previous details
+      setSelectedUserDetails(null); // Limpia detalles previos
       adminService.getUserSummary(selectedUserId)
         .then(data => setSelectedUserDetails(data))
         .catch(err => {
             console.error("Error fetching user summary:", err);
-            setSelectedUserDetails(null); // Clear on error
+            setSelectedUserDetails(null); // Limpia en caso de error
         })
         .finally(() => setLoadingUserDetails(false));
     } else {
-      setSelectedUserDetails(null); // Clear details if user is deselected
+      setSelectedUserDetails(null); // Limpia si no hay usuario
     }
   }, [selectedUserId]);
 
-
   // --- Handlers de filtros ---
+  /**
+   * Handler para selección de usuario.
+   * Evita fetches innecesarios si el ID no cambió.
+   * 
+   * @param {number|null} userId - ID del usuario seleccionado.
+   */
   const handleUserSelection = (userId) => {
-    // Check if the user ID actually changed to prevent unnecessary fetches
+    // Verifica si el ID cambió para evitar fetches innecesarios
     if(userId !== selectedUserId) {
         setSelectedUserId(userId);
     }
   };
 
+  /**
+   * Handler para cambio en el rango de fechas.
+   * @param {Object} newDateRange - Nuevo rango {startDate, endDate}.
+   */
   const handleDateFilterChange = (newDateRange) => {
     setDateRange(newDateRange);
   };
 
    // --- Calculate Duplicate Counts (Frontend) ---
+   /**
+    * Cálculo de conteos de notificaciones duplicadas basado en título y cuerpo.
+    * Se recalcula solo cuando cambia el historial.
+    */
    const notificationCounts = useMemo(() => {
     const counts = {};
     history.forEach(notif => {
-        // Use a combination of title and body as the key
+        // Usa combinación de título y cuerpo como clave
         const key = `${notif.titulo}|${notif.cuerpo}`;
         counts[key] = (counts[key] || 0) + 1;
     });
     return counts;
-   }, [history]); // Recalculate only when history changes
-
+   }, [history]); // Recalcula solo cuando cambia history
 
   // --- Handlers para acciones (Reenviar/Eliminar - No changes needed) ---
+  /**
+   * Handler para eliminar una notificación.
+   * Recarga el historial después de eliminar.
+   * 
+   * @param {number} id - ID de la notificación a eliminar.
+   */
   const handleDelete = (id) => {
     adminService.deleteNotification(id).then(() => {
-      fetchHistory(1, { /* current filters */ }, true);
+      fetchHistory(1, { /* current filters */ }, true); // Recarga con filtros actuales
     }).catch(err => console.error("Error deleting notification:", err));
   };
 
+  /**
+   * Handler para reenviar una notificación.
+   * Muestra alerta de éxito o error.
+   * 
+   * @param {Object} notif - Objeto de la notificación a reenviar.
+   */
   const handleResend = (notif) => {
     adminService.sendNotification([notif.id_usuario_receptor], notif.titulo, notif.cuerpo)
       .then(() => alert('Notificación reenviada.'))
@@ -159,6 +215,7 @@ function PaginaHistorialNotificaciones() {
       });
   };
 
+  // --- Render Principal ---
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -175,20 +232,20 @@ function PaginaHistorialNotificaciones() {
             <Stack spacing={2}>
               <SelectorUsuarioNotificaciones
                 onUserSelected={handleUserSelection}
-                disabled={loading || loadingUserDetails}
-                value={selectedUserId} // Pass current ID for potential internal state sync
+                disabled={loading || loadingUserDetails} // Deshabilita durante carga
+                value={selectedUserId} // Pasa ID actual para sincronización interna
               />
               <FiltrosNotificaciones
                 onFiltersChange={handleDateFilterChange}
-                disabled={loading || loadingUserDetails}
-                // Pass current dates if needed for DatePicker initial values (handled internally now)
+                disabled={loading || loadingUserDetails} // Deshabilita durante carga
+                // Pasa fechas actuales si se necesitan para inicializar DatePicker (manejado internamente)
               />
               <TextField
                 fullWidth size="small"
                 label="Buscar en título, mensaje..."
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                disabled={loading || loadingUserDetails}
+                disabled={loading || loadingUserDetails} // Deshabilita durante carga
                 InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
               />
             </Stack>
@@ -206,12 +263,12 @@ function PaginaHistorialNotificaciones() {
           {activeFiltersApplied && (!loading || page > 1) && (
             <ListaHistorialNotificaciones
               history={history}
-              loading={loading && page > 1}
+              loading={loading && page > 1} // Muestra carga solo en páginas adicionales
               hasMore={hasMore}
               onLoadMore={handleLoadMore}
               onResend={handleResend}
               onDelete={handleDelete}
-              // Pass counts down
+              // Pasa conteos de duplicados
               notificationCounts={notificationCounts}
             />
           )}
@@ -219,11 +276,11 @@ function PaginaHistorialNotificaciones() {
 
         {/* --- Columna Derecha: Detalles del Usuario --- */}
         <Grid item xs={12} md={4}>
-           <Box sx={{ position: 'sticky', top: '80px' }}> {/* Make details sticky */}
+           <Box sx={{ position: 'sticky', top: '80px' }}> {/* Hace el panel sticky */}
                 <DetallesUsuarioNotificaciones
                     userDetails={selectedUserDetails}
                     loading={loadingUserDetails}
-                    filteredCount={activeFiltersApplied ? history.length : undefined} // Pass filtered count
+                    filteredCount={activeFiltersApplied ? history.length : 0} // Pasa conteo filtrado
                 />
             </Box>
         </Grid>

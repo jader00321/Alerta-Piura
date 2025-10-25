@@ -24,6 +24,10 @@ import RejectedIcon from '@mui/icons-material/CancelOutlined';
 import HiddenIcon from '@mui/icons-material/VisibilityOff';
 import RoleRequestIcon from '@mui/icons-material/AssignmentInd';
 
+/**
+ * Mapeo de colores para los estados de reportes
+ * @type {Object}
+ */
 const STATUS_COLORS = {
   Pendiente: '#ff9800',
   Verificado: '#4caf50',
@@ -32,6 +36,10 @@ const STATUS_COLORS = {
   Otro: '#607d8b',
 };
 
+/**
+ * PaginaResumen - Página principal del dashboard con métricas y visualizaciones
+ * @returns {JSX.Element}
+ */
 function PaginaResumen() {
   const [stats, setStats] = useState(null);
   const [dailyChartData, setDailyChartData] = useState([]);
@@ -43,6 +51,9 @@ function PaginaResumen() {
   const [selectedReport, setSelectedReport] = useState(null);
   const { isAuthenticated } = useAuth();
 
+  /**
+   * Función para obtener todos los datos del dashboard
+   */
   const fetchData = useCallback(() => {
     if (!isAuthenticated) { setLoading(false); return; }
     setLoading(true);
@@ -86,10 +97,22 @@ function PaginaResumen() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  /**
+   * Maneja la apertura del modal de detalle de reporte
+   * @param {Object} report - Reporte seleccionado
+   */
   const handleOpenModal = (report) => { setSelectedReport(report); setModalOpen(true); };
+  
+  /**
+   * Maneja el cierre del modal de detalle de reporte
+   */
   const handleCloseModal = () => { setModalOpen(false); setTimeout(() => setSelectedReport(null), 300);};
   
-  // (handleModerationAction sin cambios)
+  /**
+   * Maneja las acciones de moderación (aprobar/rechazar reportes)
+   * @param {string} reportId - ID del reporte
+   * @param {boolean} approve - True para aprobar, false para rechazar
+   */
   const handleModerationAction = (reportId, approve) => {
     // Podrías poner un estado de carga específico para la tabla/modal aquí
     adminService.resolveReport(reportId, approve)
