@@ -1,48 +1,30 @@
-const db = require('../config/db');
+/*const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const fetch = require('node-fetch');
+const socketNotificationService = require('../services/socketNotificationService');
+const servicioNotificacionesZonas = require('../services/servicioNotificacionesZonas');
 
 const login = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ message: 'Email y contraseña son requeridos.' });
   }
-
   try {
-    // Buscamos un usuario que coincida Y tenga el rol de 'admin'
-    const userResult = await db.query("SELECT * FROM Usuarios WHERE email = $1 AND rol = 'admin'", [email]);
-    
+    const userResult = await db.query("SELECT * FROM Usuarios WHERE email = $1 AND (rol = 'admin' OR rol = 'reportero')", [email]); // Permitir login a admin y reportero
     if (userResult.rows.length === 0) {
-      return res.status(403).json({ message: 'Acceso denegado. Credenciales incorrectas o sin privilegios de administrador.' });
+      return res.status(403).json({ message: 'Acceso denegado. Credenciales incorrectas o sin privilegios.' });
     }
-    
     const user = userResult.rows[0];
     const isMatch = await bcrypt.compare(password, user.password_hash);
-
     if (!isMatch) {
-      return res.status(403).json({ message: 'Acceso denegado. Credenciales incorrectas o sin privilegios de administrador.' });
+      return res.status(403).json({ message: 'Acceso denegado. Credenciales incorrectas.' });
     }
-
-    const payload = {
-      user: {
-        id: user.id,
-        rol: user.rol
-      }
-    };
-
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '8h' }, // Sesión de admin más corta
-      (error, token) => {
-        if (error) throw error;
-        res.status(200).json({ token });
-      }
-    );
+    const payload = { user: { id: user.id, rol: user.rol, alias: user.alias || user.nombre } };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '8h' });
+    res.json({ token, user: payload.user });
   } catch (error) {
-    console.error('Error en el login de admin:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
+    console.error("Error en login de admin:", error);
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
@@ -78,27 +60,38 @@ const getDashboardStats = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    // AÑADIMOS 'search' a los posibles filtros
     const { role, status, sortBy, search } = req.query;
 
-    let query = "SELECT id, nombre, alias, email, rol, status, telefono, puntos, to_char(fecha_registro, 'DD Mon YYYY') as fecha_registro_formateada FROM usuarios";
+    // LÓGICA MEJORADA: La consulta ahora verifica si la suscripción está activa.
+    let query = `
+      SELECT 
+        u.id, u.nombre, u.alias, u.email, u.rol, u.status, u.telefono, u.puntos, 
+        to_char(u.fecha_registro, 'DD Mon YYYY') as fecha_registro_formateada,
+        CASE 
+          WHEN u.id_plan_suscripcion IS NOT NULL AND u.fecha_fin_suscripcion > NOW()
+          THEN p.nombre_publico
+          ELSE 'Plan Gratuito'
+        END AS nombre_plan,
+        to_char(u.fecha_fin_suscripcion, 'DD Mon YYYY') AS fecha_fin_suscripcion_formateada
+      FROM usuarios u
+      LEFT JOIN planes_suscripcion p ON u.id_plan_suscripcion = p.id
+    `;
+
     const whereClauses = [];
     const queryParams = [];
     let paramIndex = 1;
 
-    // AÑADIMOS la lógica para el filtro de búsqueda
     if (search) {
-      whereClauses.push(`(nombre ILIKE $${paramIndex} OR email ILIKE $${paramIndex} OR alias ILIKE $${paramIndex})`);
+      whereClauses.push(`(u.nombre ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex} OR u.alias ILIKE $${paramIndex})`);
       queryParams.push(`%${search}%`);
       paramIndex++;
     }
-
     if (role) {
-      whereClauses.push(`rol = $${paramIndex++}`);
+      whereClauses.push(`u.rol = $${paramIndex++}`);
       queryParams.push(role);
     }
     if (status) {
-      whereClauses.push(`status = $${paramIndex++}`);
+      whereClauses.push(`u.status = $${paramIndex++}`);
       queryParams.push(status);
     }
 
@@ -106,11 +99,11 @@ const getAllUsers = async (req, res) => {
       query += ' WHERE ' + whereClauses.join(' AND ');
     }
 
-    let orderByClause = ' ORDER BY fecha_registro DESC'; // Por defecto, los más recientes
+    let orderByClause = ' ORDER BY u.fecha_registro DESC';
     if (sortBy === 'oldest') {
-      orderByClause = ' ORDER BY fecha_registro ASC';
+      orderByClause = ' ORDER BY u.fecha_registro ASC';
     } else if (sortBy === 'name') {
-        orderByClause = ' ORDER BY nombre ASC';
+        orderByClause = ' ORDER BY u.nombre ASC';
     }
     query += orderByClause;
 
@@ -121,26 +114,25 @@ const getAllUsers = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener la lista de usuarios.' });
   }
 };
+
 // Actualizar el rol de un usuario
 const updateUserRole = async (req, res) => {
-  console.log('--- DEBUG: Recibido en updateUserRole ---');
-  console.log('Request Body:', req.body);
-  console.log('------------------------------------');
-
   const { id: targetUserId } = req.params;
   const { rol, adminPassword } = req.body;
-  const adminId = req.user.id;
+  const adminId = req.user.userId; // Corregido para usar userId
 
-  if (!['ciudadano', 'lider_vecinal', 'admin'].includes(rol)) {
+  // --- MODIFICACIÓN CLAVE ---
+  // Añadimos 'reportero' a la lista de roles válidos.
+  if (!['ciudadano', 'lider_vecinal', 'admin', 'reportero'].includes(rol)) {
     return res.status(400).json({ message: 'Rol no válido.' });
   }
 
   // --- SECURITY CHECK ---
+  // La lógica de seguridad para promover a 'admin' se mantiene.
   if (rol === 'admin') {
     if (!adminPassword) {
       return res.status(400).json({ message: 'Se requiere su contraseña para confirmar esta acción.' });
     }
-    // Verify the logged-in admin's password
     const adminResult = await db.query('SELECT password_hash FROM usuarios WHERE id = $1', [adminId]);
     const admin = adminResult.rows[0];
     const isMatch = await bcrypt.compare(adminPassword, admin.password_hash);
@@ -390,14 +382,14 @@ const getModerationHistory = async (req, res) => {
 const getAllAdminReports = async (req, res) => {
   try {
     const { search, status, categoryId, sortBy, page = 1, suggestedOnly } = req.query;
-    const limit = 10;
+    const limit = 10; // Aumentar el límite para el panel web
     const offset = (page - 1) * limit;
 
-    // MEJORA: Se añaden u.email y l.email a la consulta
     let query = `
       SELECT 
         r.id, r.titulo, r.foto_url, r.distrito, r.urgencia, r.tags,
         r.codigo_reporte,
+        r.apoyos_pendientes,
         to_char(r.hora_incidente, 'HH24:MI') as hora_incidente,
         c.nombre as categoria, 
         r.categoria_sugerida,
@@ -413,11 +405,15 @@ const getAllAdminReports = async (req, res) => {
         r.descripcion, 
         r.referencia_ubicacion,
         r.impacto,
-        r.location 
+        ST_AsGeoJSON(r.location) as location,
+        -- AÑADIMOS EL CAMPO PARA SABER SI ES PRIORITARIO
+        CASE WHEN rp.id_reporte IS NOT NULL THEN true ELSE false END as es_prioritario
       FROM reportes r
       LEFT JOIN usuarios u ON r.id_usuario = u.id
       LEFT JOIN categorias c ON r.id_categoria = c.id
       LEFT JOIN usuarios l ON r.id_lider_verificador = l.id
+      -- Hacemos un LEFT JOIN con la tabla de reportes prioritarios
+      LEFT JOIN reportes_prioritarios rp ON r.id = rp.id_reporte
     `;
     
     const whereClauses = [];
@@ -693,13 +689,20 @@ const sendNotification = async (req, res) => {
   const client = await db.getClient();
   try {
     await client.query('BEGIN');
-    // Create an INSERT query for each user ID
+    const io = req.app.get('socketio');
+
     for (const userId of userIds) {
-      const query = 'INSERT INTO notificaciones (id_usuario_receptor, titulo, cuerpo) VALUES ($1, $2, $3)';
-      await client.query(query, [userId, title, body]);
+      const payload = JSON.stringify({ type: 'alerts_screen', id: reporte.id });
+      // 1. Guardar la notificación en la base de datos para el historial.
+      const query = 'INSERT INTO notificaciones (id_usuario_receptor, titulo, cuerpo, payload) VALUES ($1, $2, $3)';
+      await client.query(query, [userId, title, body, payload]);
+
+      // 2. Enviar la notificación en tiempo real a través del socket.
+      socketNotificationService.sendNotification(io, userId, { title, body, payload});
     }
+    
     await client.query('COMMIT');
-    res.status(200).json({ message: 'Notificación(es) guardada(s) en la base de datos.' });
+    res.status(200).json({ message: `${userIds.length} notificación(es) enviada(s) exitosamente.` });
   } catch (error) {
     await client.query('ROLLBACK');
     console.error("Error sending notification:", error);
@@ -756,15 +759,47 @@ const getLatestPendingReports = async (req, res) => {
 // Admin-specific moderation functions (as provided previously, ensuring they exist)
 const adminAprobarReporte = async (req, res) => {
   const { id } = req.params;
+  const adminId = req.user.id;
+  const client = await db.getClient();
+
   try {
-    const result = await db.query("UPDATE reportes SET estado = 'verificado', fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *", [id]);
+    await client.query('BEGIN');
+    
+    // La lógica es casi idéntica a la del líder, pero asignamos el ID del admin
+    const result = await client.query("UPDATE reportes SET estado = 'verificado', fecha_actualizacion = CURRENT_TIMESTAMP, id_lider_verificador = $1 WHERE id = $2 RETURNING *", [adminId, id]);
+    
     if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ message: 'Reporte no encontrado.' });
     }
-    res.status(200).json({ message: 'Reporte aprobado.', report: result.rows[0] });
+    
+    const reporteAprobado = result.rows[0];
+    const io = req.app.get('socketio');
+    
+    // --- LÓGICA AÑADIDA PARA ALERTAS PERSONALIZADAS ---
+    const reporteCompletoResult = await client.query(`
+      SELECT r.*, c.nombre as categoria, ST_AsGeoJSON(r.location) as location 
+      FROM reportes r JOIN categorias c ON r.id_categoria = c.id WHERE r.id = $1
+    `, [reporteAprobado.id]);
+
+    if (reporteCompletoResult.rows.length > 0) {
+        const reporteCompleto = reporteCompletoResult.rows[0];
+        reporteCompleto.location = JSON.parse(reporteCompleto.location);
+
+        // Llamar al servicio de notificación de zonas seguras
+        await servicioNotificacionesZonas.verificarReporteEnZonas(io, reporteCompleto);
+    }
+    // --- FIN DE LA LÓGICA AÑADIDA ---
+
+    await client.query('COMMIT');
+    res.status(200).json({ message: 'Reporte aprobado por administrador.', report: result.rows[0] });
+    
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error in adminAprobarReporte:', error);
     res.status(500).json({ message: 'Error al aprobar el reporte.', error: error.message });
+  } finally {
+    client.release();
   }
 };
 
@@ -1199,6 +1234,110 @@ const mergeCategorySuggestion = async (req, res) => {
   }
 };
 
+const getSolicitudesRol = async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        s.id, s.id_usuario, s.estado, 
+        to_char(s.fecha_solicitud, 'DD Mon YYYY, HH24:MI') as fecha,
+        u.nombre, u.alias, u.email,
+        s.motivacion, 
+        s.zona_propuesta
+      FROM solicitudes_rol s
+      JOIN usuarios u ON s.id_usuario = u.id
+      WHERE s.estado = 'pendiente'
+      ORDER BY s.fecha_solicitud ASC
+    `;
+    const result = await db.query(query);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener solicitudes de rol:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
+const resolverSolicitudRol = async (req, res) => {
+  const { id } = req.params;
+  const { accion } = req.body; // 'aprobar' o 'rechazar'
+
+  if (!['aprobar', 'rechazar'].includes(accion)) {
+    return res.status(400).json({ message: 'Acción no válida.' });
+  }
+
+  const client = await db.getClient();
+  try {
+    await client.query('BEGIN');
+
+    const solicitudResult = await client.query('SELECT id_usuario FROM solicitudes_rol WHERE id = $1', [id]);
+    if (solicitudResult.rows.length === 0) {
+      throw new Error('Solicitud no encontrada.');
+    }
+    const id_usuario = solicitudResult.rows[0].id_usuario;
+
+    if (accion === 'aprobar') {
+      // 1. Promover al usuario a 'lider_vecinal'
+      await client.query("UPDATE usuarios SET rol = 'lider_vecinal' WHERE id = $1", [id_usuario]);
+      // 2. Actualizar el estado de la solicitud
+      await client.query("UPDATE solicitudes_rol SET estado = 'aprobado' WHERE id = $1", [id]);
+    } else { // rechazar
+      await client.query("UPDATE solicitudes_rol SET estado = 'rechazado' WHERE id = $1", [id]);
+    }
+
+    await client.query('COMMIT');
+    res.status(200).json({ message: `Solicitud ${accion === 'aprobar' ? 'aprobada' : 'rechazada'} exitosamente.` });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ message: 'Error al resolver la solicitud.' });
+  } finally {
+    client.release();
+  }
+};
+
+const asignarZonasLider = async (req, res) => {
+    const { id: id_lider } = req.params;
+    const { distritos } = req.body; 
+
+    if (!Array.isArray(distritos) || distritos.length === 0) {
+        return res.status(400).json({ message: 'Se requiere un array de distritos (puede ser ["*"] para todas).' });
+    }
+    const zonasParaInsertar = distritos.includes('*') ? ['*'] : distritos;
+
+    const client = await db.getClient();
+    try {
+        await client.query('BEGIN');
+        const userResult = await client.query("SELECT rol FROM usuarios WHERE id = $1", [id_lider]);
+        if (userResult.rows.length === 0 || userResult.rows[0].rol !== 'lider_vecinal') {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: 'Usuario no encontrado o no es un líder vecinal.' });
+        }
+        await client.query("DELETE FROM lider_zonas_asignadas WHERE id_usuario = $1", [id_lider]);
+        const insertPromises = zonasParaInsertar.map(distrito => {
+            return client.query("INSERT INTO lider_zonas_asignadas (id_usuario, nombre_distrito) VALUES ($1, $2)", [id_lider, distrito]);
+        });
+        await Promise.all(insertPromises);
+        await client.query('COMMIT');
+        res.status(200).json({ message: `Zonas asignadas correctamente al líder ${id_lider}.` });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error al asignar zonas al líder:', error);
+        res.status(500).json({ message: 'Error interno del servidor.' });
+    } finally {
+        client.release();
+    }
+};
+
+const getZonasAsignadas = async (req, res) => {
+    const { id: id_lider } = req.params;
+    try {
+        const query = "SELECT nombre_distrito FROM lider_zonas_asignadas WHERE id_usuario = $1";
+        const result = await db.query(query, [id_lider]);
+        res.status(200).json(result.rows.map(row => row.nombre_distrito));
+    } catch (error) {
+        console.error('Error al obtener zonas asignadas:', error);
+        res.status(500).json({ message: 'Error interno del servidor.' });
+    }
+};
+
 module.exports = {
   login,
   getDashboardStats,
@@ -1245,4 +1384,8 @@ module.exports = {
   reorderCategories,
   mergeCategorySuggestion,
   getModerationHistory,
-};
+  getSolicitudesRol,
+  resolverSolicitudRol,
+  asignarZonasLider,
+  getZonasAsignadas,
+};*/

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:intl/intl.dart';
 import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/chat_message_model.dart';
+import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/services/socket_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 class ChatScreen extends StatefulWidget {
   final int reporteId;
@@ -18,110 +19,232 @@ class _ChatScreenState extends State<ChatScreen> {
   final ReporteService _reporteService = ReporteService();
   final SocketService _socketService = SocketService();
   final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  
   List<ChatMessage> _messages = [];
+  bool _isLoading = true;
   int? _currentUserId;
 
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
-    _connectToChat();
+    _currentUserId = Provider.of<AuthNotifier>(context, listen: false).userId;
+    _loadHistoryAndConnect();
   }
 
-  void _loadInitialData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken');
-    if (token != null) {
-      final decodedToken = JwtDecoder.decode(token);
-      _currentUserId = decodedToken['user']['id'];
+  Future<void> _loadHistoryAndConnect() async {
+    try {
+      final history = await _reporteService.getChatHistory(widget.reporteId);
+      if (mounted) {
+        setState(() {
+          _messages = history;
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+      _connectToChat();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al cargar el historial del chat.'))
+        );
+      }
     }
-    final history = await _reporteService.getChatHistory(widget.reporteId);
-    setState(() {
-      _messages = history;
-    });
   }
 
   void _connectToChat() {
-    _socketService.connect();
     _socketService.emit('join-chat-room', widget.reporteId.toString());
     _socketService.on('receive-message', (data) {
       if (mounted) {
+        final newMessage = ChatMessage.fromJson(data);
         setState(() {
-          _messages.add(ChatMessage.fromJson(data));
+          _messages.add(newMessage);
         });
+        _scrollToBottom();
       }
     });
   }
 
-  @override
-  void dispose() {
-    _socketService.disconnect();
-    _messageController.dispose();
-    super.dispose();
-  }
-
-  void _sendMessage() async {
-    if (_messageController.text.trim().isEmpty || _currentUserId == null) return;
+  void _sendMessage() {
+    final text = _messageController.text.trim();
+    if (text.isEmpty || _currentUserId == null) return;
     
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('authToken');
-    if (token == null) return;
-    final decodedToken = JwtDecoder.decode(token);
-    final senderAlias = decodedToken['user']['alias'] ?? decodedToken['user']['nombre'];
+    final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
+    final senderAlias = authNotifier.userAlias ?? 'Usuario';
 
     _socketService.emit('send-message', {
       'id_reporte': widget.reporteId,
       'id_sender': _currentUserId,
-      'message_text': _messageController.text.trim(),
+      'message_text': text,
       'sender_alias': senderAlias,
     });
     _messageController.clear();
   }
 
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+  
+  @override
+  void dispose() {
+    // Al salir, dejamos la sala, pero no desconectamos el socket principal
+    _socketService.emit('leave-room', widget.reporteId.toString());
+    _socketService.off('receive-message');
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.reporteTitulo)),
+      appBar: AppBar(
+        title: Text('Chat: ${widget.reporteTitulo}', maxLines: 1, overflow: TextOverflow.ellipsis),
+      ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8.0),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final msg = _messages[index];
-                final isMe = msg.idSender == _currentUserId;
-                return Align(
-                  alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Card(
-                    color: isMe ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.secondaryContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Text(msg.messageText),
-                    ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final msg = _messages[index];
+                      final isMe = msg.idSender == _currentUserId;
+                      return _ChatMessageBubble(message: msg, isMe: isMe);
+                    },
                   ),
-                );
-              },
-            ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(hintText: 'Escribe un mensaje...'),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: _sendMessage,
-                ),
-              ],
-            ),
+          _ChatInput(
+            controller: _messageController,
+            onSend: _sendMessage,
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Widget para la burbuja de chat
+class _ChatMessageBubble extends StatelessWidget {
+  final ChatMessage message;
+  final bool isMe;
+
+  const _ChatMessageBubble({required this.message, required this.isMe});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final alignment = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+    final color = isMe ? theme.colorScheme.primary : theme.colorScheme.surfaceVariant;
+    final textColor = isMe ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant;
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Column(
+        crossAxisAlignment: alignment,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isMe)
+                CircleAvatar(
+                  radius: 12,
+                  child: Text(message.senderAlias[0]),
+                ),
+              if (!isMe) const SizedBox(width: 8),
+              Flexible(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(18),
+                      topRight: const Radius.circular(18),
+                      bottomLeft: isMe ? const Radius.circular(18) : const Radius.circular(4),
+                      bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(18),
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Text(message.messageText, style: TextStyle(color: textColor)),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 4.0, left: 40, right: 8),
+            child: Text(
+              DateFormat('HH:mm').format(message.timestamp),
+              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+// Widget para la barra de entrada de texto
+class _ChatInput extends StatelessWidget {
+  final TextEditingController controller;
+  final VoidCallback onSend;
+
+  const _ChatInput({required this.controller, required this.onSend});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, -1),
+            blurRadius: 4,
+            color: Colors.black.withOpacity(0.05),
+          )
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: 'Escribe un mensaje...',
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+                onSubmitted: (_) => onSend(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton.filled(
+              icon: const Icon(Icons.send),
+              onPressed: onSend,
+              style: IconButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

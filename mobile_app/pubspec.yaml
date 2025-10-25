@@ -11,38 +11,47 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  
-  # Paquete para hacer peticiones HTTP a nuestra API
+
+  flutter_localizations:
+    sdk: flutter
+
+  # Paquetes de Comunicación y Datos
   http: ^1.2.1
-  # Paquete para guardar datos simples en el dispositivo
   shared_preferences: ^2.2.3
-  # Paquete para mostrar mapas interactivos
-  flutter_map: ^6.1.0
-  # Paquete de ayuda para las coordenadas del mapa
-  latlong2: ^0.9.1
-  # Paquete para obtener la ubicación GPS del dispositivo
-  geolocator: ^12.0.0
-  # Paquete para solicitar permisos
-  permission_handler: ^11.3.1
-  # Paquete para decodificar tokens de sesión
-  jwt_decoder: ^2.0.1
-  # Paquete para elegir imágenes de la galería o cámara
-  image_picker: ^1.1.2
-  # Paquete para formatear fechas y horas
-  intl: ^0.19.0
-  # For local push notifications
-  flutter_local_notifications: ^17.1.2
-  # For running tasks in the background
-  flutter_background_service: ^5.0.1
-
   provider: ^6.1.2
-
   socket_io_client: ^3.1.2
+  jwt_decoder: ^2.0.1
+
+  # Paquetes Geoespaciales (ACTUALIZADOS)
+  flutter_map: ^8.0.0 # <-- Actualización mayor
+  latlong2: ^0.9.1
+  geolocator: ^14.0.0 # <-- Actualización mayor
+  permission_handler: ^12.0.1 # <-- Actualización mayor
+  flutter_map_marker_cluster: ^8.0.0 # <-- Actualización mayor (debe coincidir con flutter_map)
+  fl_heatmap: ^0.4.5
+  # flutter_image_map: ^1.0.1
+  # google_maps_places_autocomplete_widgets: ^1.3.3
+
+  # Paquetes de UI y Utilidades
+  image_picker: ^1.1.2
+  intl: ^0.20.2 # <-- Actualización
+  shimmer: ^3.0.0
+
+  # Paquetes de Funcionalidades Nativas
+  flutter_local_notifications: ^19.0.0 # <-- Actualización mayor
+  flutter_background_service: ^5.0.1
+  fl_chart: ^1.1.1
+  pdf: ^3.11.3
+  path_provider: ^2.1.5
+  open_file: ^3.5.10
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/fonts/

@@ -1,12 +1,16 @@
+// lib/screens/verificacion_detalle_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-//import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/api/lider_service.dart';
 import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';
-
-// We reuse the header widget for a consistent and professional design
-import 'package:mobile_app/widgets/reporte_detalle/reporte_header.dart';
+import 'package:mobile_app/widgets/esqueletos/esqueleto_reporte_detalle.dart';
+// Importar los widgets de layout y acciones
+import 'package:mobile_app/widgets/verificacion/layout_detalle_verificacion.dart';
+import 'package:mobile_app/widgets/verificacion/cabezal_detalle_verificacion.dart'; // Importamos para usar buildAppBar
+import 'package:mobile_app/widgets/verificacion/acciones_moderacion.dart';
+// Importar pantallas para navegación
+import 'package:mobile_app/screens/pantalla_editar_reporte_lider.dart';
+import 'package:mobile_app/screens/pantalla_buscar_reporte_original.dart';
 
 class VerificacionDetalleScreen extends StatefulWidget {
   final int reporteId;
@@ -19,169 +23,200 @@ class VerificacionDetalleScreen extends StatefulWidget {
 class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
   final ReporteService _reporteService = ReporteService();
   final LiderService _liderService = LiderService();
-  late Future<ReporteDetallado> _reporteFuture;
-  final MapController _mapController = MapController(); // Controller for the map
+
+  ReporteDetallado? _reporte;
+  bool _isLoadingReporte = true;
+  String? _errorReporte;
+  bool _isLoadingAction = false;
 
   @override
   void initState() {
     super.initState();
-    _reporteFuture = _reporteService.getReporteById(widget.reporteId);
+    _loadReporteData();
   }
 
-  @override
-  void dispose() {
-    _mapController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _moderarReporte(bool aprobar) async {
-    // This function remains the same
-    final success = aprobar
-        ? await _liderService.aprobarReporte(widget.reporteId)
-        : await _liderService.rechazarReporte(widget.reporteId);
-    
-    if (mounted && success) {
-      Navigator.pop(context, true);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al moderar el reporte')));
+  void setStateIfMounted(VoidCallback fn) {
+    if (mounted) {
+      setState(fn);
     }
   }
 
+  Future<void> _loadReporteData() async {
+    if (!mounted) return;
+    setStateIfMounted(() {
+      _isLoadingReporte = true;
+      _errorReporte = null;
+    });
+    try {
+      final reporteData = await _reporteService.getReporteById(widget.reporteId);
+      if (mounted) {
+        setStateIfMounted(() {
+          _reporte = reporteData;
+          _isLoadingReporte = false;
+        });
+      }
+    } catch (e) {
+      print("Error cargando detalle para verificación: $e");
+      if (mounted) {
+        setStateIfMounted(() {
+          _errorReporte = e.toString().replaceFirst('Exception: ', '');
+          _isLoadingReporte = false;
+        });
+      }
+    }
+  }
+
+  // --- HANDLERS (Sin cambios funcionales) ---
+  Future<void> _moderarReporte(bool aprobar) async {
+    if (_isLoadingAction || _reporte == null) return;
+    setStateIfMounted(() => _isLoadingAction = true);
+    Map<String, dynamic> response = {};
+    String actionName = aprobar ? 'aprobar' : 'rechazar';
+    try {
+      if (aprobar) {
+        response = await _liderService.aprobarReporte(widget.reporteId);
+      } else {
+        response = await _liderService.rechazarReporte(widget.reporteId);
+      }
+      if (!mounted) return;
+      final message = response['message'] ?? 'Error desconocido';
+      final success = response['statusCode'] == 200;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message),
+        backgroundColor: success ? Colors.green : Colors.red,
+      ));
+      if (success) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar( content: Text('Error al $actionName: $e'), backgroundColor: Colors.red, ));
+    } finally {
+      if (mounted) setStateIfMounted(() => _isLoadingAction = false);
+    }
+  }
+
+  Future<void> _iniciarEdicion() async {
+    if (_reporte == null || _isLoadingAction) return;
+    final result = await Navigator.push<bool>( context, MaterialPageRoute(builder: (context) => PantallaEditarReporteLider(reporteInicial: _reporte!)), );
+    if (result == true && mounted) _loadReporteData();
+  }
+
+  Future<void> _iniciarFusion() async {
+    if (_reporte == null || _isLoadingAction) return;
+    final reporteOriginalId = await Navigator.push<int>( context, MaterialPageRoute(builder: (context) => const PantallaBuscarReporteOriginal()), );
+    if (reporteOriginalId == null || !mounted) return;
+
+    ReporteDetallado? reporteOriginal;
+    String originalIdentifier = '#$reporteOriginalId';
+    setStateIfMounted(() => _isLoadingAction = true);
+    try {
+        reporteOriginal = await _reporteService.getReporteById(reporteOriginalId);
+        originalIdentifier = '"${reporteOriginal.titulo}" (${reporteOriginal.codigoReporte ?? '#$reporteOriginalId'})';
+    } catch(e) { print("Error obteniendo detalles del original: $e"); }
+    finally { if (mounted) setStateIfMounted(() => _isLoadingAction = false); }
+    if (!mounted) return;
+
+    final confirm = await showDialog<bool>( context: context, builder: (ctx) => AlertDialog( title: const Text('Confirmar Fusión'), content: Text('¿Fusionar "${_reporte!.titulo}" (${_reporte!.codigoReporte ?? '#' + widget.reporteId.toString()}) con el reporte original $originalIdentifier?'), actions: [ TextButton(child: const Text('Cancelar'), onPressed: () => Navigator.pop(ctx, false)), ElevatedButton( style: ElevatedButton.styleFrom(backgroundColor: Colors.purple), child: const Text('Sí, Fusionar'), onPressed: () => Navigator.pop(ctx, true) ), ], ), );
+    if (confirm != true) return;
+
+    setStateIfMounted(() => _isLoadingAction = true);
+    Map<String, dynamic> response = {};
+    try {
+       response = await _liderService.fusionarReporte(widget.reporteId, reporteOriginalId);
+    } catch(e) { response = {'statusCode': 500, 'message': 'Error de conexión al fusionar.'}; }
+    if (!mounted) return;
+    setStateIfMounted(() => _isLoadingAction = false);
+    final message = response['message'] ?? 'Error desconocido';
+    final success = response['statusCode'] == 200;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar( content: Text(message), backgroundColor: success ? Colors.green : Colors.red, ));
+    if (success) Navigator.pop(context, true);
+  }
+
+  void _irAlChat() {
+    if (_reporte == null) return;
+    Navigator.pushNamed(context, '/chat', arguments: {
+      'reporteId': _reporte!.id,
+      'reporteTitulo': _reporte!.titulo,
+    });
+  }
+
+  // --- BUILD METHOD REESTRUCTURADO ---
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Verificar Reporte')),
-      body: FutureBuilder<ReporteDetallado>(
-        future: _reporteFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar el reporte para verificación: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: Text('Reporte no encontrado.'));
-          }
-
-          final reporte = snapshot.data!;
-          return Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  children: [
-                    // --- REUSE THE DETAILED HEADER WIDGET ---
-                    // This now shows all the new information (urgency, district, etc.)
-                    ReporteHeader(reporte: reporte),
-                    
-                    const Divider(height: 24),
-
-                    // --- NEW INTERACTIVE MINIMAP SECTION ---
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text('Verificación de Ubicación', style: Theme.of(context).textTheme.titleLarge),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 250,
-                      child: Stack(
-                        children: [
-                          FlutterMap(
-                            mapController: _mapController,
-                            options: MapOptions(
-                              initialCenter: reporte.location,
-                              initialZoom: 16.0,
-                            ),
-                            children: [
-                              TileLayer(
-                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                userAgentPackageName: 'com.example.mobile_app',
-                              ),
-                              MarkerLayer(
-                                markers: [
-                                  Marker(
-                                    point: reporte.location,
-                                    width: 80,
-                                    height: 80,
-                                    child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
-                                  )
-                                ],
-                              ),
-                            ],
-                          ),
-                          // --- NEW MAP CONTROLS ---
-                          Positioned(
-                            bottom: 10,
-                            right: 10,
-                            child: Column(
-                              children: [
-                                FloatingActionButton.small(
-                                  heroTag: 'zoomInBtn',
-                                  onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom + 1),
-                                  child: const Icon(Icons.add),
-                                ),
-                                const SizedBox(height: 8),
-                                FloatingActionButton.small(
-                                  heroTag: 'zoomOutBtn',
-                                  onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom - 1),
-                                  child: const Icon(Icons.remove),
-                                ),
-                                const SizedBox(height: 8),
-                                FloatingActionButton.small(
-                                  heroTag: 'centerBtn',
-                                  onPressed: () => _mapController.move(reporte.location, 16.0),
-                                  child: const Icon(Icons.my_location),
-                                ),
-                              ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24), // Extra space at the bottom
-                  ],
-                ),
-              ),
-            ],
+    // Usamos FutureBuilder para manejar estados iniciales
+    return FutureBuilder<ReporteDetallado>(
+      // Usamos _reporteFuture directamente si _loadReporteData lo inicializa bien
+      // O volvemos a llamar al servicio si _reporte es null tras la carga inicial
+      future: _reporte == null ? _reporteService.getReporteById(widget.reporteId) : Future.value(_reporte!),
+      builder: (context, snapshot) {
+        // Estado de carga inicial o si _reporte es null
+        if ((snapshot.connectionState == ConnectionState.waiting && _reporte == null) || _isLoadingReporte) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Cargando...')),
+            body: const EsqueletoReporteDetalle(),
           );
-        },
-      ),
-      bottomNavigationBar: BottomAppBar(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // --- UPDATED BUTTONS FOR BETTER STYLING ---
-              Expanded(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.cancel_outlined),
-                  label: const Text('Rechazar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                    foregroundColor: Theme.of(context).colorScheme.onError,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  onPressed: () => _moderarReporte(false),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Aprobar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  onPressed: () => _moderarReporte(true),
-                ),
-              ),
-            ],
+        }
+
+        // Estado de error
+        if (snapshot.hasError || _errorReporte != null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Error')),
+            body: Center(child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text('Error al cargar el reporte: ${_errorReporte ?? snapshot.error}'),
+            )),
+             floatingActionButton: FloatingActionButton( // Botón para reintentar
+               onPressed: _loadReporteData,
+               child: const Icon(Icons.refresh),
+               tooltip: 'Reintentar',
+             ),
+          );
+        }
+
+        // Estado con datos (aseguramos que _reporte tenga valor)
+        if (snapshot.hasData && _reporte == null) {
+          _reporte = snapshot.data; // Asigna el dato cargado por FutureBuilder
+        }
+
+        // Si _reporte sigue siendo null (caso improbable pero seguro)
+        if (_reporte == null) {
+           return Scaffold(
+             appBar: AppBar(title: const Text('Error')),
+             body: const Center(child: Text('No se pudo cargar el reporte.')),
+             floatingActionButton: FloatingActionButton(
+               onPressed: _loadReporteData,
+               child: const Icon(Icons.refresh),
+               tooltip: 'Reintentar',
+             ),
+           );
+        }
+
+        // --- Scaffold Principal con Datos ---
+        return Scaffold(
+          // AppBar ahora se construye aquí usando la función estática
+          appBar: CabezalDetalleVerificacion.buildAppBar(
+            context,
+            isLoadingAction: _isLoadingAction,
+            onEditar: _iniciarEdicion,
+            onChat: _irAlChat,
+            reporteEstado: _reporte!.estado, // Pasa el estado actual
           ),
-        ),
-      ),
+          // El Layout va dentro del RefreshIndicator
+          body: RefreshIndicator(
+            onRefresh: _loadReporteData,
+            child: LayoutDetalleVerificacion(
+              reporte: _reporte!,
+              // Ya no se pasan los callbacks aquí
+            ),
+          ),
+          // Barra inferior de acciones se mantiene igual
+          bottomNavigationBar: (_reporte?.estado == 'pendiente_verificacion')
+              ? AccionesModeracion(
+                  isLoading: _isLoadingAction,
+                  onModerar: _moderarReporte,
+                  onFusionar: _iniciarFusion,
+                )
+              : null,
+        );
+      },
     );
   }
 }

@@ -5,18 +5,17 @@ class ThemeProvider with ChangeNotifier {
   bool _isDarkMode = false;
   bool get isDarkMode => _isDarkMode;
 
-  ThemeProvider() {
-    _loadThemePreference();
-  }
-
-  void _loadThemePreference() async {
+  /// Carga la preferencia de tema guardada por el usuario.
+  /// Este método debe ser llamado al iniciar la aplicación.
+  Future<void> loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     notifyListeners();
   }
 
-  void toggleTheme(bool isOn) async {
-    _isDarkMode = isOn;
+  /// Establece el modo del tema (claro u oscuro) y guarda la preferencia.
+  Future<void> setThemeMode(bool isDarkMode) async {
+    _isDarkMode = isDarkMode;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isDarkMode', _isDarkMode);
     notifyListeners();

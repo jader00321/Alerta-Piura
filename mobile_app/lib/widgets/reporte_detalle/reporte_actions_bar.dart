@@ -16,14 +16,14 @@ class ReporteActionsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
+    final authNotifier = context.read<AuthNotifier>();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: Row(
         children: [
           TextButton.icon(
-            icon: const Icon(Icons.thumb_up_alt_outlined),
+            icon: const Icon(Icons.thumb_up_alt_outlined, size: 20),
             label: Text('$apoyosCount Apoyos'),
             onPressed: () {
               if (!authNotifier.isAuthenticated) {
@@ -34,10 +34,12 @@ class ReporteActionsBar extends StatelessWidget {
             },
           ),
           const SizedBox(width: 16),
-          TextButton.icon(
-            icon: const Icon(Icons.comment_outlined),
-            label: Text('$comentariosCount Comentarios'),
-            onPressed: () {},
+          Row(
+            children: [
+              const Icon(Icons.comment_outlined, size: 20, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text('$comentariosCount Comentarios', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+            ],
           ),
         ],
       ),

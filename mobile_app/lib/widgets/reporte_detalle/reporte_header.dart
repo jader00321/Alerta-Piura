@@ -1,9 +1,16 @@
+// lib/widgets/reporte_detalle/reporte_header.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';
 
 class ReporteHeader extends StatelessWidget {
   final ReporteDetallado reporte;
-  const ReporteHeader({super.key, required this.reporte});
+  final bool showImage; // Controla si se muestra la imagen
+
+  const ReporteHeader({
+    super.key,
+    required this.reporte,
+    this.showImage = true, // Por defecto, mostrar la imagen
+  });
 
   Widget _buildInfoRow(BuildContext context, IconData icon, String title, String? value) {
     if (value == null || value.isEmpty) return const SizedBox.shrink();
@@ -29,7 +36,7 @@ class ReporteHeader extends StatelessWidget {
       ),
     );
   }
-  
+
   Color _getUrgencyColor(String? urgency) {
     switch (urgency?.toLowerCase()) {
       case 'alta': return Colors.red;
@@ -44,23 +51,29 @@ class ReporteHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (reporte.fotoUrl != null)
-          Image.network(
-            reporte.fotoUrl!,
-            height: 250,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, progress) => progress == null
-                ? child
-                : const SizedBox(height: 250, child: Center(child: CircularProgressIndicator())),
-          )
-        else
-          Container(
-            height: 200,
-            color: Theme.of(context).colorScheme.surfaceVariant,
-            child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 50)),
-          ),
-        
+        // --- MOSTRAR IMAGEN CONDICIONALMENTE ---
+        if (showImage) ...[
+          if (reporte.fotoUrl != null && reporte.fotoUrl!.isNotEmpty)
+            Image.network(
+              reporte.fotoUrl!,
+              height: 250,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) => progress == null
+                  ? child
+                  : const SizedBox(height: 250, child: Center(child: CircularProgressIndicator())),
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(height: 200, color: Theme.of(context).colorScheme.surfaceVariant, child: const Center(child: Icon(Icons.broken_image, color: Colors.grey, size: 50))),
+            )
+          else
+            Container(
+              height: 200,
+              color: Theme.of(context).colorScheme.surfaceVariant,
+              child: const Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 50)),
+            ),
+        ],
+        // --- FIN MOSTRAR IMAGEN ---
+
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -90,7 +103,7 @@ class ReporteHeader extends StatelessWidget {
                 'Publicado por ${reporte.autor} • ${reporte.fechaCreacion}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              if (reporte.codigoReporte != null) 
+              if (reporte.codigoReporte != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 4.0),
                   child: Text('Código de Seguimiento: ${reporte.codigoReporte}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.teal)),

@@ -10,5 +10,6 @@ const jsonParser = express.json(); // <-- CREAR PARSER
 router.post('/register', jsonParser, authController.register);
 router.post('/login', jsonParser, authController.login);
 router.post('/verify-password', jsonParser, authMiddleware, authController.verifyPassword);
+router.get('/refresh-token', authMiddleware, authController.refreshToken);
 
 module.exports = router;

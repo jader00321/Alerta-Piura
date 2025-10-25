@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Typography, Box, Alert, Paper, CssBaseline } from '@mui/material';
 import authService from '../services/authService';
+import { useAuth } from '../context/AuthContext'; // Importar el hook useAuth
 import logo from '../assets/logo.png';
 import loginBg from '../assets/login-bg.png';
 
@@ -15,8 +16,9 @@ function Copyright(props) {
   );
 }
 
-function LoginPage({ onLogin }) {
+function LoginPage() {
   const navigate = useNavigate();
+  const { login } = useAuth(); // Usar la función login del contexto
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,29 +27,28 @@ function LoginPage({ onLogin }) {
     e.preventDefault();
     setError('');
     try {
-      await authService.login(email, password);
-      onLogin();
-      navigate('/');
+      const data = await authService.login(email, password);
+      if (data.token) {
+        login(data.token); // Llamar a la función del contexto para actualizar el estado global
+        navigate('/');
+      }
     } catch (err) {
       setError(err.message || 'Error al iniciar sesión.');
     }
   };
 
   return (
-    // Main container using Flexbox to create two columns
     <Box sx={{ display: 'flex', height: '100vh' }}>
       <CssBaseline />
       
-      {/* --- Left Side: Branding & Illustration --- */}
-      {/* This Box will be hidden on small screens */}
       <Box 
         sx={{ 
-          flex: 1.5, // Takes up more space
-          display: { xs: 'none', sm: 'flex' }, // Hidden on extra-small, flex on small and up
+          flex: 1.5,
+          display: { xs: 'none', sm: 'flex' },
           alignItems: 'center',
           justifyContent: 'center',
           p: { xs: 2, sm: 3, md: 8 },
-          backgroundColor: '#1e1e1e' // A dark background
+          backgroundColor: '#1e1e1e'
         }}
       >
         <Box
@@ -65,13 +66,12 @@ function LoginPage({ onLogin }) {
         />
       </Box>
       
-      {/* --- Right Side: Login Form --- */}
       <Box 
         component={Paper} 
         elevation={6} 
         square
         sx={{
-          flex: 1, // Takes up less space
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -85,10 +85,9 @@ function LoginPage({ onLogin }) {
             flexDirection: 'column',
             alignItems: 'center',
             width: '100%',
-            maxWidth: '600px' // Constrain form width
+            maxWidth: '600px'
           }}
         >
-          {/* Your custom logo styling is preserved */}
           <img src={logo} alt="Alerta Piura Logo" style={{ width: '160px', height: '160px', border: `3px solid black`, borderRadius: '16px', padding: '5px'}} />
           
           <Typography component="h1" variant="h5" sx={{ mt: 4, fontWeight: 'bold' }}>

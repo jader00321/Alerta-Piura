@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/perfil_service.dart';
-//import 'package:mobile_app/models/perfil_model.dart';
+import 'package:mobile_app/models/perfil_model.dart';
+import 'package:mobile_app/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
+
+// Importamos los nuevos widgets que hemos creado
+import 'package:mobile_app/widgets/editar_perfil/seccion_datos_personales.dart';
+import 'package:mobile_app/widgets/editar_perfil/seccion_seguridad.dart';
+import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart'; // Reutilizamos un esqueleto
 
 class EditarPerfilScreen extends StatefulWidget {
   const EditarPerfilScreen({super.key});
@@ -10,198 +17,65 @@ class EditarPerfilScreen extends StatefulWidget {
 }
 
 class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
-  final _formKey = GlobalKey<FormState>();
-  // Controllers for personal data
-  final _nombreController = TextEditingController();
-  final _aliasController = TextEditingController();
-  final _telefonoController = TextEditingController();
-  final _emailController = TextEditingController();
-  // Controllers for password change
-  final _currentPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-
-  bool _obscureText = true;
   final PerfilService _perfilService = PerfilService();
-  bool _isLoading = true;
+  late Future<Perfil> _perfilFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    _perfilFuture = _perfilService.getMiPerfil();
   }
 
-  @override
-  void dispose() {
-    _nombreController.dispose();
-    _aliasController.dispose();
-    _telefonoController.dispose();
-    _emailController.dispose();
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadUserProfile() async {
-    try {
-      final perfil = await _perfilService.getMiPerfil();
-      if (mounted) {
-        setState(() {
-          _nombreController.text = perfil.nombre;
-          _aliasController.text = perfil.alias ?? '';
-          _telefonoController.text = perfil.telefono ?? '';
-          _emailController.text = perfil.email;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      // Handle error
+  // Esta función se pasará como callback para refrescar el estado del AuthProvider
+  // y notificar a la pantalla anterior que debe recargar los datos.
+  void _onProfileUpdated() {
+    if (mounted) {
+      Provider.of<AuthNotifier>(context, listen: false).checkAuthStatus();
+      // Se podría pasar un valor al hacer pop, pero el refresh en la pantalla de perfil ya maneja la recarga.
     }
-  }
-  
-  void _showConfirmationDialog({required Function onConfirm}) {
-    final passwordConfirmController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirmar Cambios'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Para guardar los cambios, por favor ingresa tu contraseña actual.'),
-            TextField(
-              controller: passwordConfirmController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Contraseña Actual'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              onConfirm(passwordConfirmController.text);
-            },
-            child: const Text('Confirmar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _updateProfileData() {
-    _showConfirmationDialog(
-      onConfirm: (String password) async {
-        final success = await _perfilService.updateMyProfile(
-          _nombreController.text,
-          _aliasController.text,
-          _telefonoController.text,
-        );
-        // We'll also update the email separately if it has changed
-        if (_emailController.text != (await _perfilService.getMiPerfil()).email) {
-          final emailResponse = await _perfilService.updateMyEmail(_emailController.text, password);
-           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(emailResponse['data']['message'])));
-           }
-        }
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Datos actualizados.')));
-          Navigator.pop(context, true); // Pop with true to signal a refresh
-        }
-      }
-    );
-  }
-
-  void _updatePassword() {
-    if (_newPasswordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Las nuevas contraseñas no coinciden.')));
-      return;
-    }
-    // You can add more password strength validation here
-    
-    _perfilService.updateMyPassword(_currentPasswordController.text, _newPasswordController.text).then((response) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(response['data']['message']),
-          backgroundColor: response['statusCode'] == 200 ? Colors.green : Colors.red,
-        ));
-        if (response['statusCode'] == 200) {
-          _currentPasswordController.clear();
-          _newPasswordController.clear();
-          _confirmPasswordController.clear();
-        }
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Editar Perfil')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Datos Personales', style: Theme.of(context).textTheme.titleLarge),
-                    const Divider(),
-                    TextFormField(controller: _nombreController, decoration: const InputDecoration(labelText: 'Nombre Completo')),
-                    const SizedBox(height: 16),
-                    TextFormField(controller: _aliasController, decoration: const InputDecoration(labelText: 'Alias (Opcional)')),
-                    const SizedBox(height: 16),
-                    TextFormField(controller: _telefonoController, decoration: const InputDecoration(labelText: 'Teléfono (Opcional)')),
-                    const SizedBox(height: 16),
-                    TextFormField(controller: _emailController, decoration: const InputDecoration(labelText: 'Correo Electrónico')),
-                    const SizedBox(height: 24),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: _updateProfileData,
-                        child: const Text('Guardar Datos Personales'),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    Text('Seguridad', style: Theme.of(context).textTheme.titleLarge),
-                    const Divider(),
-                    TextFormField(
-                      controller: _currentPasswordController,
-                      obscureText: _obscureText,
-                      decoration: const InputDecoration(labelText: 'Contraseña Actual'),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _newPasswordController,
-                      obscureText: _obscureText,
-                      decoration: InputDecoration(
-                        labelText: 'Nueva Contraseña',
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _obscureText = !_obscureText),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: _obscureText,
-                      decoration: const InputDecoration(labelText: 'Confirmar Nueva Contraseña'),
-                    ),
-                     const SizedBox(height: 24),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: _updatePassword,
-                        child: const Text('Cambiar Contraseña'),
-                      ),
-                    ),
-                  ],
+      body: FutureBuilder<Perfil>(
+        future: _perfilFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // Usamos un esqueleto de carga para una mejor UX
+            return const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: EsqueletoListaActividad(),
+            );
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return const Center(child: Text('Error al cargar la información del perfil.'));
+          }
+
+          final perfil = snapshot.data!;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Renderizamos el primer widget con los datos personales iniciales
+                SeccionDatosPersonales(
+                  nombreInicial: perfil.nombre,
+                  aliasInicial: perfil.alias ?? '',
+                  telefonoInicial: perfil.telefono ?? '',
+                  emailInicial: perfil.email,
+                  onProfileUpdated: _onProfileUpdated,
                 ),
-              ),
+                const SizedBox(height: 24),
+                // Renderizamos el segundo widget para la seguridad
+                const SeccionSeguridad(),
+              ],
             ),
+          );
+        },
+      ),
     );
   }
 }

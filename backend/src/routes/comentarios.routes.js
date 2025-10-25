@@ -6,9 +6,12 @@ const authMiddleware = require('../middleware/auth.middleware');
 const router = Router();
 const jsonParser = express.json();
 
-// All comment routes require authentication
+// Todas las rutas requieren autenticación
 router.use(authMiddleware);
 
+router.post('/', jsonParser, comentariosController.createComentario);
+
+// Rutas existentes para editar, eliminar, reportar, apoyar (usan /:id del comentario)
 router.put('/:id', jsonParser, comentariosController.editarComentario);
 router.delete('/:id', comentariosController.eliminarComentario);
 router.post('/:id/reportar', jsonParser, comentariosController.reportarComentario);

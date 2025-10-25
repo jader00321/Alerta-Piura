@@ -1,3 +1,4 @@
+// lib/api/lider_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app/models/reporte_pendiente_model.dart';
@@ -5,6 +6,22 @@ import 'package:mobile_app/utils/api_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_app/models/reporte_moderacion_model.dart';
 import 'package:mobile_app/models/solicitud_revision_model.dart';
+import 'package:mobile_app/models/reporte_historial_moderado_model.dart';
+
+// --- MODIFICADO: Añadir totalFiltrado ---
+class PagedResult<T> {
+  final List<T> items;
+  final bool hasMore;
+  final int totalFiltrado; // <-- Añadido
+
+  PagedResult({
+    required this.items,
+    required this.hasMore,
+    required this.totalFiltrado, // <-- Añadido
+  });
+}
+// --- FIN MODIFICADO ---
+
 
 class LiderService {
   Future<String?> _getToken() async {
@@ -12,107 +29,289 @@ class LiderService {
     return prefs.getString('authToken');
   }
 
-  Future<List<ReportePendiende>> getReportesPendientes() async {
+  // Obtener Estadísticas (sin cambios)
+  Future<Map<String, int>> getModeracionStats() async {
     final token = await _getToken();
     if (token == null) throw Exception('No autenticado');
-    
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes-pendientes');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
-
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((item) => ReportePendiende.fromJson(item)).toList();
-    } else {
-      throw Exception('Error al cargar reportes pendientes');
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/stats/moderacion');
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        // Asegurarse de que los valores sean enteros
+        return data.map((key, value) => MapEntry(key, (value is num) ? value.toInt() : 0));
+      } else {
+        throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar estadísticas'}');
+      }
+    } catch (e) {
+      print("Error fetching moderation stats: $e");
+      throw Exception('Error de conexión al cargar estadísticas.');
     }
   }
 
-  Future<bool> aprobarReporte(int id) async {
-    final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
-    
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes/$id/aprobar');
-    final response = await http.put(url, headers: {'Authorization': 'Bearer $token'});
-    return response.statusCode == 200;
-  }
-  
-  Future<bool> rechazarReporte(int id) async {
-    final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
-
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes/$id/rechazar');
-    final response = await http.put(url, headers: {'Authorization': 'Bearer $token'});
-    return response.statusCode == 200;
-  }
-
-  Future<List<ReportePendiende>> getReportesModerados() async {
+  // --- MODIFICADO: getReportesPendientes (añadir sortBy) ---
+  Future<PagedResult<ReportePendiente>> getReportesPendientes({
+      int page = 1,
+      int? categoriaId,
+      bool? prioritario,
+      bool? conApoyos,
+      String? search,
+      String? sortBy, // <-- Añadido
+  }) async {
     final token = await _getToken();
     if (token == null) throw Exception('No autenticado');
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes-moderados');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    final queryParameters = <String, String>{
+      'page': page.toString(),
+      if (categoriaId != null) 'categoriaId': categoriaId.toString(),
+      if (prioritario == true) 'prioritario': 'true',
+      if (conApoyos == true) 'conApoyos': 'true',
+      if (search != null && search.isNotEmpty) 'search': search,
+      if (sortBy != null) 'sortBy': sortBy, // <-- Añadido
+    };
 
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      // Reutilizamos el mismo modelo
-      return jsonResponse.map((item) => ReportePendiende.fromJson(item)).toList();
-    } else {
-      throw Exception('Error al cargar el historial');
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes-pendientes')
+        .replace(queryParameters: queryParameters);
+
+    try {
+        final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> decodedBody = json.decode(response.body);
+          final List<dynamic> reportesJson = decodedBody['reportes'] ?? [];
+          final bool hasMore = decodedBody['hasMore'] ?? false;
+          // --- MODIFICADO: Parsear totalFiltrado ---
+          final int totalFiltrado = (decodedBody['totalFiltrado'] as num?)?.toInt() ?? 0;
+          // --- FIN MODIFICADO ---
+          final List<ReportePendiente> reportes = reportesJson.map((item) => ReportePendiente.fromJson(item)).toList();
+          return PagedResult(items: reportes, hasMore: hasMore, totalFiltrado: totalFiltrado); // <-- Pasar totalFiltrado
+        } else {
+          throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar pendientes'}');
+        }
+    } catch(e) {
+        print("Error fetching pending reports: $e");
+        throw Exception('Error de conexión al cargar pendientes.');
     }
   }
 
-  Future<bool> reportarUsuario(int idUsuario, String motivo) async {
-    final token = await _getToken();
-    if (token == null) return false;
-
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/usuarios/$idUsuario/reportar');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: json.encode({'motivo': motivo}),
-    );
-    return response.statusCode == 201;
-  }
-
-  Future<List<ReporteModeracion>> getMisComentariosReportados() async {
+  // --- MODIFICADO: getReportesModerados (con fechas precisas y totalFiltrado) ---
+  Future<PagedResult<ReporteHistorialModerado>> getReportesModerados({
+      int page = 1,
+      String? estado, // 'verificado', 'rechazado', 'fusionado'
+      String? fecha, // 'hoy', 'semana', 'mes' (Mantenido como fallback)
+      DateTime? startDate, // <-- Añadido
+      DateTime? endDate, // <-- Añadido
+  }) async {
     final token = await _getToken();
     if (token == null) throw Exception('No autenticado');
-    
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/me/comentarios-reportados');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
 
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((item) => ReporteModeracion.fromJson(item, TipoReporteModeracion.comentario)).toList();
-    } else {
-      throw Exception('Error al cargar comentarios reportados');
+    final queryParameters = <String, String>{
+      'page': page.toString(),
+      if (estado != null) 'estado': estado,
+      // Solo añadir 'fecha' si no hay rango preciso
+      if (fecha != null && startDate == null && endDate == null) 'fecha': fecha,
+      // Añadir fechas precisas si existen
+      if (startDate != null) 'startDate': startDate.toIso8601String().substring(0, 10), // Formato YYYY-MM-DD
+      if (endDate != null) 'endDate': endDate.toIso8601String().substring(0, 10), // Formato YYYY-MM-DD
+    };
+
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes-moderados')
+        .replace(queryParameters: queryParameters);
+
+     try {
+        final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> decodedBody = json.decode(response.body);
+          final List<dynamic> reportesJson = decodedBody['reportes'] ?? [];
+          final bool hasMore = decodedBody['hasMore'] ?? false;
+          // --- MODIFICADO: Parsear totalFiltrado ---
+          final int totalFiltrado = (decodedBody['totalFiltrado'] as num?)?.toInt() ?? 0;
+          // --- FIN MODIFICADO ---
+          final List<ReporteHistorialModerado> reportes = reportesJson.map((item) => ReporteHistorialModerado.fromJson(item)).toList();
+          return PagedResult(items: reportes, hasMore: hasMore, totalFiltrado: totalFiltrado); // <-- Pasar totalFiltrado
+        } else {
+          throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar historial'}');
+        }
+    } catch(e) {
+        print("Error fetching moderation history: $e");
+        throw Exception('Error de conexión al cargar historial.');
     }
   }
-  
-  Future<List<ReporteModeracion>> getMisUsuariosReportados() async {
+
+  // --- MODIFICADO: getMisComentariosReportados (con fechas precisas y totalFiltrado) ---
+  Future<PagedResult<ReporteModeracion>> getMisComentariosReportados({
+      int page = 1,
+      String? fecha, // Fallback
+      DateTime? startDate, // <-- Añadido
+      DateTime? endDate, // <-- Añadido
+  }) async {
     final token = await _getToken();
     if (token == null) throw Exception('No autenticado');
-    
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/me/usuarios-reportados');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
 
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((item) => ReporteModeracion.fromJson(item, TipoReporteModeracion.usuario)).toList();
-    } else {
-      throw Exception('Error al cargar usuarios reportados');
+    final queryParameters = <String, String>{
+      'page': page.toString(),
+      if (fecha != null && startDate == null && endDate == null) 'fecha': fecha,
+      if (startDate != null) 'startDate': startDate.toIso8601String().substring(0, 10),
+      if (endDate != null) 'endDate': endDate.toIso8601String().substring(0, 10),
+    };
+
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/me/comentarios-reportados')
+        .replace(queryParameters: queryParameters);
+
+    try {
+        final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> decodedBody = json.decode(response.body);
+          final List<dynamic> reportesJson = decodedBody['reportes'] ?? [];
+          final bool hasMore = decodedBody['hasMore'] ?? false;
+          // --- MODIFICADO: Parsear totalFiltrado ---
+          final int totalFiltrado = (decodedBody['totalFiltrado'] as num?)?.toInt() ?? 0;
+          // --- FIN MODIFICADO ---
+          final List<ReporteModeracion> reportes = reportesJson.map((item) => ReporteModeracion.fromJson(item, TipoReporteModeracion.comentario)).toList();
+          return PagedResult(items: reportes, hasMore: hasMore, totalFiltrado: totalFiltrado); // <-- Pasar totalFiltrado
+        } else {
+          throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar comentarios reportados'}');
+        }
+    } catch(e) {
+         print("Error fetching reported comments: $e");
+         throw Exception('Error de conexión al cargar reportes.');
     }
   }
 
-  Future<bool> solicitarRevision(int reporteId) async {
+  // --- MODIFICADO: getMisUsuariosReportados (con fechas precisas y totalFiltrado) ---
+  Future<PagedResult<ReporteModeracion>> getMisUsuariosReportados({
+      int page = 1,
+      String? fecha, // Fallback
+      DateTime? startDate, // <-- Añadido
+      DateTime? endDate, // <-- Añadido
+  }) async {
     final token = await _getToken();
-    if (token == null) return false;
-    
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes/$reporteId/solicitar-revision');
-    final response = await http.post(url, headers: {'Authorization': 'Bearer $token'});
-    return response.statusCode == 200;
+    if (token == null) throw Exception('No autenticado');
+
+    final queryParameters = <String, String>{
+      'page': page.toString(),
+      if (fecha != null && startDate == null && endDate == null) 'fecha': fecha,
+      if (startDate != null) 'startDate': startDate.toIso8601String().substring(0, 10),
+      if (endDate != null) 'endDate': endDate.toIso8601String().substring(0, 10),
+    };
+
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/me/usuarios-reportados')
+        .replace(queryParameters: queryParameters);
+
+    try {
+        final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> decodedBody = json.decode(response.body);
+          final List<dynamic> reportesJson = decodedBody['reportes'] ?? [];
+          final bool hasMore = decodedBody['hasMore'] ?? false;
+           // --- MODIFICADO: Parsear totalFiltrado ---
+          final int totalFiltrado = (decodedBody['totalFiltrado'] as num?)?.toInt() ?? 0;
+          // --- FIN MODIFICADO ---
+          final List<ReporteModeracion> reportes = reportesJson.map((item) => ReporteModeracion.fromJson(item, TipoReporteModeracion.usuario)).toList();
+          return PagedResult(items: reportes, hasMore: hasMore, totalFiltrado: totalFiltrado); // <-- Pasar totalFiltrado
+        } else {
+          throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar usuarios reportados'}');
+        }
+    } catch(e) {
+        print("Error fetching reported users: $e");
+        throw Exception('Error de conexión al cargar reportes.');
+    }
   }
 
+  // aprobarReporte y rechazarReporte (sin cambios)
+  Future<Map<String, dynamic>> aprobarReporte(int reporteId) async {
+     final token = await _getToken();
+     if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+     final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes/$reporteId/aprobar');
+     try {
+       final response = await http.put(url, headers: {'Authorization': 'Bearer $token'});
+       final body = json.decode(response.body);
+       return {'statusCode': response.statusCode, 'message': body['message'] ?? 'Respuesta inesperada'};
+     } catch (e) { return {'statusCode': 500, 'message': 'Error de conexión.'}; }
+  }
+
+  Future<Map<String, dynamic>> rechazarReporte(int reporteId) async {
+      final token = await _getToken();
+     if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+     final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes/$reporteId/rechazar');
+     try {
+       final response = await http.put(url, headers: {'Authorization': 'Bearer $token'});
+       final body = json.decode(response.body);
+       return {'statusCode': response.statusCode, 'message': body['message'] ?? 'Respuesta inesperada'};
+     } catch (e) { return {'statusCode': 500, 'message': 'Error de conexión.'}; }
+  }
+
+  // editarReporteLider (sin cambios)
+  Future<Map<String, dynamic>> editarReporteLider(int reporteId, {
+    required String titulo,
+    String? descripcion,
+    required int idCategoria,
+    String? referenciaUbicacion,
+    List<String>? tags,
+  }) async {
+    final token = await _getToken();
+    if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reporte/$reporteId');
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: json.encode({
+          'titulo': titulo,
+          'descripcion': descripcion,
+          'id_categoria': idCategoria,
+          'referencia_ubicacion': referenciaUbicacion,
+          'tags': tags,
+        }),
+      );
+      final body = json.decode(response.body);
+      return {'statusCode': response.statusCode, 'message': body['message'] ?? 'Respuesta inesperada'};
+    } catch (e) {
+        print("Error en editarReporteLider: $e");
+        return {'statusCode': 500, 'message': 'Error de conexión.'};
+    }
+  }
+
+  // fusionarReporte (sin cambios)
+  Future<Map<String, dynamic>> fusionarReporte(int reporteDuplicadoId, int reporteOriginalId) async {
+    final token = await _getToken();
+    if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reporte/$reporteDuplicadoId/fusionar');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: json.encode({'id_reporte_original': reporteOriginalId}),
+      );
+      final body = json.decode(response.body);
+      return {'statusCode': response.statusCode, 'message': body['message'] ?? 'Respuesta inesperada'};
+    } catch (e) {
+      print("Error en fusionarReporte: $e");
+      return {'statusCode': 500, 'message': 'Error de conexión.'};
+    }
+  }
+
+  // eliminarReporteModeracion (sin cambios)
+  Future<Map<String, dynamic>> eliminarReporteModeracion(int moderacionReporteId, TipoReporteModeracion tipo) async {
+    final token = await _getToken();
+    if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+    final tipoString = tipo == TipoReporteModeracion.comentario ? 'comentario' : 'usuario';
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/moderacion/$tipoString/$moderacionReporteId');
+    try {
+      final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
+      String message = 'Eliminado correctamente';
+      if (response.body.isNotEmpty) {
+          try {
+              message = json.decode(response.body)['message'] ?? message;
+          } catch (_) {}
+      }
+      return {'statusCode': response.statusCode, 'message': message};
+    } catch (e) {
+      print("Error en eliminarReporteModeracion: $e");
+      return {'statusCode': 500, 'message': 'Error de conexión.'};
+    }
+  }
+
+  // getMisSolicitudesRevision (sin cambios)
   Future<List<SolicitudRevision>> getMisSolicitudesRevision() async {
     final token = await _getToken();
     if (token == null) throw Exception('No autenticado');
@@ -127,4 +326,56 @@ class LiderService {
       throw Exception('Error al cargar solicitudes');
     }
   }
+
+  // --- solicitarRevision (ACTUALIZADO para enviar motivo) ---
+  Future<Map<String, dynamic>> solicitarRevision(int reporteId, String motivo) async { // <-- Añadir motivo
+    final token = await _getToken();
+    if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes/$reporteId/solicitar-revision');
+    try {
+      final response = await http.post(
+        url,
+        headers: { // <-- Añadir headers y body
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
+        body: json.encode({'motivo': motivo}), // <-- Enviar motivo
+      );
+      // Manejar posible cuerpo vacío en éxito
+      String message = 'Respuesta inesperada';
+      if (response.body.isNotEmpty) {
+          try {
+              message = json.decode(response.body)['message'] ?? message;
+          } catch (_) {}
+      } else if (response.statusCode == 201) {
+          message = 'Solicitud enviada exitosamente.';
+      }
+      return {'statusCode': response.statusCode, 'message': message};
+    } catch (e) {
+      print("Error en solicitarRevision: $e");
+      return {'statusCode': 500, 'message': 'Error de conexión.'};
+    }
+  }
+
+  // --- NUEVO MÉTODO: Obtener Zonas Asignadas ---
+  Future<List<String>> getMisZonasAsignadas() async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No autenticado');
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/me/zonas-asignadas');
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      if (response.statusCode == 200) {
+        // La API devuelve directamente una lista de strings
+        final List<dynamic> data = json.decode(response.body);
+        return List<String>.from(data);
+      } else {
+        throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar zonas asignadas'}');
+      }
+    } catch (e) {
+      print("Error fetching assigned zones: $e");
+      throw Exception('Error de conexión al cargar zonas.');
+    }
+  }
+  // --- FIN NUEVO MÉTODO ---
+
 }

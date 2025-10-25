@@ -1,242 +1,268 @@
+// lib/screens/mi_actividad_screen.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/lider_service.dart';
 import 'package:mobile_app/api/perfil_service.dart';
 import 'package:mobile_app/api/reporte_service.dart';
+import 'package:mobile_app/api/seguimiento_service.dart';
 import 'package:mobile_app/models/reporte_resumen_model.dart';
 import 'package:mobile_app/models/solicitud_revision_model.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
+import 'package:mobile_app/widgets/mi_actividad/activity_list_view.dart';
+import 'package:mobile_app/widgets/mi_actividad/solicitudes_revision_view.dart';
 
-class MiActividadScreen extends StatelessWidget {
-  const MiActividadScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Get the role directly from the provider. No need for Futures or loading states here.
-    final userRole = Provider.of<AuthNotifier>(context, listen: false).userRole;
-    final bool isLider = userRole == 'lider_vecinal';
-    final int tabLength = isLider ? 4 : 3;
-
-    return DefaultTabController(
-      length: tabLength,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Mi Actividad'),
-          bottom: TabBar(
-            isScrollable: true,
-            tabs: [
-              const Tab(text: 'Mis Reportes'),
-              const Tab(text: 'Mis Apoyos'),
-              const Tab(text: 'Comentarios'),
-              if (isLider) const Tab(text: 'Revisiones Solicitadas'),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            const _ActivityListView(fetcher: Fetcher.misReportes),
-            const _ActivityListView(fetcher: Fetcher.misApoyos),
-            const _ActivityListView(fetcher: Fetcher.misComentarios),
-            if (isLider) const _SolicitudesRevisionView(),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Enum to differentiate which list to fetch
-enum Fetcher { misReportes, misApoyos, misComentarios }
-
-// Reusable widget for the first 3 tabs
-class _ActivityListView extends StatefulWidget {
-  final Fetcher fetcher;
-  const _ActivityListView({required this.fetcher});
+class MiActividadScreen extends StatefulWidget {
+  // --- NUEVO: Aceptar el PageController principal ---
+  final PageController mainPageController;
+  
+  const MiActividadScreen({
+    super.key, 
+    required this.mainPageController
+  });
 
   @override
-  State<_ActivityListView> createState() => _ActivityListViewState();
+  State<MiActividadScreen> createState() => _MiActividadScreenState();
 }
 
-class _ActivityListViewState extends State<_ActivityListView> with AutomaticKeepAliveClientMixin {
+class _MiActividadScreenState extends State<MiActividadScreen> with TickerProviderStateMixin {
+  // Servicios
   final PerfilService _perfilService = PerfilService();
   final ReporteService _reporteService = ReporteService();
-  late Future<List<ReporteResumen>> _listFuture;
+  final SeguimientoService _seguimientoService = SeguimientoService();
+  final LiderService _liderService = LiderService();
+
+  // Estado
+  TabController? _tabController;
+  bool _isLoading = true; // Estado de carga principal
+  bool _isLider = false;
+  int _tabLength = 4; // Longitud por defecto para Ciudadano
+
+  // Listas de datos
+  List<ReporteResumen> _misReportes = [];
+  List<ReporteResumen> _misApoyos = [];
+  List<ReporteResumen> _misSeguimientos = [];
+  List<ReporteResumen> _misComentarios = [];
+  List<SolicitudRevision> _misRevisiones = [];
+  bool _isSwipingScreens = false;
+  // Claves para llamar a _refreshData() en hijos (si fuera necesario, pero RefreshIndicator lo maneja)
 
   @override
   void initState() {
     super.initState();
-    _listFuture = _fetchData();
+    _isLider = context.read<AuthNotifier>().isLider;
+    _tabLength = _isLider ? 5 : 4;
+    _tabController = TabController(length: _tabLength, vsync: this);
+    
+    _tabController?.addListener(() { 
+      if (!_tabController!.indexIsChanging) {
+        setState(() {
+          _isSwipingScreens = false; // Resetear al cambiar de pestaña
+        });
+      }
+    });
+    // Cargar todos los datos al iniciar
+    _fetchAllData();
   }
 
-  Future<List<ReporteResumen>> _fetchData() {
-    switch (widget.fetcher) {
-      case Fetcher.misReportes:
-        return _perfilService.getMisReportes();
-      case Fetcher.misApoyos:
-        return _perfilService.getMisApoyos();
-      case Fetcher.misComentarios:
-        return _perfilService.getMisComentarios();
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
+  }
+
+  /// Carga todos los datos para todas las pestañas simultáneamente
+  Future<void> _fetchAllData() async {
+    // No establecer isLoading a true si ya está en medio de una recarga,
+    // pero si no es una recarga (estado inicial), mostrar esqueleto.
+    if (mounted) setState(() => _isLoading = true);
+    try {
+      final tareas = [
+        _perfilService.getMisReportes(),
+        _perfilService.getMisApoyos(),
+        _seguimientoService.getMisReportesSeguidos(),
+        _perfilService.getMisComentarios(),
+        if (_isLider) _liderService.getMisSolicitudesRevision(),
+      ];
+      final resultados = await Future.wait(tareas);
+      if (mounted) {
+        setState(() {
+          _misReportes = resultados[0] as List<ReporteResumen>;
+          _misApoyos = resultados[1] as List<ReporteResumen>;
+          _misSeguimientos = resultados[2] as List<ReporteResumen>;
+          _misComentarios = resultados[3] as List<ReporteResumen>;
+          if (_isLider) _misRevisiones = resultados[4] as List<SolicitudRevision>;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error cargando toda la actividad: $e");
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar la actividad: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return FutureBuilder<List<ReporteResumen>>(
-      future: _listFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return const Center(child: Text('Error al cargar los datos.'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No hay actividad para mostrar.'));
-        }
-
-        final reportes = snapshot.data!;
-        return RefreshIndicator(
-          onRefresh: () async {
-            setState(() {
-              _listFuture = _fetchData();
-            });
-          },
-          child: ListView.builder(
-            itemCount: reportes.length,
-            itemBuilder: (context, index) {
-              final reporte = reportes[index];
-              return ListTile(
-                title: Text(reporte.titulo),
-                subtitle: Text('Estado: ${reporte.estado} - ${reporte.fecha ?? 'N/A'}'),
-                trailing: widget.fetcher == Fetcher.misReportes && reporte.estado == 'pendiente_verificacion'
-                  ? TextButton(
-                      child: const Text('Cancelar', style: TextStyle(color: Colors.red)),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Cancelar Reporte'),
-                            content: const Text('¿Estás seguro de que quieres cancelar este reporte?'),
-                            actions: [
-                              TextButton(
-                                child: const Text('No'),
-                                onPressed: () => Navigator.pop(ctx),
-                              ),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                                child: const Text('Sí, Cancelar'),
-                                onPressed: () async {
-                                  final success = await _reporteService.eliminarReporte(reporte.id);
-                                  if (mounted) {
-                                    Navigator.pop(ctx);
-                                    if (success) {
-                                      setState(() {
-                                        _listFuture = _fetchData();
-                                      });
-                                    }
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    )
-                  : const Icon(Icons.chevron_right),
-                onTap: () async {
-                  final result = await Navigator.pushNamed(
-                    context, 
-                    '/reporte_detalle', 
-                    arguments: reporte.id
-                  );
-                  if (result == true) {
-                    setState(() {
-                      _listFuture = _fetchData();
-                    });
-                  }
-                },
-              );
-            },
+  /// Maneja la acción de "Cancelar" desde la pestaña "Mis Reportes"
+  Future<void> _handleCancelarReporte(int reporteId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancelar Reporte'),
+        content: const Text('¿Estás seguro? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(child: const Text('No'), onPressed: () => Navigator.pop(ctx, false)),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Sí, Cancelar'),
+            onPressed: () => Navigator.pop(ctx, true),
           ),
-        );
-      },
+        ],
+      ),
     );
+
+    if (confirm == true) {
+      try {
+        final success = await _reporteService.eliminarReporte(reporteId);
+        if (success && mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('Reporte cancelado exitosamente.'), backgroundColor: Colors.green),
+           );
+           _fetchAllData(); // Recargar todos los datos para actualizar contadores y listas
+        } else if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             const SnackBar(content: Text('No se pudo cancelar el reporte.'), backgroundColor: Colors.red),
+           );
+        }
+      } catch (e) {
+         if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+           );
+         }
+      }
+    }
   }
-}
 
-// Widget for the Leader's submitted review requests tab
-class _SolicitudesRevisionView extends StatefulWidget {
-  const _SolicitudesRevisionView();
-  @override
-  State<_SolicitudesRevisionView> createState() => __SolicitudesRevisionViewState();
-}
-
-class __SolicitudesRevisionViewState extends State<_SolicitudesRevisionView> with AutomaticKeepAliveClientMixin {
-  late Future<List<SolicitudRevision>> _listFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _listFuture = LiderService().getMisSolicitudesRevision();
+  /// Maneja la navegación al detalle y refresca si es necesario
+  Future<void> _handleNavigateToDetail(int reporteId) async {
+    final result = await Navigator.pushNamed(context, '/reporte_detalle', arguments: reporteId);
+    // Si la pantalla de detalle devuelve 'true' (porque se siguió/comentó/etc.),
+    // recargamos todos los datos para mantener la consistencia.
+    if (result == true && mounted) {
+      _fetchAllData();
+    }
   }
   
-  @override
-  bool get wantKeepAlive => true;
+  bool _handleScrollNotification(ScrollNotification notification) {
+    // Solo nos interesa el Overscroll (cuando el usuario llega al borde)
+    if (notification is OverscrollNotification) {
+      // Evitar múltiples triggers
+      if (_isSwipingScreens) return false; 
+
+      // Si el overscroll es negativo (hacia la derecha) y estamos en la primera pestaña (index 0)
+      if (notification.overscroll < 0 && _tabController?.index == 0) {
+        setState(() => _isSwipingScreens = true);
+        // Navegar a la pantalla principal anterior (Cerca de Ti)
+        widget.mainPageController.previousPage(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+        return true; // Notificación manejada
+      }
+
+      // Si el overscroll es positivo (hacia la izquierda) y estamos en la última pestaña
+      if (notification.overscroll > 0 && _tabController?.index == _tabLength - 1) {
+        setState(() => _isSwipingScreens = true);
+        // Navegar a la pantalla principal siguiente (Perfil)
+        widget.mainPageController.nextPage(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+        return true; // Notificación manejada
+      }
+    }
+    return false; // Dejar que la notificación continúe
+  }
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-    return FutureBuilder<List<SolicitudRevision>>(
-      future: _listFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return const Center(child: Text('Error al cargar las solicitudes.'));
-        }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No has enviado solicitudes de revisión.'));
-        }
+    // Lista de pestañas dinámica
+    final List<Tab> tabs = [
+      Tab(text: 'Mis Reportes (${_isLoading ? '...' : _misReportes.length})'),
+      Tab(text: 'Mis Apoyos (${_isLoading ? '...' : _misApoyos.length})'),
+      Tab(text: 'Seguidos (${_isLoading ? '...' : _misSeguimientos.length})'),
+      Tab(text: 'Comentarios (${_isLoading ? '...' : _misComentarios.length})'),
+      if (_isLider)
+        Tab(text: 'Revisiones (${_isLoading ? '...' : _misRevisiones.length})'),
+    ];
 
-        final solicitudes = snapshot.data!;
-        return RefreshIndicator(
-          onRefresh: () async {
-            setState(() {
-               _listFuture = LiderService().getMisSolicitudesRevision();
-            });
-          },
-          child: ListView.builder(
-            itemCount: solicitudes.length,
-            itemBuilder: (context, index) {
-              final solicitud = solicitudes[index];
-              return ListTile(
-                title: Text(solicitud.titulo),
-                subtitle: Text('Solicitado el: ${solicitud.fecha}'),
-                trailing: Chip(
-                  label: Text(solicitud.estado, style: const TextStyle(fontSize: 12)),
-                  backgroundColor: solicitud.estado == 'pendiente' 
-                      ? Colors.orange.shade100 
-                      : (solicitud.estado == 'aprobada' ? Colors.green.shade100 : Colors.grey.shade300),
-                ),
-                onTap: () {
-                  // Navigate to the public detail screen to see the report
-                  Navigator.pushNamed(
-                    context, 
-                    '/reporte_detalle', 
-                    arguments: solicitud.id_reporte // Use the report ID from the model
-                  );
-                },
-              );
-            },
-          ),
-        );
-      },
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Mi Actividad'),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: tabs,
+        ),
+      ),
+      body: _isLoading && _misReportes.isEmpty
+          ? const EsqueletoListaActividad()
+          : NotificationListener<ScrollNotification>(
+              onNotification: _handleScrollNotification,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Pestaña 1: Mis Reportes
+                  ActivityListView(
+                    fetcher: Fetcher.misReportes,
+                    reportes: _misReportes,
+                    isLoading: _isLoading,
+                    onRefresh: _fetchAllData,
+                    onCancelarReporte: _handleCancelarReporte,
+                    onNavigateToDetail: _handleNavigateToDetail,
+                  ),
+                  // Pestaña 2: Mis Apoyos
+                  ActivityListView(
+                    fetcher: Fetcher.misApoyos,
+                    reportes: _misApoyos,
+                    isLoading: _isLoading,
+                    onRefresh: _fetchAllData,
+                    onCancelarReporte: (id) {},
+                    onNavigateToDetail: _handleNavigateToDetail,
+                  ),
+                  // Pestaña 3: Mis Seguimientos
+                  ActivityListView(
+                    fetcher: Fetcher.misSeguimientos,
+                    reportes: _misSeguimientos,
+                    isLoading: _isLoading,
+                    onRefresh: _fetchAllData,
+                    onCancelarReporte: (id) {},
+                    onNavigateToDetail: _handleNavigateToDetail,
+                  ),
+                  // Pestaña 4: Mis Comentarios
+                  ActivityListView(
+                    fetcher: Fetcher.misComentarios,
+                    reportes: _misComentarios,
+                    isLoading: _isLoading,
+                    onRefresh: _fetchAllData,
+                    onCancelarReporte: (id) {},
+                    onNavigateToDetail: _handleNavigateToDetail,
+                  ),
+                  // Pestaña 5: Solicitudes (Solo Líder)
+                  if (_isLider)
+                    SolicitudesRevisionView(
+                      solicitudes: _misRevisiones,
+                      isLoading: _isLoading,
+                      onRefresh: _fetchAllData,
+                    ),
+                ],
+              ),
+            ),
+      // --- FIN MODIFICACIÓN ---
     );
   }
 }

@@ -6,6 +6,7 @@ class Reporte {
   final String? descripcion;
   final String categoria;
   final LatLng location;
+  final bool esPrioritario; // <-- AÑADIR ESTE CAMPO
 
   Reporte({
     required this.id,
@@ -13,6 +14,7 @@ class Reporte {
     this.descripcion,
     required this.categoria,
     required this.location,
+    required this.esPrioritario, // <-- AÑADIR AL CONSTRUCTOR
   });
 
   factory Reporte.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class Reporte {
       descripcion: json['descripcion'],
       categoria: json['categoria'],
       location: LatLng(coords[1], coords[0]),
+      esPrioritario: json['es_prioritario'] ?? false, // <-- PARSEAR EL NUEVO CAMPO
     );
   }
 }
