@@ -1,4 +1,3 @@
-// lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/screens/mapa_view.dart';
@@ -17,7 +16,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  // PageController para controlar el PageView
   late PageController _pageController;
 
   @override
@@ -32,32 +30,26 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  /// Llamado cuando se toca un ítem de la barra de navegación
   void _onItemTapped(int index) {
-    // Si el usuario no está autenticado y toca una pestaña protegida
     final authNotifier = context.read<AuthNotifier>();
     if (!authNotifier.isAuthenticated && index > 0) {
       Navigator.pushNamed(context, '/login');
-      return; // No cambiar de página
+      return;
     }
 
-    // Animar suavemente a la página seleccionada
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
-    // El _selectedIndex se actualizará en el callback onPageChanged
   }
 
-  /// Llamado cuando el PageView cambia de página (por swipe)
   void _onPageChanged(int index) {
     final authNotifier = context.read<AuthNotifier>();
     if (!authNotifier.isAuthenticated && index > 0) {
-      // Prevenir swipe a pestañas protegidas si no está logueado
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _pageController.animateToPage(
-          0, // Forzar regreso al mapa
+          0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
@@ -75,8 +67,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final authNotifier = context.watch<AuthNotifier>();
     final isLider = authNotifier.isLider;
 
-    // --- Lista de páginas ---
-    // Pasamos el _pageController a las pantallas hijas que lo necesitan
     final List<Widget> pages = [
       const MapaView(),
       const PantallaCercaDeTi(),
@@ -85,28 +75,20 @@ class _HomeScreenState extends State<HomeScreen> {
           : MiActividadScreen(mainPageController: _pageController),
       const PerfilScreen(),
     ];
-    // --- Fin Lista de páginas ---
 
     return Scaffold(
-      // --- Usamos PageView en lugar de IndexedStack ---
       body: PageView(
         controller: _pageController,
         onPageChanged: _onPageChanged,
-        children: pages,
-        // --- LÓGICA DE FÍSICA DE SCROLL (CLAVE) ---
-        // Deshabilitamos el swipe horizontal del PageView principal
-        // SOLAMENTE si la pestaña actual es la 2 (Actividad/Verificar),
-        // para permitir que el TabBarView interno maneje el swipe.
-        // En todas las demás pestañas (Mapa, Cerca, Perfil), el swipe SÍ funciona.
         physics: _selectedIndex == 2
-            ? const NeverScrollableScrollPhysics() // Deshabilitar swipe
-            : const PageScrollPhysics(), // Habilitar swipe
-        // --- FIN LÓGICA DE FÍSICA ---
+            ? const NeverScrollableScrollPhysics()
+            : const PageScrollPhysics(),
+        children: pages, // CORREGIDO: sort_child_properties_last
       ),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Mantiene el layout fijo
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
-        onTap: _onItemTapped, // Llama a _onItemTapped al tocar
+        onTap: _onItemTapped,
         items: [
           const BottomNavigationBarItem(
             icon: Icon(Icons.map_outlined),
@@ -118,7 +100,6 @@ class _HomeScreenState extends State<HomeScreen> {
             activeIcon: Icon(Icons.location_on),
             label: 'Cerca de Ti',
           ),
-          // El ítem cambia dinámicamente según el rol
           if (isLider)
             const BottomNavigationBarItem(
               icon: Icon(Icons.verified_user_outlined),

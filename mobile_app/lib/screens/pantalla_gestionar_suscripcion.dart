@@ -47,25 +47,27 @@ class _PantallaGestionarSuscripcionState
       ),
     );
 
-    if (confirm == true && mounted) {
-      setState(() => _isCancelling = true);
+    if (confirm == true) {
+      if (mounted) {
+        setState(() => _isCancelling = true);
+      }
       final response = await _suscripcionService.cancelarSuscripcion();
 
-      if (mounted) {
-        final message = response['data']['message'] ?? 'Ocurrió un error.';
-        final success = response['statusCode'] == 200;
+      if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: success ? Colors.orange : Colors.red,
-          ),
-        );
+      final message = response['data']['message'] ?? 'Ocurrió un error.';
+      final success = response['statusCode'] == 200;
 
-        await context.read<AuthNotifier>().refreshUserStatus();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: success ? Colors.orange : Colors.red,
+        ),
+      );
 
-        Navigator.pop(context, true);
-      }
+      await context.read<AuthNotifier>().refreshUserStatus();
+
+      Navigator.pop(context, true);
 
       if (mounted) {
         setState(() => _isCancelling = false);

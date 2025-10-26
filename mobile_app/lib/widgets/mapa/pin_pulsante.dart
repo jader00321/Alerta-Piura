@@ -30,7 +30,6 @@ class _PinPulsanteState extends State<PinPulsante>
   Widget build(BuildContext context) {
     return Center(
       child: IgnorePointer(
-        // Para que no interfiera con los gestos del mapa
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -42,8 +41,8 @@ class _PinPulsanteState extends State<PinPulsante>
                   height: 50 * _controller.value,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color:
-                        Colors.blue.withOpacity(0.5 * (1 - _controller.value)),
+                    color: Colors.blue.withAlpha(
+                        (128 * (1 - _controller.value)).round()), // CORREGIDO
                   ),
                 );
               },

@@ -1,5 +1,3 @@
-// lib/screens/pantalla_pago.dart
-
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/metodo_pago_service.dart';
 import 'package:mobile_app/api/servicio_suscripcion.dart';
@@ -22,7 +20,6 @@ class _PantallaPagoState extends State<PantallaPago> {
   late Future<List<MetodoPago>> _metodosFuture;
   int? _selectedMetodoId;
 
-  // CADA PANTALLA MANEJA SU PROPIO FORMKEY
   final _formKey = GlobalKey<FormState>();
   final _numeroTarjetaController = TextEditingController();
   final _fechaExpController = TextEditingController();
@@ -71,22 +68,24 @@ class _PantallaPagoState extends State<PantallaPago> {
     final response = await ServicioSuscripcion()
         .suscribirseAlPlan(widget.plan.id, paymentPayload);
 
-    if (mounted) {
-      if (response['statusCode'] == 200 && response['data']['token'] != null) {
-        // Refrescamos el estado del usuario con el nuevo token
-        await context.read<AuthNotifier>().login(response['data']['token']);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('¡Suscripción exitosa!'),
-            backgroundColor: Colors.green));
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-                response['data']['message'] ?? 'Error al procesar el pago.'),
-            backgroundColor: Colors.red));
-      }
+    if (!mounted) return;
+
+    if (response['statusCode'] == 200 && response['data']['token'] != null) {
+      await context.read<AuthNotifier>().login(response['data']['token']);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('¡Suscripción exitosa!'),
+          backgroundColor: Colors.green));
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content:
+              Text(response['data']['message'] ?? 'Error al procesar el pago.'),
+          backgroundColor: Colors.red));
     }
-    if (mounted) setState(() => _isLoading = false);
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -113,7 +112,6 @@ class _PantallaPagoState extends State<PantallaPago> {
                 if (snapshot.hasError ||
                     snapshot.data == null ||
                     snapshot.data!.isEmpty) {
-                  // Si no hay tarjetas, mostramos el formulario para añadir una
                   return Form(
                     key: _formKey,
                     child: Column(
@@ -138,14 +136,11 @@ class _PantallaPagoState extends State<PantallaPago> {
                   );
                 }
 
-                // Si hay tarjetas, mostramos el selector
                 final metodos = snapshot.data!;
-                if (_selectedMetodoId == null) {
-                  _selectedMetodoId = metodos
-                      .firstWhere((m) => m.esPredeterminado,
-                          orElse: () => metodos.first)
-                      .id;
-                }
+                _selectedMetodoId ??= metodos
+                    .firstWhere((m) => m.esPredeterminado,
+                        orElse: () => metodos.first)
+                    .id;
 
                 return Card(
                   child: Padding(

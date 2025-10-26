@@ -1,13 +1,12 @@
-// lib/widgets/verificacion/tarjeta_historial_moderado.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_historial_moderado_model.dart';
 
 class TarjetaHistorialModerado extends StatelessWidget {
   final ReporteHistorialModerado reporte;
-  final String? estadoSolicitud; // 'pendiente', 'aprobada', 'desestimada', null
-  final VoidCallback onTap; // Para ver detalles del reporte
+  final String? estadoSolicitud;
+  final VoidCallback onTap;
   final VoidCallback onSolicitarRevision;
-  final VoidCallback? onIrAlOriginal; // Callback para ir al reporte original
+  final VoidCallback? onIrAlOriginal;
 
   const TarjetaHistorialModerado({
     super.key,
@@ -15,11 +14,10 @@ class TarjetaHistorialModerado extends StatelessWidget {
     required this.estadoSolicitud,
     required this.onTap,
     required this.onSolicitarRevision,
-    this.onIrAlOriginal, // <-- Añadido
+    this.onIrAlOriginal,
   });
 
   Widget _buildStatusChip(ThemeData theme) {
-    // ... (código del chip de estado sin cambios) ...
     String label;
     IconData icon;
     Color fgColor;
@@ -65,18 +63,14 @@ class TarjetaHistorialModerado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // --- LÓGICA CONFIRMADA: Permite revisión en verificado, rechazado y fusionado ---
     final bool puedeSolicitarRevision = reporte.estado == 'verificado' ||
         reporte.estado == 'rechazado' ||
         reporte.estado == 'fusionado';
-    // --- FIN CONFIRMACIÓN ---
 
     Widget? trailingWidget;
     List<Widget> trailingWidgets = [];
 
-    // Lógica para Solicitud de Revisión
     if (puedeSolicitarRevision) {
-      // ... (lógica de estados de solicitud sin cambios) ...
       switch (estadoSolicitud) {
         case 'pendiente':
           trailingWidgets.add(Chip(
@@ -90,25 +84,23 @@ class TarjetaHistorialModerado extends StatelessWidget {
           ));
           break;
         case 'aprobada':
-          // No mostrar nada
           break;
         case 'desestimada':
-        default: // null
+        default:
           trailingWidgets.add(TextButton(
-            child: const Text('Solicitar Revisión',
-                style: TextStyle(fontSize: 12)),
             onPressed: onSolicitarRevision,
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               visualDensity: VisualDensity.compact,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
+            child: const Text('Solicitar Revisión',
+                style: TextStyle(fontSize: 12)),
           ));
           break;
       }
     }
 
-    // Lógica para Botón de Enlace (solo si está fusionado)
     if (reporte.estado == 'fusionado' && onIrAlOriginal != null) {
       trailingWidgets.add(Tooltip(
         message: 'Ir al reporte original',
@@ -122,7 +114,6 @@ class TarjetaHistorialModerado extends StatelessWidget {
       ));
     }
 
-    // Construir el widget trailing (sin cambios)
     if (trailingWidgets.isEmpty) {
       trailingWidget = null;
     } else if (trailingWidgets.length == 1) {
@@ -138,7 +129,6 @@ class TarjetaHistorialModerado extends StatelessWidget {
       );
     }
 
-    // ListTile principal (sin cambios)
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
       child: ListTile(

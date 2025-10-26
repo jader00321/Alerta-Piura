@@ -1,14 +1,12 @@
-// lib/screens/verificacion_detalle_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobile_app/api/lider_service.dart';
 import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_reporte_detalle.dart';
-// Importar los widgets de layout y acciones
 import 'package:mobile_app/widgets/verificacion/layout_detalle_verificacion.dart';
-import 'package:mobile_app/widgets/verificacion/cabezal_detalle_verificacion.dart'; // Importamos para usar buildAppBar
+import 'package:mobile_app/widgets/verificacion/cabezal_detalle_verificacion.dart';
 import 'package:mobile_app/widgets/verificacion/acciones_moderacion.dart';
-// Importar pantallas para navegación
 import 'package:mobile_app/screens/pantalla_editar_reporte_lider.dart';
 import 'package:mobile_app/screens/pantalla_buscar_reporte_original.dart';
 
@@ -58,7 +56,7 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
         });
       }
     } catch (e) {
-      print("Error cargando detalle para verificación: $e");
+      debugPrint("Error cargando detalle para verificación: $e");
       if (mounted) {
         setStateIfMounted(() {
           _errorReporte = e.toString().replaceFirst('Exception: ', '');
@@ -68,7 +66,6 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
     }
   }
 
-  // --- HANDLERS (Sin cambios funcionales) ---
   Future<void> _moderarReporte(bool aprobar) async {
     if (_isLoadingAction || _reporte == null) return;
     setStateIfMounted(() => _isLoadingAction = true);
@@ -80,22 +77,29 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
       } else {
         response = await _liderService.rechazarReporte(widget.reporteId);
       }
+
       if (!mounted) return;
+
       final message = response['message'] ?? 'Error desconocido';
       final success = response['statusCode'] == 200;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(message),
         backgroundColor: success ? Colors.green : Colors.red,
       ));
-      if (success) Navigator.pop(context, true);
+      if (success) {
+        Navigator.pop(context, true);
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error al $actionName: $e'),
           backgroundColor: Colors.red,
         ));
+      }
     } finally {
-      if (mounted) setStateIfMounted(() => _isLoadingAction = false);
+      if (mounted) {
+        setStateIfMounted(() => _isLoadingAction = false);
+      }
     }
   }
 
@@ -107,16 +111,21 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
           builder: (context) =>
               PantallaEditarReporteLider(reporteInicial: _reporte!)),
     );
-    if (result == true && mounted) _loadReporteData();
+    if (result == true && mounted) {
+      _loadReporteData();
+    }
   }
 
   Future<void> _iniciarFusion() async {
     if (_reporte == null || _isLoadingAction) return;
+
+    if (!mounted) return;
     final reporteOriginalId = await Navigator.push<int>(
       context,
       MaterialPageRoute(
           builder: (context) => const PantallaBuscarReporteOriginal()),
     );
+
     if (reporteOriginalId == null || !mounted) return;
 
     ReporteDetallado? reporteOriginal;
@@ -127,9 +136,11 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
       originalIdentifier =
           '"${reporteOriginal.titulo}" (${reporteOriginal.codigoReporte ?? '#$reporteOriginalId'})';
     } catch (e) {
-      print("Error obteniendo detalles del original: $e");
+      debugPrint("Error obteniendo detalles del original: $e");
     } finally {
-      if (mounted) setStateIfMounted(() => _isLoadingAction = false);
+      if (mounted) {
+        setStateIfMounted(() => _isLoadingAction = false);
+      }
     }
     if (!mounted) return;
 
@@ -138,7 +149,7 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Confirmar Fusión'),
         content: Text(
-            '¿Fusionar "${_reporte!.titulo}" (${_reporte!.codigoReporte ?? '#' + widget.reporteId.toString()}) con el reporte original $originalIdentifier?'),
+            '¿Fusionar "${_reporte!.titulo}" (${_reporte!.codigoReporte ?? '#${widget.reporteId}'}) con el reporte original $originalIdentifier?'),
         actions: [
           TextButton(
               child: const Text('Cancelar'),
@@ -163,7 +174,9 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
         'message': 'Error de conexión al fusionar.'
       };
     }
+
     if (!mounted) return;
+
     setStateIfMounted(() => _isLoadingAction = false);
     final message = response['message'] ?? 'Error desconocido';
     final success = response['statusCode'] == 200;
@@ -171,7 +184,9 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
       content: Text(message),
       backgroundColor: success ? Colors.green : Colors.red,
     ));
-    if (success) Navigator.pop(context, true);
+    if (success) {
+      Navigator.pop(context, true);
+    }
   }
 
   void _irAlChat() {
@@ -182,18 +197,13 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
     });
   }
 
-  // --- BUILD METHOD REESTRUCTURADO ---
   @override
   Widget build(BuildContext context) {
-    // Usamos FutureBuilder para manejar estados iniciales
     return FutureBuilder<ReporteDetallado>(
-      // Usamos _reporteFuture directamente si _loadReporteData lo inicializa bien
-      // O volvemos a llamar al servicio si _reporte es null tras la carga inicial
       future: _reporte == null
           ? _reporteService.getReporteById(widget.reporteId)
           : Future.value(_reporte!),
       builder: (context, snapshot) {
-        // Estado de carga inicial o si _reporte es null
         if ((snapshot.connectionState == ConnectionState.waiting &&
                 _reporte == null) ||
             _isLoadingReporte) {
@@ -203,7 +213,6 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
           );
         }
 
-        // Estado de error
         if (snapshot.hasError || _errorReporte != null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Error')),
@@ -214,51 +223,43 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
                   'Error al cargar el reporte: ${_errorReporte ?? snapshot.error}'),
             )),
             floatingActionButton: FloatingActionButton(
-              // Botón para reintentar
               onPressed: _loadReporteData,
-              child: const Icon(Icons.refresh),
               tooltip: 'Reintentar',
+              child: const Icon(Icons.refresh),
             ),
           );
         }
 
-        // Estado con datos (aseguramos que _reporte tenga valor)
         if (snapshot.hasData && _reporte == null) {
-          _reporte = snapshot.data; // Asigna el dato cargado por FutureBuilder
+          _reporte = snapshot.data;
         }
 
-        // Si _reporte sigue siendo null (caso improbable pero seguro)
         if (_reporte == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Error')),
             body: const Center(child: Text('No se pudo cargar el reporte.')),
             floatingActionButton: FloatingActionButton(
               onPressed: _loadReporteData,
-              child: const Icon(Icons.refresh),
               tooltip: 'Reintentar',
+              child: const Icon(Icons.refresh),
             ),
           );
         }
 
-        // --- Scaffold Principal con Datos ---
         return Scaffold(
-          // AppBar ahora se construye aquí usando la función estática
           appBar: CabezalDetalleVerificacion.buildAppBar(
             context,
             isLoadingAction: _isLoadingAction,
             onEditar: _iniciarEdicion,
             onChat: _irAlChat,
-            reporteEstado: _reporte!.estado, // Pasa el estado actual
+            reporteEstado: _reporte!.estado,
           ),
-          // El Layout va dentro del RefreshIndicator
           body: RefreshIndicator(
             onRefresh: _loadReporteData,
             child: LayoutDetalleVerificacion(
               reporte: _reporte!,
-              // Ya no se pasan los callbacks aquí
             ),
           ),
-          // Barra inferior de acciones se mantiene igual
           bottomNavigationBar: (_reporte?.estado == 'pendiente_verificacion')
               ? AccionesModeracion(
                   isLoading: _isLoadingAction,

@@ -4,15 +4,13 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/models/reporte_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_mapa.dart';
-//import 'package:fl_heatmap/fl_heatmap.dart'; // IMPORT CORRECTO
 
 class CapaMapaBase extends StatelessWidget {
   final Future<List<Reporte>> reportesFuture;
   final Future<List<LatLng>>? heatmapFuture;
   final MapController mapController;
   final LatLng initialCenter;
-  final Function(MapEvent)
-      onPositionChanged; // CORREGIDO: MapPosition -> MapEvent
+  final Function(MapEvent) onPositionChanged;
   final VoidCallback onMapReady;
   final Function(BuildContext, Reporte) onShowReportSummary;
   final bool isHeatmapVisible;
@@ -81,7 +79,7 @@ class CapaMapaBase extends StatelessWidget {
                                 size: 18,
                                 shadows: [
                                   BoxShadow(
-                                      color: Colors.black.withOpacity(0.5),
+                                      color: Colors.black.withAlpha(128),
                                       blurRadius: 3)
                                 ]),
                           ),
@@ -97,38 +95,13 @@ class CapaMapaBase extends StatelessWidget {
             initialCenter: initialCenter,
             initialZoom: 14.0,
             onMapReady: onMapReady,
-            onMapEvent:
-                onPositionChanged, // CORREGIDO: onPositionChanged -> onMapEvent
+            onMapEvent: onPositionChanged,
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.example.mobile_app',
             ),
-
-            /*if (isHeatmapVisible)
-              FutureBuilder<List<LatLng>>(
-                future: heatmapFuture,
-                builder: (context, heatmapSnapshot) {
-                  if (!heatmapSnapshot.hasData || heatmapSnapshot.data!.isEmpty) {
-                    return const SizedBox.shrink();
-                  }
-                  
-                  // SINTAXIS CORREGIDA
-                  final heatmapData = heatmapSnapshot.data!
-                      .map((latlng) => WeightedLocation(location: latlng, weight: 1.0))
-                      .toList();
-
-                  return Heatmap(
-                    heatmapData: heatmapData,
-                    config: HeatmapConfig(
-                      radius: 30,
-                      colorPalette: HeatmapColor.defaults,
-                    ),
-                  );
-                },
-              ),*/
-
             if (!isHeatmapVisible)
               MarkerClusterLayerWidget(
                 options: MarkerClusterLayerOptions(

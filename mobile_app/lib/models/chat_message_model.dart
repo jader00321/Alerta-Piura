@@ -16,15 +16,16 @@ class ChatMessage {
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
-    String timestampString = json['fecha_envio_iso']
-                       ?? json['timestamp']
-                       ?? DateTime.now().toIso8601String();
+    String timestampString = json['fecha_envio_iso'] ??
+        json['timestamp'] ??
+        DateTime.now().toIso8601String();
 
     DateTime parsedTimestamp;
     try {
       parsedTimestamp = DateTime.parse(timestampString).toLocal();
     } catch (e) {
-      debugPrint("Error parseando chat timestamp: $timestampString. Usando hora actual.");
+      debugPrint(
+          "Error parseando chat timestamp: $timestampString. Usando hora actual.");
       parsedTimestamp = DateTime.now();
     }
 

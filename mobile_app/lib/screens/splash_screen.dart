@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
+/// Pantalla de carga inicial (Splash) de la aplicación.
+///
+/// Se muestra al iniciar la app mientras se realizan las verificaciones
+/// iniciales de autenticación antes de navegar a la pantalla principal.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -9,6 +13,7 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
+/// Estado para [SplashScreen].
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
@@ -16,19 +21,18 @@ class _SplashScreenState extends State<SplashScreen> {
     _initializeApp();
   }
 
+  /// Realiza la inicialización de la app.
+  ///
+  /// Espera 2 segundos, verifica el estado del token de autenticación
+  /// (y lo refresca si existe) y luego navega a la pantalla principal (`/home`).
   Future<void> _initializeApp() async {
-    // Espera un momento para que la pantalla de bienvenida sea visible.
     await Future.delayed(const Duration(seconds: 2));
 
-    if (mounted) {
-      final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
+    if (!mounted) return;
+    final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
 
-      // --- CAMBIO CLAVE ---
-      // En lugar de solo leer el token guardado, forzamos una
-      // verificación con el servidor para obtener el estado más reciente.
-      if (authNotifier.isAuthenticated) {
-        await authNotifier.refreshUserStatus();
-      }
+    if (authNotifier.isAuthenticated) {
+      await authNotifier.refreshUserStatus();
     }
 
     if (mounted) {

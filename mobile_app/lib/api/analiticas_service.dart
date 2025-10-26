@@ -19,7 +19,8 @@ class AnaliticasService {
     }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/analiticas/$endpoint');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    final response =
+        await http.get(url, headers: {'Authorization': 'Bearer $token'});
 
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
@@ -45,13 +46,21 @@ class AnaliticasService {
     final token = await _getToken();
     // --- CORRECCIÓN: Añadidas llaves {} ---
     if (token == null) {
-      return {'statusCode': 401, 'data': {'message': 'No autenticado'}};
+      return {
+        'statusCode': 401,
+        'data': {'message': 'No autenticado'}
+      };
     }
     // --- FIN CORRECCIÓN ---
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/analiticas/exportar-pdf');
-    final response = await http.post(url, headers: {'Authorization': 'Bearer $token'});
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/analiticas/exportar-pdf');
+    final response =
+        await http.post(url, headers: {'Authorization': 'Bearer $token'});
 
-    return {'statusCode': response.statusCode, 'data': json.decode(response.body)};
+    return {
+      'statusCode': response.statusCode,
+      'data': json.decode(response.body)
+    };
   }
 }

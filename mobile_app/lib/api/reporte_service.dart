@@ -59,7 +59,8 @@ class ReporteService {
     }
 
     if (filters != null && filters.isNotEmpty) {
-      if (filters.containsKey('categoriaId') && filters['categoriaId']!.isNotEmpty) {
+      if (filters.containsKey('categoriaId') &&
+          filters['categoriaId']!.isNotEmpty) {
         queryParameters['categoriaIds'] = filters['categoriaId']!;
       }
       if (filters.containsKey('dias') && filters['dias']!.isNotEmpty) {
@@ -75,9 +76,12 @@ class ReporteService {
 
       if (response.statusCode == 200) {
         final List<dynamic> reportesJson = json.decode(response.body);
-        return reportesJson.map((jsonMap) => Reporte.fromJson(jsonMap)).toList();
+        return reportesJson
+            .map((jsonMap) => Reporte.fromJson(jsonMap))
+            .toList();
       } else {
-        throw Exception('Error al cargar los reportes (${response.statusCode}): ${response.body}');
+        throw Exception(
+            'Error al cargar los reportes (${response.statusCode}): ${response.body}');
       }
     } catch (e) {
       debugPrint("Error en getAllReports: $e");
@@ -102,16 +106,20 @@ class ReporteService {
       ...?filtros?.toQueryParameters(),
     };
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/v1/cercanos').replace(
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/reportes/v1/cercanos').replace(
       queryParameters: queryParameters,
     );
     debugPrint("API Request URL (getReportesCercanos): $url");
 
     try {
-      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
       if (response.statusCode == 200) {
         final List<dynamic> reportesJson = json.decode(response.body);
-        return reportesJson.map((jsonMap) => ReporteCercano.fromJson(jsonMap)).toList();
+        return reportesJson
+            .map((jsonMap) => ReporteCercano.fromJson(jsonMap))
+            .toList();
       } else {
         String errorMessage = 'Falló al cargar reportes cercanos.';
         try {
@@ -135,9 +143,11 @@ class ReporteService {
     if (token == null) {
       return {'statusCode': 401, 'message': 'Usuario no autenticado'};
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/$reporteId/unirse_pendiente');
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/reportes/$reporteId/unirse_pendiente');
     try {
-      final response = await http.post(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.post(url, headers: {'Authorization': 'Bearer $token'});
       final Map<String, dynamic> body = json.decode(response.body);
       return {
         'statusCode': response.statusCode,
@@ -209,7 +219,6 @@ class ReporteService {
 
       var response = await request.send();
       return response.statusCode == 201;
-
     } catch (e) {
       debugPrint(e.toString());
       return false;
@@ -222,13 +231,17 @@ class ReporteService {
       return {'statusCode': 401, 'message': 'Usuario no autenticado'};
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/$idReporte/apoyar');
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/reportes/$idReporte/apoyar');
     try {
       final response = await http.post(
         url,
         headers: {'Authorization': 'Bearer $token'},
       );
-      return {'statusCode': response.statusCode, 'message': json.decode(response.body)['message']};
+      return {
+        'statusCode': response.statusCode,
+        'message': json.decode(response.body)['message']
+      };
     } catch (e) {
       return {'statusCode': 500, 'message': 'Error de conexión'};
     }
@@ -238,15 +251,17 @@ class ReporteService {
     final token = await _getToken();
     final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/$id');
     try {
-      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
       if (response.statusCode == 200) {
         return ReporteDetallado.fromJson(json.decode(response.body));
       } else {
-         debugPrint("Error Body (Report Details): ${response.body}");
-        throw Exception('Error al cargar los detalles del reporte (${response.statusCode})');
+        debugPrint("Error Body (Report Details): ${response.body}");
+        throw Exception(
+            'Error al cargar los detalles del reporte (${response.statusCode})');
       }
-    } catch(e) {
-       debugPrint("Connection Error (Report Details): $e");
+    } catch (e) {
+      debugPrint("Connection Error (Report Details): $e");
       throw Exception('Error de conexión o reporte no encontrado');
     }
   }
@@ -261,11 +276,11 @@ class ReporteService {
 
     final response = await http.post(
       url,
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: json.encode({
-        'id_reporte': idReporte,
-        'comentario': comentario
-      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+      body: json.encode({'id_reporte': idReporte, 'comentario': comentario}),
     );
     return response.statusCode == 201;
   }
@@ -276,13 +291,17 @@ class ReporteService {
       return {'statusCode': 401, 'message': 'Usuario no autenticado'};
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/comentarios/$idComentario/apoyar');
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/comentarios/$idComentario/apoyar');
     try {
       final response = await http.post(
         url,
         headers: {'Authorization': 'Bearer $token'},
       );
-      return {'statusCode': response.statusCode, 'message': json.decode(response.body)['message']};
+      return {
+        'statusCode': response.statusCode,
+        'message': json.decode(response.body)['message']
+      };
     } catch (e) {
       return {'statusCode': 500, 'message': 'Error de conexión'};
     }
@@ -294,10 +313,14 @@ class ReporteService {
       return false;
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/comentarios/$idComentario');
-    final response = await http.put(url, headers: {
-      'Content-Type': 'application/json', 'Authorization': 'Bearer $token'
-    }, body: json.encode({'comentario': nuevoTexto}));
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/comentarios/$idComentario');
+    final response = await http.put(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
+        body: json.encode({'comentario': nuevoTexto}));
     return response.statusCode == 200;
   }
 
@@ -307,8 +330,10 @@ class ReporteService {
       return false;
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/comentarios/$idComentario');
-    final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/comentarios/$idComentario');
+    final response =
+        await http.delete(url, headers: {'Authorization': 'Bearer $token'});
     return response.statusCode == 200;
   }
 
@@ -318,10 +343,14 @@ class ReporteService {
       return false;
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/comentarios/$idComentario/reportar');
-    final response = await http.post(url, headers: {
-      'Content-Type': 'application/json', 'Authorization': 'Bearer $token'
-    }, body: json.encode({'motivo': motivo}));
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/comentarios/$idComentario/reportar');
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
+        body: json.encode({'motivo': motivo}));
     return response.statusCode == 201;
   }
 
@@ -332,14 +361,17 @@ class ReporteService {
     }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/$idReporte');
-    final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
+    final response =
+        await http.delete(url, headers: {'Authorization': 'Bearer $token'});
     return response.statusCode == 200;
   }
 
-  Future<int> getRiesgoZona(LatLng center, {required LatLng centerPoint, required double radius}) async {
+  Future<int> getRiesgoZona(LatLng center,
+      {required LatLng centerPoint, required double radius}) async {
     final lat = center.latitude;
     final lon = center.longitude;
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/riesgo-zona?lat=$lat&lon=$lon&radius=$radius');
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/reportes/riesgo-zona?lat=$lat&lon=$lon&radius=$radius');
 
     try {
       final response = await http.get(url);
@@ -359,15 +391,16 @@ class ReporteService {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         List jsonResponse = json.decode(response.body);
-        var categorias = jsonResponse.map((cat) => Categoria.fromJson(cat)).toList();
+        var categorias =
+            jsonResponse.map((cat) => Categoria.fromJson(cat)).toList();
         categorias.sort((a, b) => a.nombre.compareTo(b.nombre));
         return categorias;
       } else {
-         String errorMessage = 'Error al cargar categorías';
-         try {
-           errorMessage = json.decode(response.body)['message'] ?? errorMessage;
-         } catch (_) {}
-         throw Exception('Error ${response.statusCode}: $errorMessage');
+        String errorMessage = 'Error al cargar categorías';
+        try {
+          errorMessage = json.decode(response.body)['message'] ?? errorMessage;
+        } catch (_) {}
+        throw Exception('Error ${response.statusCode}: $errorMessage');
       }
     } catch (e) {
       debugPrint("Error en getCategorias: $e");
@@ -381,8 +414,10 @@ class ReporteService {
       throw Exception('No autenticado');
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/$idReporte/chat');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/reportes/$idReporte/chat');
+    final response =
+        await http.get(url, headers: {'Authorization': 'Bearer $token'});
 
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
@@ -408,7 +443,8 @@ class ReporteService {
   }
 
   Future<List<LatLng>> getZonasPeligrosas() async {
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/zonas-peligrosas');
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/reportes/zonas-peligrosas');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -427,9 +463,11 @@ class ReporteService {
     if (token == null) {
       return {'statusCode': 401, 'message': 'Usuario no autenticado'};
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/$reporteId/unirse_pendiente');
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/reportes/$reporteId/unirse_pendiente');
     try {
-      final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.delete(url, headers: {'Authorization': 'Bearer $token'});
       final Map<String, dynamic> body = json.decode(response.body);
       return {
         'statusCode': response.statusCode,
@@ -442,7 +480,8 @@ class ReporteService {
     }
   }
 
-  Future<Map<String, dynamic>> editarReporteAutor(int reporteId, {
+  Future<Map<String, dynamic>> editarReporteAutor(
+    int reporteId, {
     required String titulo,
     String? descripcion,
     required int idCategoria,
@@ -458,11 +497,15 @@ class ReporteService {
       return {'statusCode': 401, 'message': 'No autenticado'};
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/$reporteId/author-edit');
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/reportes/$reporteId/author-edit');
     try {
       final response = await http.put(
         url,
-        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
         body: json.encode({
           'titulo': titulo,
           'descripcion': descripcion,
@@ -476,7 +519,10 @@ class ReporteService {
         }),
       );
       final body = json.decode(response.body);
-      return {'statusCode': response.statusCode, 'message': body['message'] ?? 'Respuesta inesperada'};
+      return {
+        'statusCode': response.statusCode,
+        'message': body['message'] ?? 'Respuesta inesperada'
+      };
     } catch (e) {
       debugPrint("Error en editarReporteAutor Service: $e");
       return {'statusCode': 500, 'message': 'Error de conexión.'};

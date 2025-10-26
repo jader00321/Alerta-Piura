@@ -50,10 +50,13 @@ class PerfilService {
 
     final url = Uri.parse(ApiConstants.baseUrl + endpoint);
     try {
-      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
       if (response.statusCode == 200) {
         List jsonResponse = json.decode(response.body);
-        return jsonResponse.map((item) => ReporteResumen.fromJson(item)).toList();
+        return jsonResponse
+            .map((item) => ReporteResumen.fromJson(item))
+            .toList();
       } else {
         throw Exception('Error del servidor al cargar la lista');
       }
@@ -80,8 +83,10 @@ class PerfilService {
       throw Exception('No autenticado');
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/conversaciones');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/conversaciones');
+    final response =
+        await http.get(url, headers: {'Authorization': 'Bearer $token'});
 
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
@@ -97,9 +102,11 @@ class PerfilService {
       throw Exception('No autenticado');
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones');
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones');
     try {
-      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
       if (response.statusCode == 200) {
         List jsonResponse = json.decode(response.body);
         return jsonResponse.map((n) => Notificacion.fromJson(n)).toList();
@@ -111,7 +118,8 @@ class PerfilService {
     }
   }
 
-  Future<bool> updateMyProfile(String nombre, String? alias, String? telefono) async {
+  Future<bool> updateMyProfile(
+      String nombre, String? alias, String? telefono) async {
     final token = await _getToken();
     if (token == null) {
       return false;
@@ -132,10 +140,14 @@ class PerfilService {
     return response.statusCode == 200;
   }
 
-  Future<Map<String, dynamic>> updateMyPassword(String currentPassword, String newPassword) async {
+  Future<Map<String, dynamic>> updateMyPassword(
+      String currentPassword, String newPassword) async {
     final token = await _getToken();
     if (token == null) {
-      return {'statusCode': 401, 'data': {'message': 'No autenticado'}};
+      return {
+        'statusCode': 401,
+        'data': {'message': 'No autenticado'}
+      };
     }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/password');
@@ -150,17 +162,26 @@ class PerfilService {
         'newPassword': newPassword,
       }),
     );
-    return {'statusCode': response.statusCode, 'data': json.decode(response.body)};
+    return {
+      'statusCode': response.statusCode,
+      'data': json.decode(response.body)
+    };
   }
 
-  Future<Map<String, dynamic>> updateMyEmail(String newEmail, String password) async {
+  Future<Map<String, dynamic>> updateMyEmail(
+      String newEmail, String password) async {
     final token = await _getToken();
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/email');
-    final response = await http.put(url, headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token'
-    }, body: json.encode({'newEmail': newEmail, 'password': password}));
-    return {'statusCode': response.statusCode, 'data': json.decode(response.body)};
+    final response = await http.put(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
+        body: json.encode({'newEmail': newEmail, 'password': password}));
+    return {
+      'statusCode': response.statusCode,
+      'data': json.decode(response.body)
+    };
   }
 
   Future<bool> verifyPassword(String password) async {
@@ -169,10 +190,12 @@ class PerfilService {
       return false;
     }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/auth/verify-password');
-    final response = await http.post(url, headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token'
-    }, body: json.encode({'password': password}));
+    final response = await http.post(url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
+        body: json.encode({'password': password}));
     return response.statusCode == 200;
   }
 
@@ -182,7 +205,8 @@ class PerfilService {
       return false;
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones/mark-all-read');
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/perfil/me/notificaciones/mark-all-read');
     try {
       final response = await http.put(
         url,
@@ -200,12 +224,16 @@ class PerfilService {
       throw Exception('No autenticado');
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/payment-history');
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/payment-history');
     try {
-      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
       if (response.statusCode == 200) {
         List jsonResponse = json.decode(response.body);
-        return jsonResponse.map((item) => HistorialPago.fromJson(item)).toList();
+        return jsonResponse
+            .map((item) => HistorialPago.fromJson(item))
+            .toList();
       } else {
         throw Exception('Error del servidor al cargar el historial de pagos');
       }
@@ -220,13 +248,16 @@ class PerfilService {
       throw Exception('No autenticado');
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/invoices/$transactionId');
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/perfil/me/invoices/$transactionId');
     try {
-      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
       if (response.statusCode == 200) {
         return BoletaDetalle.fromJson(json.decode(response.body));
       } else {
-        throw Exception('Error del servidor al cargar los detalles de la boleta');
+        throw Exception(
+            'Error del servidor al cargar los detalles de la boleta');
       }
     } catch (e) {
       throw Exception('Error de conexión');
@@ -238,8 +269,10 @@ class PerfilService {
     if (token == null) {
       throw Exception('No autenticado');
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/estadisticas/resumen');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/estadisticas/resumen');
+    final response =
+        await http.get(url, headers: {'Authorization': 'Bearer $token'});
     if (response.statusCode == 200) {
       return EstadisticasResumen.fromJson(json.decode(response.body));
     } else {
@@ -252,8 +285,10 @@ class PerfilService {
     if (token == null) {
       throw Exception('No autenticado');
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/estadisticas/por-categoria');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/perfil/me/estadisticas/por-categoria');
+    final response =
+        await http.get(url, headers: {'Authorization': 'Bearer $token'});
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
       return jsonResponse.map((item) => DatoGrafico.fromJson(item)).toList();
@@ -267,8 +302,10 @@ class PerfilService {
     if (token == null) {
       throw Exception('No autenticado');
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/zonas-seguras');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/zonas-seguras');
+    final response =
+        await http.get(url, headers: {'Authorization': 'Bearer $token'});
 
     if (response.statusCode == 200) {
       List jsonResponse = json.decode(response.body);
@@ -287,10 +324,14 @@ class PerfilService {
     if (token == null) {
       return false;
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/zonas-seguras');
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/zonas-seguras');
     final response = await http.post(
       url,
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
       body: json.encode({
         'nombre': nombre,
         'lat': centro.latitude,
@@ -306,8 +347,10 @@ class PerfilService {
     if (token == null) {
       return false;
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/zonas-seguras/$idZona');
-    final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/perfil/me/zonas-seguras/$idZona');
+    final response =
+        await http.delete(url, headers: {'Authorization': 'Bearer $token'});
     return response.statusCode == 200;
   }
 
@@ -324,13 +367,20 @@ class PerfilService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
         body: json.encode({
           'motivacion': motivacion,
           'zona_propuesta': zonaPropuesta,
         }),
       );
-      return {'statusCode': response.statusCode, 'message': json.decode(response.body)['message'] ?? 'Respuesta inesperada'};
+      return {
+        'statusCode': response.statusCode,
+        'message':
+            json.decode(response.body)['message'] ?? 'Respuesta inesperada'
+      };
     } catch (e) {
       debugPrint("Error en postularComoLider: $e");
       return {'statusCode': 500, 'message': 'Error de conexión.'};
@@ -342,12 +392,15 @@ class PerfilService {
     if (token == null) {
       throw Exception('No autenticado');
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/stats/actividad');
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/stats/actividad');
     try {
-      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
-        return data.map((key, value) => MapEntry(key, (value is num) ? value.toInt() : 0));
+        return data.map(
+            (key, value) => MapEntry(key, (value is num) ? value.toInt() : 0));
       } else {
         throw Exception('Error al cargar estadísticas de actividad');
       }
@@ -357,22 +410,28 @@ class PerfilService {
     }
   }
 
-  Future<Map<String, dynamic>> reportarUsuario(int userIdToReport, String motivo) async {
+  Future<Map<String, dynamic>> reportarUsuario(
+      int userIdToReport, String motivo) async {
     final token = await _getToken();
     if (token == null) {
       return {'statusCode': 401, 'message': 'No autenticado'};
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/usuarios/$userIdToReport/reportar');
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/usuarios/$userIdToReport/reportar');
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
         body: json.encode({'motivo': motivo}),
       );
       return {
         'statusCode': response.statusCode,
-        'message': json.decode(response.body)['message'] ?? 'Respuesta inesperada'
+        'message':
+            json.decode(response.body)['message'] ?? 'Respuesta inesperada'
       };
     } catch (e) {
       debugPrint("Error en reportarUsuario Service: $e");

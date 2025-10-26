@@ -1,9 +1,9 @@
-// lib/screens/pantalla_editar_reporte_lider.dart (NUEVO ARCHIVO)
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobile_app/api/lider_service.dart';
-import 'package:mobile_app/api/reporte_service.dart'; // Para cargar categorías
+import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/categoria_model.dart';
-import 'package:mobile_app/models/reporte_detallado_model.dart'; // Para datos iniciales
+import 'package:mobile_app/models/reporte_detallado_model.dart';
 
 class PantallaEditarReporteLider extends StatefulWidget {
   final ReporteDetallado reporteInicial;
@@ -65,8 +65,10 @@ class _PantallaEditarReporteLiderState
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoadingCategories = false);
-      print("Error cargando categorías: $e");
+      if (mounted) {
+        setState(() => _isLoadingCategories = false);
+      }
+      debugPrint("Error cargando categorías: $e");
     }
   }
 
@@ -82,7 +84,9 @@ class _PantallaEditarReporteLiderState
   Future<void> _guardarCambios() async {
     if (!_formKey.currentState!.validate() ||
         _isLoading ||
-        _isLoadingCategories) return;
+        _isLoadingCategories) {
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -113,7 +117,7 @@ class _PantallaEditarReporteLiderState
       ));
 
       if (success) {
-        Navigator.pop(context, true); // Devolver true para indicar éxito
+        Navigator.pop(context, true);
       } else {
         setState(() => _isLoading = false);
       }

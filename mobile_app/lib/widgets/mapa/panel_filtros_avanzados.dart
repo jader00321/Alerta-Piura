@@ -1,5 +1,3 @@
-// lib/widgets/mapa/panel_filtros_avanzados.dart
-
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/categoria_model.dart';
@@ -47,9 +45,9 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.5, // Start at 50% of the screen height
-      minChildSize: 0.3, // Can be dragged down to 30%
-      maxChildSize: 0.8, // Can be dragged up to 80%
+      initialChildSize: 0.5,
+      minChildSize: 0.3,
+      maxChildSize: 0.8,
       expand: false,
       builder: (_, scrollController) {
         return Container(
@@ -59,7 +57,6 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
           ),
           child: Column(
             children: [
-              // Handle and Apply Button (fixed at the top)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Column(
@@ -94,7 +91,6 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
                 ),
               ),
               const Divider(),
-              // Scrollable filter options
               Expanded(
                 child: ListView(
                   controller: scrollController,
@@ -108,8 +104,10 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
                           label: Text(status),
                           selected: _filtrosSeleccionados.estado == status,
                           onSelected: (selected) {
-                            setState(() => _filtrosSeleccionados.estado =
-                                selected ? status : null);
+                            setState(() {
+                              _filtrosSeleccionados.estado =
+                                  selected ? status : null;
+                            });
                           },
                         );
                       }).toList(),
@@ -126,8 +124,10 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
                           label: Text(range),
                           selected: _filtrosSeleccionados.rangoFechas == range,
                           onSelected: (selected) {
-                            setState(() => _filtrosSeleccionados.rangoFechas =
-                                selected ? range : null);
+                            setState(() {
+                              _filtrosSeleccionados.rangoFechas =
+                                  selected ? range : null;
+                            });
                           },
                         );
                       }).toList(),
@@ -136,9 +136,10 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
                     FutureBuilder<List<Categoria>>(
                       future: _categoriasFuture,
                       builder: (context, snapshot) {
-                        if (!snapshot.hasData)
+                        if (!snapshot.hasData) {
                           return const Center(
                               child: CircularProgressIndicator());
+                        }
                         return Wrap(
                           spacing: 8.0,
                           children: snapshot.data!.map((cat) {
@@ -147,15 +148,17 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
                               selected:
                                   _filtrosSeleccionados.categoriaId == cat.id,
                               onSelected: (selected) {
-                                setState(() => _filtrosSeleccionados
-                                    .categoriaId = selected ? cat.id : null);
+                                setState(() {
+                                  _filtrosSeleccionados.categoriaId =
+                                      selected ? cat.id : null;
+                                });
                               },
                             );
                           }).toList(),
                         );
                       },
                     ),
-                    const SizedBox(height: 80), // Extra space for FAB
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),

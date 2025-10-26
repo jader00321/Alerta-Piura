@@ -1,8 +1,7 @@
-// lib/screens/pantalla_insignias.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/gamificacion_service.dart';
 import 'package:mobile_app/models/insignia_detalle_model.dart';
-import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart'; // Reutilizamos un esqueleto
+import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
 
 class PantallaInsignias extends StatefulWidget {
   const PantallaInsignias({super.key});
@@ -21,7 +20,6 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
     _progresoFuture = _gamificacionService.getProgresoInsignias();
   }
 
-  // Función para obtener el icono basado en el 'icono_url'
   IconData _obtenerIcono(String? iconoUrl) {
     switch (iconoUrl) {
       case 'premium_shield':
@@ -33,13 +31,13 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
       case 'city_defender_crest':
         return Icons.verified_user_rounded;
       case 'school':
-        return Icons.school_rounded; // Ciudadano Iniciado
+        return Icons.school_rounded;
       case 'record_voice_over':
-        return Icons.record_voice_over_rounded; // Voz Activa
+        return Icons.record_voice_over_rounded;
       case 'security':
-        return Icons.security_rounded; // Guardián del Barrio
+        return Icons.security_rounded;
       default:
-        return Icons.emoji_events_outlined; // Icono por defecto
+        return Icons.emoji_events_outlined;
     }
   }
 
@@ -55,7 +53,7 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
         future: _progresoFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const EsqueletoListaActividad(); // Muestra esqueleto mientras carga
+            return const EsqueletoListaActividad();
           }
           if (snapshot.hasError) {
             return Center(
@@ -69,7 +67,6 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
           final progreso = snapshot.data!;
           final puntosUsuario = progreso.puntosUsuario;
 
-          // Separar insignias
           final insigniasGanadas = progreso.insignias
               .where((i) => i.isEarned && (i.puntosNecesarios ?? 0) > 0)
               .toList();
@@ -77,9 +74,7 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
               .where((i) => !i.isEarned && (i.puntosNecesarios ?? 0) > 0)
               .toList();
 
-          // Encontrar la próxima insignia por puntos
           InsigniaDetalle? proximaInsignia;
-          // Ordenar bloqueadas por puntos necesarios ascendente para encontrar la próxima
           insigniasBloqueadas.sort((a, b) =>
               (a.puntosNecesarios ?? 0).compareTo(b.puntosNecesarios ?? 0));
           if (insigniasBloqueadas.isNotEmpty) {
@@ -91,7 +86,6 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
           return ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
-              // --- Tarjeta de Puntos y Próxima Insignia ---
               Card(
                 elevation: 4,
                 color: theme.colorScheme.primaryContainer,
@@ -115,8 +109,7 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                             ? 'Siguiente Desafío:'
                             : '¡Has desbloqueado todo!',
                         style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme
-                                .onPrimaryContainer), // Ajustar color
+                            color: theme.colorScheme.onPrimaryContainer),
                       ),
                       Text(
                         proximaInsignia != null
@@ -124,44 +117,36 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                             : 'Sigue participando',
                         style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: theme.colorScheme
-                                .onPrimaryContainer, // Ajustar color
-                            fontSize: 20 // Ajustar tamaño si es muy grande
-                            ),
-                        textAlign: TextAlign.center, // Centrar texto
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontSize: 20),
+                        textAlign: TextAlign.center,
                       ),
                       if (proximaInsignia != null &&
                           proximaInsignia.puntosNecesarios != null &&
                           proximaInsignia.puntosNecesarios! > 0) ...[
-                        // Chequeo adicional
                         const SizedBox(height: 12),
                         LinearProgressIndicator(
-                          // Asegurar que el valor esté entre 0 y 1
                           value: (puntosUsuario /
                                   proximaInsignia.puntosNecesarios!)
                               .clamp(0.0, 1.0),
                           minHeight: 10,
                           borderRadius: BorderRadius.circular(5),
-                          backgroundColor: theme.colorScheme.primary
-                              .withOpacity(0.2), // Fondo más claro
+                          backgroundColor: theme.colorScheme.primary.withAlpha(
+                              51), // CORREGIDO: withOpacity -> withAlpha
                           valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.colorScheme.primary), // Color primario
+                              theme.colorScheme.primary),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          // Calcular puntos restantes asegurando que no sea negativo
                           '${(proximaInsignia.puntosNecesarios! - puntosUsuario).clamp(0, proximaInsignia.puntosNecesarios!)} puntos restantes',
                           style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme
-                                  .onPrimaryContainer), // Ajustar color
+                              color: theme.colorScheme.onPrimaryContainer),
                         ),
                       ]
                     ],
                   ),
                 ),
               ),
-
-              // --- Insignias Obtenidas ---
               Padding(
                 padding: const EdgeInsets.only(top: 32.0, bottom: 16.0),
                 child: Text('Insignias Obtenidas (${insigniasGanadas.length})',
@@ -169,7 +154,6 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
               ),
               if (insigniasGanadas.isEmpty)
                 const Padding(
-                  // Añadir padding
                   padding: EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text(
                       '¡Sigue participando para ganar tu primera insignia!'),
@@ -179,11 +163,10 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3, // Número de columnas
-                    crossAxisSpacing: 12, // Espacio horizontal
-                    mainAxisSpacing: 12, // Espacio vertical
-                    childAspectRatio:
-                        0.85, // Relación ancho/alto (ajustar si es necesario)
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.85,
                   ),
                   itemCount: insigniasGanadas.length,
                   itemBuilder: (context, index) {
@@ -191,14 +174,11 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                     return _InsigniaCard(
                       insignia: insignia,
                       icono: _obtenerIcono(insignia.iconoUrl),
-                      color: theme
-                          .colorScheme.primary, // Color para insignias ganadas
+                      color: theme.colorScheme.primary,
                       isLocked: false,
                     );
                   },
                 ),
-
-              // --- Insignias por Desbloquear ---
               Padding(
                 padding: const EdgeInsets.only(top: 32.0, bottom: 12.0),
                 child: Text('Por Desbloquear (${insigniasBloqueadas.length})',
@@ -206,7 +186,6 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
               ),
               if (insigniasBloqueadas.isEmpty)
                 const Padding(
-                  // Añadir padding
                   padding: EdgeInsets.symmetric(horizontal: 8.0),
                   child: Text(
                       '¡Felicidades! Has conseguido todas las insignias de progreso.'),
@@ -219,7 +198,7 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                     crossAxisCount: 3,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    childAspectRatio: 0.85, // Misma relación de aspecto
+                    childAspectRatio: 0.85,
                   ),
                   itemCount: insigniasBloqueadas.length,
                   itemBuilder: (context, index) {
@@ -227,13 +206,12 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                     return _InsigniaCard(
                       insignia: insignia,
                       icono: _obtenerIcono(insignia.iconoUrl),
-                      color: Colors
-                          .grey.shade600, // Color para insignias bloqueadas
+                      color: Colors.grey.shade600,
                       isLocked: true,
                     );
                   },
                 ),
-              const SizedBox(height: 18), // Espacio extra al final
+              const SizedBox(height: 18),
             ],
           );
         },
@@ -242,7 +220,6 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
   }
 }
 
-// --- Widget _InsigniaCard CORREGIDO ---
 class _InsigniaCard extends StatelessWidget {
   final InsigniaDetalle insignia;
   final IconData icono;
@@ -261,49 +238,38 @@ class _InsigniaCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Tooltip(
       message: isLocked
-          ? "${insignia.descripcion}\nRequiere: ${insignia.puntosNecesarios ?? '?'} puntos" // Mensaje para bloqueadas
-          : insignia.descripcion, // Mensaje para desbloqueadas
-      preferBelow: false, // Mostrar tooltip arriba si es posible
+          ? "${insignia.descripcion}\nRequiere: ${insignia.puntosNecesarios ?? '?'} puntos"
+          : insignia.descripcion,
+      preferBelow: false,
       child: Card(
-        elevation: isLocked ? 0 : 2, // Sin elevación si está bloqueada
-        // Color de fondo diferente si está bloqueada
+        elevation: isLocked ? 0 : 2,
         color: isLocked
-            ? theme.colorScheme.onSurface.withOpacity(0.05)
-            : theme.cardColor,
-        clipBehavior: Clip.antiAlias, // Para asegurar bordes redondeados
+            ? theme.colorScheme.onSurface.withAlpha(13)
+            : theme.cardColor, // CORREGIDO: withOpacity -> withAlpha
+        clipBehavior: Clip.antiAlias,
         child: Padding(
-          padding: const EdgeInsets.all(5.0), // Reducir padding si es necesario
+          padding: const EdgeInsets.all(5.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                isLocked
-                    ? Icons.lock_outline
-                    : icono, // Icono de candado o el de la insignia
-                size: 36, // Tamaño del icono
-                color: isLocked
-                    ? Colors.grey.shade500
-                    : color, // Color diferente si está bloqueada
+                isLocked ? Icons.lock_outline : icono,
+                size: 36,
+                color: isLocked ? Colors.grey.shade500 : color,
               ),
-              const SizedBox(height: 8), // Espacio
+              const SizedBox(height: 8),
               Text(
                 insignia.nombre,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isLocked
-                      ? Colors.grey.shade600
-                      : null, // Color de texto diferente
+                  color: isLocked ? Colors.grey.shade600 : null,
                 ),
                 textAlign: TextAlign.center,
-                // --- CORRECCIONES ---
-                maxLines: 2, // Permitir hasta 2 líneas
-                overflow:
-                    TextOverflow.ellipsis, // Usar ellipsis si excede 2 líneas
-                softWrap: true, // Permitir el salto de línea
-                // --- FIN CORRECCIONES ---
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                softWrap: true,
               ),
               if (isLocked && insignia.puntosNecesarios != null) ...[
-                // Mostrar puntos solo si está bloqueada y tiene puntos definidos
                 const SizedBox(height: 4),
                 Text(
                   '${insignia.puntosNecesarios} Pts',
@@ -318,4 +284,3 @@ class _InsigniaCard extends StatelessWidget {
     );
   }
 }
-// --- FIN Widget _InsigniaCard CORREGIDO ---

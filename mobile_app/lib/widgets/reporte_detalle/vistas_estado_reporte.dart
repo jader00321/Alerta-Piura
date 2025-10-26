@@ -1,8 +1,6 @@
-// lib/widgets/reporte_detalle/vistas_estado_reporte.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';
 
-/// Muestra un banner para reportes que están 'ocultos' pero son visibles para el usuario.
 class BannerReporteOculto extends StatelessWidget {
   const BannerReporteOculto({super.key});
 
@@ -33,7 +31,6 @@ class BannerReporteOculto extends StatelessWidget {
   }
 }
 
-/// Muestra una pantalla completa para un reporte que fue fusionado.
 class VistaReporteFusionado extends StatelessWidget {
   final ReporteDetallado reporte;
   const VistaReporteFusionado({super.key, required this.reporte});
@@ -83,7 +80,6 @@ class VistaReporteFusionado extends StatelessWidget {
   }
 }
 
-/// Muestra una pantalla completa para un reporte 'oculto' que el usuario no puede ver.
 class VistaReporteOculto extends StatelessWidget {
   const VistaReporteOculto({super.key});
 

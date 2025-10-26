@@ -1,13 +1,13 @@
 class SolicitudRevision {
   final int id;
-  final int id_reporte; // <-- ADD THIS
+  final int idReporte;
   final String estado;
   final String fecha;
   final String titulo;
 
   SolicitudRevision({
     required this.id,
-    required this.id_reporte, // <-- ADD THIS
+    required this.idReporte,
     required this.estado,
     required this.fecha,
     required this.titulo,
@@ -16,7 +16,7 @@ class SolicitudRevision {
   factory SolicitudRevision.fromJson(Map<String, dynamic> json) {
     return SolicitudRevision(
       id: json['id'],
-      id_reporte: json['id_reporte'], // <-- ADD THIS
+      idReporte: json['id_reporte'],
       estado: json['estado'],
       fecha: json['fecha'],
       titulo: json['titulo'],

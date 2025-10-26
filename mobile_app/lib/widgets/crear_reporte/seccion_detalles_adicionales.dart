@@ -51,7 +51,8 @@ class SeccionDetallesAdicionales extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: distritoSeleccionado,
+              value:
+                  distritoSeleccionado, 
               decoration: const InputDecoration(
                   labelText: 'Distrito', border: OutlineInputBorder()),
               items: distritos.map((String value) {
@@ -84,7 +85,8 @@ class SeccionDetallesAdicionales extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: impactoSeleccionado,
+              value:
+                  impactoSeleccionado,
               decoration: const InputDecoration(
                   labelText: 'Impacto del Problema',
                   border: OutlineInputBorder()),

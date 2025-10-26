@@ -1,20 +1,21 @@
-// lib/widgets/reporte_detalle/reporte_header.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';
 
 class ReporteHeader extends StatelessWidget {
   final ReporteDetallado reporte;
-  final bool showImage; // Controla si se muestra la imagen
+  final bool showImage;
 
   const ReporteHeader({
     super.key,
     required this.reporte,
-    this.showImage = true, // Por defecto, mostrar la imagen
+    this.showImage = true,
   });
 
   Widget _buildInfoRow(
       BuildContext context, IconData icon, String title, String? value) {
-    if (value == null || value.isEmpty) return const SizedBox.shrink();
+    if (value == null || value.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
@@ -58,7 +59,6 @@ class ReporteHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // --- MOSTRAR IMAGEN CONDICIONALMENTE ---
         if (showImage) ...[
           if (reporte.fotoUrl != null && reporte.fotoUrl!.isNotEmpty)
             Image.network(
@@ -73,7 +73,7 @@ class ReporteHeader extends StatelessWidget {
                       child: Center(child: CircularProgressIndicator())),
               errorBuilder: (context, error, stackTrace) => Container(
                   height: 200,
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   child: const Center(
                       child: Icon(Icons.broken_image,
                           color: Colors.grey, size: 50))),
@@ -81,14 +81,12 @@ class ReporteHeader extends StatelessWidget {
           else
             Container(
               height: 200,
-              color: Theme.of(context).colorScheme.surfaceVariant,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               child: const Center(
                   child: Icon(Icons.image_not_supported,
                       color: Colors.grey, size: 50)),
             ),
         ],
-        // --- FIN MOSTRAR IMAGEN ---
-
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -108,7 +106,7 @@ class ReporteHeader extends StatelessWidget {
                     Chip(
                       label: Text('Urgencia: ${reporte.urgencia}'),
                       backgroundColor:
-                          _getUrgencyColor(reporte.urgencia).withOpacity(0.2),
+                          _getUrgencyColor(reporte.urgencia).withAlpha(51),
                       side:
                           BorderSide(color: _getUrgencyColor(reporte.urgencia)),
                     )

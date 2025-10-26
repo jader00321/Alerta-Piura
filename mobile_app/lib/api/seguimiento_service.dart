@@ -16,9 +16,11 @@ class SeguimientoService {
     if (token == null) {
       return false;
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/seguimiento/reporte/$idReporte/verificar');
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/seguimiento/reporte/$idReporte/verificar');
     try {
-      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
       if (response.statusCode == 200) {
         return json.decode(response.body)['siguiendo'];
       }
@@ -33,8 +35,10 @@ class SeguimientoService {
     if (token == null) {
       return false;
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/seguimiento/reporte/$idReporte/seguir');
-    final response = await http.post(url, headers: {'Authorization': 'Bearer $token'});
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/seguimiento/reporte/$idReporte/seguir');
+    final response =
+        await http.post(url, headers: {'Authorization': 'Bearer $token'});
     return response.statusCode == 201;
   }
 
@@ -43,8 +47,10 @@ class SeguimientoService {
     if (token == null) {
       return false;
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/seguimiento/reporte/$idReporte/dejar-de-seguir');
-    final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
+    final url = Uri.parse(
+        '${ApiConstants.baseUrl}/api/seguimiento/reporte/$idReporte/dejar-de-seguir');
+    final response =
+        await http.delete(url, headers: {'Authorization': 'Bearer $token'});
     return response.statusCode == 200;
   }
 
@@ -53,18 +59,22 @@ class SeguimientoService {
     if (token == null) {
       throw Exception('No autenticado');
     }
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/seguimiento/mis-seguimientos');
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/seguimiento/mis-seguimientos');
     try {
-        final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
-        if (response.statusCode == 200) {
-          final List<dynamic> reportesJson = json.decode(response.body);
-          return reportesJson.map((jsonMap) => ReporteResumen.fromJson(jsonMap)).toList();
-        } else {
-          throw Exception('Error al cargar reportes seguidos');
-        }
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      if (response.statusCode == 200) {
+        final List<dynamic> reportesJson = json.decode(response.body);
+        return reportesJson
+            .map((jsonMap) => ReporteResumen.fromJson(jsonMap))
+            .toList();
+      } else {
+        throw Exception('Error al cargar reportes seguidos');
+      }
     } catch (e) {
-        debugPrint("Error fetching followed reports: $e");
-        throw Exception('Error de conexión al cargar seguidos.');
+      debugPrint("Error fetching followed reports: $e");
+      throw Exception('Error de conexión al cargar seguidos.');
     }
   }
 }

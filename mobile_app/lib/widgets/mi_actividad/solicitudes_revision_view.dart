@@ -63,7 +63,7 @@ class SolicitudesRevisionView extends StatelessWidget {
               ),
               onTap: () {
                 Navigator.pushNamed(context, '/reporte_detalle',
-                    arguments: solicitud.id_reporte);
+                    arguments: solicitud.idReporte);
               },
             ),
           );

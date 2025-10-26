@@ -1,7 +1,5 @@
-// lib/widgets/reporte_detalle/campo_comentario.dart
 import 'package:flutter/material.dart';
 
-/// Campo de texto para escribir y enviar un comentario.
 class CampoComentarioInput extends StatelessWidget {
   final TextEditingController controller;
   final bool isPosting;
@@ -21,7 +19,8 @@ class CampoComentarioInput extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         boxShadow: [
-          BoxShadow(blurRadius: 5, color: Colors.black.withOpacity(0.1)),
+          BoxShadow(
+              blurRadius: 5, color: Colors.black.withAlpha(26)), // CORREGIDO
         ],
       ),
       child: SafeArea(
@@ -36,7 +35,7 @@ class CampoComentarioInput extends StatelessWidget {
                     contentPadding:
                         EdgeInsets.symmetric(vertical: 10, horizontal: 8)),
                 enabled: !isPosting,
-                maxLines: null, // Permitir múltiples líneas
+                maxLines: null,
               ),
             ),
             isPosting
@@ -57,7 +56,6 @@ class CampoComentarioInput extends StatelessWidget {
   }
 }
 
-/// Botón que solicita al usuario iniciar sesión para poder comentar.
 class PromptLoginComentario extends StatelessWidget {
   const PromptLoginComentario({super.key});
 
@@ -71,9 +69,10 @@ class PromptLoginComentario extends StatelessWidget {
           boxShadow: [
             BoxShadow(
                 blurRadius: 4,
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withAlpha(26),
                 offset: const Offset(0, -2))
-          ]),
+          ] // CORREGIDO
+          ),
       child: ElevatedButton.icon(
         icon: const Icon(Icons.login),
         label: const Text('Inicia sesión para comentar'),

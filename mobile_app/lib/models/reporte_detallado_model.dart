@@ -81,9 +81,9 @@ class ReporteDetallado {
       }
       final coords = locationData?['coordinates'];
       if (coords != null && coords is List && coords.length >= 2) {
-         parsedLocation = LatLng(coords[1], coords[0]);
+        parsedLocation = LatLng(coords[1], coords[0]);
       } else {
-         throw Exception('Invalid coordinates format');
+        throw Exception('Invalid coordinates format');
       }
     } catch (e) {
       debugPrint("Error parseando location, usando default: $e");
@@ -120,7 +120,9 @@ class ReporteDetallado {
       tags: tagsList,
       impacto: json['impacto'],
       codigoReporte: json['codigo_reporte'],
-      idReporteOriginal: _parseInt(json['id_reporte_original'], -1) == -1 ? null : _parseInt(json['id_reporte_original']),
+      idReporteOriginal: _parseInt(json['id_reporte_original'], -1) == -1
+          ? null
+          : _parseInt(json['id_reporte_original']),
       reportesVinculadosCount: _parseInt(json['reportes_vinculados_count']),
     );
   }

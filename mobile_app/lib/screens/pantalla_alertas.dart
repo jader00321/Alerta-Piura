@@ -38,18 +38,20 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
 
   Future<void> _markAllAsRead() async {
     final success = await _perfilService.marcarTodasComoLeidas();
-    if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Todas las notificaciones marcadas como leídas.')),
-      );
-      _loadNotifications();
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Error al realizar la acción.'),
-            backgroundColor: Colors.red),
-      );
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Todas las notificaciones marcadas como leídas.')),
+        );
+        _loadNotifications();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Error al realizar la acción.'),
+              backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -109,7 +111,7 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
                       : Theme.of(context)
                           .colorScheme
                           .primaryContainer
-                          .withOpacity(0.3),
+                          .withAlpha(77), // CORREGIDO: withOpacity -> withAlpha
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: notif.leido

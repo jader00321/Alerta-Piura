@@ -1,5 +1,3 @@
-// lib/screens/pantalla_crear_zona.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -17,9 +15,8 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
   final _nombreController = TextEditingController();
   final _mapController = MapController();
 
-  LatLng _centroZona =
-      const LatLng(-5.19449, -80.63282); // Centro de Piura por defecto
-  double _radioMetros = 500.0; // 500m por defecto
+  LatLng _centroZona = const LatLng(-5.19449, -80.63282);
+  double _radioMetros = 500.0;
   bool _isLoading = false;
 
   @override
@@ -30,7 +27,9 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
   }
 
   Future<void> _guardarZona() async {
-    if (!_formKey.currentState!.validate() || _isLoading) return;
+    if (!_formKey.currentState!.validate() || _isLoading) {
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -50,8 +49,7 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
         ),
       );
       if (success) {
-        Navigator.pop(context,
-            true); // Devuelve 'true' para indicar que se debe refrescar
+        Navigator.pop(context, true);
       }
     }
 
@@ -75,7 +73,6 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
         key: _formKey,
         child: Column(
           children: [
-            // Mapa interactivo
             Expanded(
               child: FlutterMap(
                 mapController: _mapController,
@@ -94,23 +91,19 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.example.mobile_app',
                   ),
-                  // Círculo que muestra el radio de la zona
                   CircleLayer(
                     circles: [
                       CircleMarker(
                         point: _centroZona,
                         radius: _radioMetros,
                         useRadiusInMeter: true,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withOpacity(0.2),
+                        color: Theme.of(context).colorScheme.primary.withAlpha(
+                            51), // CORREGIDO: withOpacity -> withAlpha
                         borderColor: Theme.of(context).colorScheme.primary,
                         borderStrokeWidth: 2,
                       ),
                     ],
                   ),
-                  // Pin central fijo
                   const Center(
                     child:
                         Icon(Icons.location_pin, size: 50, color: Colors.red),
@@ -118,7 +111,6 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
                 ],
               ),
             ),
-            // Panel inferior para los controles
             Card(
               margin: EdgeInsets.zero,
               elevation: 8,
@@ -141,8 +133,8 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
                     Text('Radio de la zona: ${_radioMetros.toInt()} metros'),
                     Slider(
                       value: _radioMetros,
-                      min: 100, // Radio mínimo de 100m
-                      max: 2000, // Radio máximo de 2km
+                      min: 100,
+                      max: 2000,
                       divisions: 19,
                       label: '${_radioMetros.toInt()}m',
                       onChanged: (value) {

@@ -1,4 +1,3 @@
-//import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,8 +7,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_app/models/categoria_model.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
-
-// Importamos los nuevos widgets que hemos creado
 import 'package:mobile_app/widgets/crear_reporte/seccion_evidencia.dart';
 import 'package:mobile_app/widgets/crear_reporte/seccion_detalles_principales.dart';
 import 'package:mobile_app/widgets/crear_reporte/seccion_detalles_adicionales.dart';
@@ -24,15 +21,12 @@ class CreateReportScreen extends StatefulWidget {
 
 class _CreateReportScreenState extends State<CreateReportScreen> {
   final _formKey = GlobalKey<FormState>();
-
-  // Controladores para los campos del formulario
   final _tituloController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _categoriaSugeridaController = TextEditingController();
   final _tagsController = TextEditingController();
   final _referenciaController = TextEditingController();
 
-  // Estado de la pantalla
   int? _selectedCategoria;
   bool _isAnonimo = false;
   LatLng? _currentLocation;
@@ -45,7 +39,6 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   String? _distrito;
   XFile? _imageFile;
 
-  // Servicios y datos estáticos
   final ReporteService _reporteService = ReporteService();
   final ImagePicker _picker = ImagePicker();
   final List<String> _distritosDePiura = [
@@ -84,8 +77,6 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     super.dispose();
   }
 
-  // --- LÓGICA DE LA PANTALLA ---
-
   Future<void> _fetchCategories() async {
     try {
       final cats = await _reporteService.getCategorias();
@@ -121,22 +112,28 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       setState(() => _isLoading = true);
       try {
         Position position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high);
+            locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                timeLimit: Duration(seconds: 15)));
         if (mounted) {
           setState(() =>
               _currentLocation = LatLng(position.latitude, position.longitude));
         }
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('No se pudo obtener la ubicación.')));
+        }
       } finally {
-        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     } else {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Se necesita permiso de ubicación.')));
+      }
     }
   }
 
@@ -215,8 +212,6 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     }
   }
 
-  // --- CONSTRUCCIÓN DE LA UI USANDO LOS NUEVOS WIDGETS ---
-
   @override
   Widget build(BuildContext context) {
     final authNotifier = context.watch<AuthNotifier>();
@@ -241,8 +236,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                     padding: const EdgeInsets.all(12.0),
                     child: Row(
                       children: [
-                        Icon(Icons.star_border,
-                            color: const Color.fromARGB(255, 224, 127, 0)),
+                        const Icon(Icons.star_border,
+                            color: Color.fromARGB(255, 224, 127, 0)),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Text(

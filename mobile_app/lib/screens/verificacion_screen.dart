@@ -1,5 +1,5 @@
-// lib/screens/verificacion_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobile_app/api/lider_service.dart';
 import 'package:mobile_app/widgets/verificacion/lista_reportes_verificacion.dart';
 import 'package:mobile_app/widgets/verificacion/mis_reportes_moderacion_view.dart';
@@ -58,9 +58,14 @@ class _VerificacionScreenState extends State<VerificacionScreen>
   }
 
   Future<void> _loadStats({bool isRefresh = false}) async {
-    if (!isRefresh && !_isLoadingStats && _stats.values.every((v) => v != null))
+    if (!isRefresh &&
+        !_isLoadingStats &&
+        _stats.values.every((v) => v != null)) {
       return;
-    if (mounted) setState(() => _isLoadingStats = true);
+    }
+    if (mounted) {
+      setState(() => _isLoadingStats = true);
+    }
     try {
       final fetchedStats = await _liderService.getModeracionStats();
       if (mounted) {
@@ -70,7 +75,7 @@ class _VerificacionScreenState extends State<VerificacionScreen>
         });
       }
     } catch (e) {
-      print("Error cargando stats de moderación: $e");
+      debugPrint("Error cargando stats de moderación: $e");
       if (mounted) {
         setState(() {
           _isLoadingStats = false;
@@ -86,24 +91,25 @@ class _VerificacionScreenState extends State<VerificacionScreen>
   }
 
   Future<void> _loadZonasAsignadas() async {
-    if (mounted) setStateIfMounted(() => _isLoadingZonas = true); // Usar helper
+    if (mounted) {
+      setStateIfMounted(() => _isLoadingZonas = true);
+    }
     try {
       final zonas = await _liderService.getMisZonasAsignadas();
       if (mounted) {
         setStateIfMounted(() {
-          // Usar helper
           _zonasAsignadas = zonas;
           _isLoadingZonas = false;
         });
       }
     } catch (e) {
-      print("Error cargando zonas asignadas: $e");
-      if (mounted)
-        setStateIfMounted(() => _isLoadingZonas = false); // Usar helper
+      debugPrint("Error cargando zonas asignadas: $e");
+      if (mounted) {
+        setStateIfMounted(() => _isLoadingZonas = false);
+      }
     }
   }
 
-  // Helper para evitar llamar a setState si el widget se desmontó
   void setStateIfMounted(VoidCallback fn) {
     if (mounted) {
       setState(fn);
@@ -112,7 +118,7 @@ class _VerificacionScreenState extends State<VerificacionScreen>
 
   Future<void> _handleTabRefresh() async {
     if (!mounted) return;
-    setStateIfMounted(() => _isLoadingStats = true); // Indicador general
+    setStateIfMounted(() => _isLoadingStats = true);
 
     int? newCount;
     String currentTabKey = '';
@@ -134,30 +140,27 @@ class _VerificacionScreenState extends State<VerificacionScreen>
     }
 
     try {
-      // Ejecutar refresh de pestaña Y recarga de zonas en paralelo
       final results = await Future.wait([
-        _loadZonasAsignadas(), // Recargar zonas asignadas
-        if (refreshFuture != null)
-          refreshFuture
-        else
-          Future.value(null), // Refresh de pestaña
+        _loadZonasAsignadas(),
+        if (refreshFuture != null) refreshFuture else Future.value(null),
       ]);
 
       newCount = results[1] as int?;
 
-      if (mounted && currentTabKey.isNotEmpty) {
-        setStateIfMounted(() {
-          // Usar helper
-          _stats[currentTabKey] = newCount;
-          _isLoadingStats = false;
-        });
-      } else if (mounted) {
-        setStateIfMounted(() => _isLoadingStats = false); // Usar helper
+      if (mounted) {
+        if (currentTabKey.isNotEmpty) {
+          setStateIfMounted(() {
+            _stats[currentTabKey] = newCount;
+            _isLoadingStats = false;
+          });
+        } else {
+          setStateIfMounted(() => _isLoadingStats = false);
+        }
       }
     } catch (e) {
-      print("Error durante refresh: $e");
+      debugPrint("Error durante refresh: $e");
       if (mounted) {
-        setStateIfMounted(() => _isLoadingStats = false); // Usar helper
+        setStateIfMounted(() => _isLoadingStats = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text('Error al refrescar: $e'),
@@ -171,7 +174,6 @@ class _VerificacionScreenState extends State<VerificacionScreen>
   Widget build(BuildContext context) {
     String countText(String key) {
       final count = _stats[key];
-      // Mostrar '...' si está cargando O si el count es null (falló la carga inicial)
       return (_isLoadingStats && count == null)
           ? '...'
           : (count?.toString() ?? '-');
@@ -203,12 +205,12 @@ class _VerificacionScreenState extends State<VerificacionScreen>
 
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Quitar flecha de back
+        automaticallyImplyLeading: false,
         flexibleSpace: _VerificacionHeader(
           isLoadingZonas: _isLoadingZonas,
           zonasAsignadas: _zonasAsignadas,
         ),
-        toolbarHeight: 80, // Ajustar según diseño final del header
+        toolbarHeight: 80,
         bottom: TabBar(
           controller: _tabController,
           tabs: tabs,
@@ -237,7 +239,6 @@ class _VerificacionScreenState extends State<VerificacionScreen>
   }
 }
 
-// --- CORRECCIÓN: Header con más espacio y texto multilínea ---
 class _VerificacionHeader extends StatelessWidget {
   final bool isLoadingZonas;
   final List<String> zonasAsignadas;
@@ -263,9 +264,7 @@ class _VerificacionHeader extends StatelessWidget {
 
     return SafeArea(
       child: Container(
-        // --- CORRECCIÓN: Usar Padding en lugar de Margin ---
-        padding: const EdgeInsets.fromLTRB(
-            16.0, 8.0, 16.0, 12.0), // Más espacio abajo (bottom: 12.0)
+        padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 12.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,11 +275,10 @@ class _VerificacionHeader extends StatelessWidget {
                   color: theme.appBarTheme.titleTextStyle?.color ??
                       (theme.brightness == Brightness.dark
                           ? Colors.white
-                          : Colors.black), // Color adaptable
+                          : Colors.black),
                   fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
-            // --- CORRECCIÓN: Permitir múltiples líneas ---
             Text(
               zonasText,
               style: theme.textTheme.bodySmall?.copyWith(
@@ -288,16 +286,13 @@ class _VerificacionHeader extends StatelessWidget {
                         (theme.brightness == Brightness.dark
                             ? Colors.white
                             : Colors.black))
-                    .withOpacity(0.8), // Color adaptable
+                    .withAlpha(204), // CORREGIDO: withOpacity -> withAlpha
               ),
-              // Quitar maxLines y overflow para permitir wrap
             ),
             const SizedBox(height: 8),
-            // --- FIN CORRECCIÓN ---
           ],
         ),
       ),
     );
   }
 }
-// --- FIN CORRECCIÓN ---

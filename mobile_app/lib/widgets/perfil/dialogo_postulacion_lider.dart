@@ -1,4 +1,3 @@
-// lib/widgets/perfil/dialogo_postulacion_lider.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/perfil_service.dart';
 
@@ -26,7 +25,9 @@ class _DialogoPostulacionLiderState extends State<DialogoPostulacionLider> {
   }
 
   Future<void> _enviarPostulacion() async {
-    if (!_formKey.currentState!.validate() || _isLoading) return;
+    if (!_formKey.currentState!.validate() || _isLoading) {
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -42,7 +43,7 @@ class _DialogoPostulacionLiderState extends State<DialogoPostulacionLider> {
       if (!mounted) return;
 
       final message = response['message'] ?? 'Error desconocido';
-      final success = response['statusCode'] == 201; // 201 Creado
+      final success = response['statusCode'] == 201;
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(message),
@@ -50,7 +51,7 @@ class _DialogoPostulacionLiderState extends State<DialogoPostulacionLider> {
       ));
 
       if (success) {
-        Navigator.pop(context, true); // Devolver true para refrescar perfil
+        Navigator.pop(context, true);
       } else {
         setState(() {
           _errorMessage = message;
@@ -74,7 +75,6 @@ class _DialogoPostulacionLiderState extends State<DialogoPostulacionLider> {
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          // Evitar overflow por teclado
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

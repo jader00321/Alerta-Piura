@@ -5,11 +5,15 @@ class IndicadorRiesgo extends StatelessWidget {
   const IndicadorRiesgo({super.key, required this.riesgoScore});
 
   ({Color color, String label}) _getRiskLevel(int score) {
-    if (score > 40)
+    if (score > 40) {
       return (color: Colors.red.shade700, label: 'Zona Peligrosa');
-    if (score > 20)
+    }
+    if (score > 20) {
       return (color: Colors.orange.shade700, label: 'Zona Insegura');
-    if (score > 5) return (color: Colors.yellow.shade800, label: 'Precaución');
+    }
+    if (score > 5) {
+      return (color: Colors.yellow.shade800, label: 'Precaución');
+    }
     return (color: Colors.green.shade700, label: 'Zona Tranquila');
   }
 
@@ -27,7 +31,7 @@ class IndicadorRiesgo extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withAlpha(64), // CORREGIDO
               blurRadius: 5,
               offset: const Offset(0, 3),
             )

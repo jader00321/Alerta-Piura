@@ -23,8 +23,10 @@ class SeccionEvidencia extends StatelessWidget {
           height: 200,
           width: double.infinity,
           decoration: BoxDecoration(
-            color:
-                Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+            color: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withAlpha(128),
           ),
           child: imageFile != null
               ? Image.file(

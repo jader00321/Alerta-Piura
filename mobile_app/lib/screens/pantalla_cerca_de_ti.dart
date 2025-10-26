@@ -1,10 +1,9 @@
-// lib/screens/pantalla_cerca_de_ti.dart
-
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/api/reporte_service.dart';
-import 'package:mobile_app/models/reporte_cercano_model.dart'; // Asegúrate que la importación sea correcta
+import 'package:mobile_app/models/reporte_cercano_model.dart';
 import 'package:mobile_app/widgets/cerca_de_ti/tarjeta_reporte_cercano.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_reportes.dart';
@@ -23,8 +22,7 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
   List<ReporteCercano>? _reportes;
   final ReporteService _reporteService = ReporteService();
   LatLng? _lastKnownLocation;
-  FiltrosCercanos _filtrosAplicados =
-      FiltrosCercanos(); // Mantiene los filtros actuales
+  FiltrosCercanos _filtrosAplicados = FiltrosCercanos();
   List<Categoria> _categoriasDisponibles = [];
   bool _isLoadingCategories = true;
   bool _isLoadingReports = false;
@@ -50,14 +48,12 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      // Refresh usando última ubicación conocida y manteniendo filtros
       _fetchNearbyReports(forceLocation: false, resetFilters: false);
     }
   }
 
   Future<void> _initializeScreen() async {
     await _loadCategories();
-    // Fetch inicial fuerza nueva ubicación y no tiene filtros
     _fetchNearbyReports(forceLocation: true, resetFilters: true);
   }
 
@@ -74,20 +70,24 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
         });
       }
     } catch (e) {
-      print("Error cargando categorías para filtros: $e");
-      if (mounted) setState(() => _isLoadingCategories = false);
+      debugPrint("Error cargando categorías para filtros: $e");
+      if (mounted) {
+        setState(() => _isLoadingCategories = false);
+      }
     }
   }
 
   Future<void> _fetchNearbyReports(
       {bool forceLocation = false, bool resetFilters = false}) async {
-    if (_isLoadingReports) return;
+    if (_isLoadingReports) {
+      return;
+    }
 
     setState(() {
       _isLoadingReports = true;
       _errorMessage = null;
       if (resetFilters) {
-        _filtrosAplicados = FiltrosCercanos(); // Resetea filtros si se solicita
+        _filtrosAplicados = FiltrosCercanos();
       }
     });
 
@@ -107,16 +107,15 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
       }
       try {
         Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 15),
-        );
+            locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                timeLimit: Duration(seconds: 15)));
         locationToUse = LatLng(position.latitude, position.longitude);
-        // Actualiza lastKnownLocation si se forzó o no existía
         if (forceLocation || _lastKnownLocation == null) {
           _lastKnownLocation = locationToUse;
         }
       } catch (e) {
-        print("Error obteniendo ubicación: $e");
+        debugPrint("Error obteniendo ubicación: $e");
         if (mounted) {
           setState(() {
             _isLoadingReports = false;
@@ -128,20 +127,7 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
       }
     }
 
-    // ignore: unnecessary_null_comparison
-    if (locationToUse == null) {
-      if (mounted) {
-        setState(() {
-          _isLoadingReports = false;
-          _errorMessage = 'Ubicación no determinada.';
-          _reportes = [];
-        });
-      }
-      return;
-    }
-
     try {
-      // Pasa los filtros actuales (_filtrosAplicados) al servicio
       final reports = await _reporteService.getReportesCercanos(locationToUse,
           filtros: _filtrosAplicados);
       if (!mounted) return;
@@ -162,8 +148,9 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
 
   Future<void> _handleJoinReport(int reporteId) async {
     if (_joiningStatus[reporteId] == true ||
-        _unjoiningStatus[reporteId] == true)
-      return; // Evitar si ya hay acción en curso
+        _unjoiningStatus[reporteId] == true) {
+      return;
+    }
 
     setState(() => _joiningStatus[reporteId] = true);
 
@@ -172,7 +159,7 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
       response = await _reporteService.unirseReportePendiente(reporteId);
     } catch (e) {
       response = {'statusCode': 500, 'message': 'Error inesperado.'};
-      print("Error: $e");
+      debugPrint("Error: $e");
     }
 
     if (!mounted) return;
@@ -190,11 +177,8 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
     ));
 
     if (success) {
-      // Refrescar lista SIN forzar nueva ubicación y manteniendo filtros
       _fetchNearbyReports(forceLocation: false, resetFilters: false);
-      // El estado de _joiningStatus se limpiará automáticamente con el refresh
     } else {
-      // Quitar estado de carga SIEMPRE si no hubo éxito o si no se refresca
       setState(() {
         _joiningStatus.remove(reporteId);
       });
@@ -203,57 +187,46 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
 
   Future<void> _handleUnjoinReport(int reporteId) async {
     if (_joiningStatus[reporteId] == true ||
-        _unjoiningStatus[reporteId] == true)
-      return; // Evitar si ya hay acción en curso
+        _unjoiningStatus[reporteId] == true) {
+      return;
+    }
 
-    setState(
-        () => _unjoiningStatus[reporteId] = true); // Marcar como quitando apoyo
+    setState(() => _unjoiningStatus[reporteId] = true);
 
     Map<String, dynamic> response = {};
     try {
-      response = await _reporteService
-          .quitarApoyoPendiente(reporteId); // Llamar al nuevo servicio
+      response = await _reporteService.quitarApoyoPendiente(reporteId);
     } catch (e) {
       response = {'statusCode': 500, 'message': 'Error inesperado.'};
-      print("Error en _handleUnjoinReport: $e");
+      debugPrint("Error en _handleUnjoinReport: $e");
     }
 
     if (!mounted) return;
 
     final message = response['message'] ?? 'Ocurrió un error.';
-    final success =
-        response['statusCode'] == 200; // 200 OK para éxito al quitar
+    final success = response['statusCode'] == 200;
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),
-      backgroundColor: success
-          ? Colors.orangeAccent
-          : Colors.red, // Naranja para éxito al quitar
+      backgroundColor: success ? Colors.orangeAccent : Colors.red,
     ));
 
     if (success) {
-      _fetchNearbyReports(
-          forceLocation: false,
-          resetFilters: false); // Refresca y limpia estado
+      _fetchNearbyReports(forceLocation: false, resetFilters: false);
     } else {
-      setState(
-          () => _unjoiningStatus.remove(reporteId)); // Limpia estado si falla
+      setState(() => _unjoiningStatus.remove(reporteId));
     }
   }
 
-  // --- MODIFICADO: Ahora navega a la nueva pantalla para pendientes ---
   void _onReportTap(ReporteCercano reporte) async {
     if (reporte.estado == 'pendiente_verificacion') {
-      // Navega a la pantalla de vista detallada pendiente
       final result = await Navigator.pushNamed(
           context, '/detalle_pendiente_vista',
           arguments: reporte.id);
-      // Si esa pantalla devuelve true (porque se unió), refrescar aquí
       if (result == true && mounted) {
         _fetchNearbyReports(forceLocation: false, resetFilters: false);
       }
     } else {
-      // Para reportes verificados, navegar a la pantalla de detalle normal
       Navigator.pushNamed(context, '/reporte_detalle', arguments: reporte.id);
     }
   }
@@ -266,16 +239,14 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
     }
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Importante para DraggableScrollableSheet
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => PanelFiltrosCercanos(
-        // Usar el widget corregido
         filtrosActuales: _filtrosAplicados,
         categoriasDisponibles: _categoriasDisponibles,
         onAplicarFiltros: (nuevosFiltros) {
           setState(() {
             _filtrosAplicados = nuevosFiltros;
-            // Refrescar con nuevos filtros, usar última ubicación
             _fetchNearbyReports(forceLocation: false, resetFilters: false);
           });
         },
@@ -298,10 +269,8 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
     Widget bodyContent;
 
     if (_isLoadingReports && _reportes == null) {
-      // Show skeleton only on initial load
       bodyContent = const EsqueletoListaReportes();
     } else if (_errorMessage != null) {
-      // Show error message
       bodyContent = Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -317,15 +286,13 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
               ElevatedButton.icon(
                 icon: const Icon(Icons.refresh),
                 label: const Text('Intentar de Nuevo'),
-                onPressed: () => _fetchNearbyReports(
-                    forceLocation: true), // Force location on manual retry
+                onPressed: () => _fetchNearbyReports(forceLocation: true),
               )
             ],
           ),
         ),
       );
     } else if (_reportes == null || _reportes!.isEmpty) {
-      // Show empty message (handles both null _reportes initially and empty list after load)
       bodyContent = const Center(
         child: Padding(
           padding: EdgeInsets.all(24.0),
@@ -337,7 +304,6 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
         ),
       );
     } else {
-      // Show the list of reports
       bodyContent = ListView.builder(
         padding: const EdgeInsets.all(8.0),
         itemCount: _reportes!.length,
@@ -372,16 +338,14 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
             onPressed: _isLoadingReports ? null : _showFilterPanel,
             tooltip: 'Filtrar reportes',
           ),
-          // Show refresh button only if not currently loading
           if (!_isLoadingReports)
             IconButton(
               icon: const Icon(Icons.refresh),
-              // Botón Refrescar: Resetea filtros y busca NUEVA ubicación
               onPressed: () =>
                   _fetchNearbyReports(forceLocation: true, resetFilters: true),
               tooltip: 'Refrescar y limpiar filtros',
             )
-          else // Show a loading indicator in app bar during refresh
+          else
             const Padding(
               padding: EdgeInsets.only(right: 16.0),
               child: Center(
@@ -392,7 +356,6 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
             ),
         ],
       ),
-      // Pull-to-refresh: Mantiene filtros, busca NUEVA ubicación
       body: RefreshIndicator(
         onRefresh: () =>
             _fetchNearbyReports(forceLocation: true, resetFilters: false),

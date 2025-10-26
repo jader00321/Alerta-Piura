@@ -1,5 +1,5 @@
 name: mobile_app
-description: "A citizen reporting application for Piura." # Descripción mejorada
+description: "Aplicación de reportes ciudadanos para Piura."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,48 +9,45 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations: # Para formato de fecha/hora en español
+  flutter_localizations:
     sdk: flutter
 
-  # Iconos estándar
   cupertino_icons: ^1.0.8
 
-  # Comunicación y Datos
+  # Paquetes de Comunicación y Datos
   http: ^1.2.1
   shared_preferences: ^2.2.3
-  socket_io_client: ^3.1.2 # Usado en socket_service.dart
-  jwt_decoder: ^2.0.1      # Usado en auth_provider.dart
-
-  # State Management
   provider: ^6.1.2
+  socket_io_client: ^3.1.2
+  jwt_decoder: ^2.0.1
 
-  # Geoespacial y Mapas
-  flutter_map: ^8.0.0 # Chequea si esta versión mayor causa problemas
+  # Paquetes Geoespaciales
+  flutter_map: ^8.0.0
   latlong2: ^0.9.1
-  geolocator: ^14.0.0 # Chequea si esta versión mayor causa problemas
-  permission_handler: ^12.0.1 # Chequea si esta versión mayor causa problemas
-  flutter_map_marker_cluster: ^8.0.0 # Debe coincidir con flutter_map
+  geolocator: ^14.0.0
+  permission_handler: ^12.0.1
+  flutter_map_marker_cluster: ^8.0.0
 
-  # UI y Utilidades
+  # Paquetes de UI y Utilidades
   image_picker: ^1.1.2
-  intl: ^0.20.2 # Necesario para formateo de fechas/horas
-  shimmer: ^3.0.0 # Para los esqueletos de carga
-  fl_chart: ^1.1.1 # Para gráficos
+  intl: ^0.20.2
+  shimmer: ^3.0.0
+  fl_chart: ^1.1.1
 
-  # Funcionalidades Nativas y Archivos
-  flutter_local_notifications: ^19.0.0 # Chequea si esta versión mayor causa problemas
+  # Paquetes de Funcionalidades Nativas
+  flutter_local_notifications: ^19.0.0
   flutter_background_service: ^5.0.1
-  pdf: ^3.11.3 # Para generar PDF
-  path_provider: ^2.1.5 # Para encontrar rutas de archivos
-  open_file: ^3.5.10 # Para abrir archivos generados (PDF)
+  pdf: ^3.11.3
+  path_provider: ^2.1.5
+  open_file: ^3.5.10
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0 # Mantenemos el linter
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
 
   assets:
-    - assets/fonts/ # Asegúrate que esta carpeta exista y contenga las fuentes Roboto
+    - assets/fonts/

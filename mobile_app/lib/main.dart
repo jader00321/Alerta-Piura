@@ -57,7 +57,8 @@ void main() async {
 
   if (authProvider.isAuthenticated) {
     SocketService().onStopSos.listen((data) {
-      debugPrint("MAIN.DART: Evento stopSos recibido. Invocando al servicio de fondo.");
+      debugPrint(
+          "MAIN.DART: Evento stopSos recibido. Invocando al servicio de fondo.");
       FlutterBackgroundService().invoke('serverForceStop', data);
     });
   }
@@ -84,9 +85,11 @@ class AlertaPiuraApp extends StatelessWidget {
           title: 'Reporta Piura',
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
-          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          themeMode:
+              themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light),
+            colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.teal, brightness: Brightness.light),
             useMaterial3: true,
             brightness: Brightness.light,
           ),
@@ -117,48 +120,66 @@ class AlertaPiuraApp extends StatelessWidget {
             '/editar-perfil': (context) => const EditarPerfilScreen(),
             '/settings': (context) => const SettingsScreen(),
             '/editar-contacto': (context) => const EditarContactoScreen(),
-            '/mi_actividad': (context) => MiActividadScreen(mainPageController: PageController()),
+            '/mi_actividad': (context) =>
+                MiActividadScreen(mainPageController: PageController()),
             '/cerca_de_ti': (context) => const PantallaCercaDeTi(),
             '/create_report': (context) => const CreateReportScreen(),
             '/conversaciones': (context) => const ConversacionesScreen(),
             '/alertas': (context) => const PantallaAlertas(),
-            '/subscription_plans': (context) => const PantallaPlanesSuscripcion(),
+            '/subscription_plans': (context) =>
+                const PantallaPlanesSuscripcion(),
             '/historial_pagos': (context) => const PantallaHistorialPagos(),
-            '/estadisticas_personales': (context) => const PantallaEstadisticasPersonales(),
-            '/alertas_personalizadas': (context) => const PantallaAlertasPersonalizadas(),
+            '/estadisticas_personales': (context) =>
+                const PantallaEstadisticasPersonales(),
+            '/alertas_personalizadas': (context) =>
+                const PantallaAlertasPersonalizadas(),
             '/crear_zona_segura': (context) => const PantallaCrearZona(),
-            '/gestionar_suscripcion': (context) => const PantallaGestionarSuscripcion(),
+            '/gestionar_suscripcion': (context) =>
+                const PantallaGestionarSuscripcion(),
             '/metodos_pago': (context) => const PantallaMetodosPago(),
-            '/agregar_metodo_pago': (context) => const PantallaAgregarMetodoPago(),
+            '/agregar_metodo_pago': (context) =>
+                const PantallaAgregarMetodoPago(),
             '/panel_analitico': (context) => const PantallaPanelAnalitico(),
             '/mis_informes': (context) => const PantallaInformesGuardados(),
-            '/buscar_reporte_original': (context) => const PantallaBuscarReporteOriginal(),
+            '/buscar_reporte_original': (context) =>
+                const PantallaBuscarReporteOriginal(),
             '/insignias': (context) => const PantallaInsignias(),
           },
           onGenerateRoute: (settings) {
             if (settings.name == '/reporte_detalle') {
               final args = settings.arguments as int;
-              return MaterialPageRoute(builder: (context) => ReporteDetalleScreen(reporteId: args));
+              return MaterialPageRoute(
+                  builder: (context) => ReporteDetalleScreen(reporteId: args));
             }
             if (settings.name == '/verificacion_detalle') {
               final args = settings.arguments as int;
-              return MaterialPageRoute(builder: (context) => VerificacionDetalleScreen(reporteId: args));
+              return MaterialPageRoute(
+                  builder: (context) =>
+                      VerificacionDetalleScreen(reporteId: args));
             }
             if (settings.name == '/detalle_pendiente_vista') {
               final args = settings.arguments as int;
-              return MaterialPageRoute(builder: (context) => PantallaDetallePendienteVista(reporteId: args));
+              return MaterialPageRoute(
+                  builder: (context) =>
+                      PantallaDetallePendienteVista(reporteId: args));
             }
             if (settings.name == '/chat') {
               final args = settings.arguments as Map<String, dynamic>;
-              return MaterialPageRoute(builder: (context) => ChatScreen(reporteId: args['reporteId'], reporteTitulo: args['reporteTitulo']));
+              return MaterialPageRoute(
+                  builder: (context) => ChatScreen(
+                      reporteId: args['reporteId'],
+                      reporteTitulo: args['reporteTitulo']));
             }
             if (settings.name == '/detalle_boleta') {
               final args = settings.arguments as String;
-              return MaterialPageRoute(builder: (context) => PantallaDetalleBoleta(transactionId: args));
+              return MaterialPageRoute(
+                  builder: (context) =>
+                      PantallaDetalleBoleta(transactionId: args));
             }
             if (settings.name == '/pago') {
               final args = settings.arguments as PlanSuscripcion;
-              return MaterialPageRoute(builder: (context) => PantallaPago(plan: args));
+              return MaterialPageRoute(
+                  builder: (context) => PantallaPago(plan: args));
             }
             return null;
           },

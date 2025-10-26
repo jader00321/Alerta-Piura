@@ -47,7 +47,8 @@ class SosService {
     return null;
   }
 
-  Future<bool> addLocationUpdate({required int alertId, required double lat, required double lon}) async {
+  Future<bool> addLocationUpdate(
+      {required int alertId, required double lat, required double lon}) async {
     final token = await _getToken();
     if (token == null) {
       return false;
@@ -76,7 +77,8 @@ class SosService {
       return false;
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/sos/$alertId/deactivate');
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/sos/$alertId/deactivate');
     try {
       final response = await http.put(
         url,

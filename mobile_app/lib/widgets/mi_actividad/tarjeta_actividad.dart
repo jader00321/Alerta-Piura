@@ -1,20 +1,19 @@
-// lib/widgets/mi_actividad/tarjeta_actividad.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_resumen_model.dart';
 import 'package:mobile_app/widgets/mi_actividad/activity_list_view.dart';
 
 class TarjetaActividad extends StatelessWidget {
   final ReporteResumen reporte;
-  final Fetcher fetcher; // El contexto (pestaña) desde donde se llama
-  final VoidCallback onTap; // Acción al tocar la tarjeta
-  final Widget? trailingAction; // Un widget opcional (ej. botón "Cancelar")
+  final Fetcher fetcher;
+  final VoidCallback onTap;
+  final Widget? trailingAction;
 
   const TarjetaActividad({
     super.key,
     required this.reporte,
     required this.fetcher,
     required this.onTap,
-    this.trailingAction, // Acepta la acción del trailing
+    this.trailingAction,
   });
 
   Widget _buildStatusChip(BuildContext context) {
@@ -67,13 +66,14 @@ class TarjetaActividad extends StatelessWidget {
       backgroundColor: bgColor,
       visualDensity: VisualDensity.compact,
       padding: const EdgeInsets.symmetric(horizontal: 4),
-      materialTapTargetSize:
-          MaterialTapTargetSize.shrinkWrap, // Reduce padding extra
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
   Widget _buildUrgencyChip(BuildContext context) {
-    if (reporte.urgencia == null) return const SizedBox.shrink();
+    if (reporte.urgencia == null) {
+      return const SizedBox.shrink();
+    }
     String label = reporte.urgencia!;
     Color color = Colors.grey;
     switch (reporte.urgencia!.toLowerCase()) {
@@ -91,7 +91,7 @@ class TarjetaActividad extends StatelessWidget {
       label: Text(label),
       labelStyle:
           TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
-      backgroundColor: color.withOpacity(0.15),
+      backgroundColor: color.withAlpha(38),
       visualDensity: VisualDensity.compact,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -100,7 +100,7 @@ class TarjetaActividad extends StatelessWidget {
 
   Widget _buildContextualRow(BuildContext context, ThemeData theme) {
     final contextualBoxDecoration = BoxDecoration(
-      color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+      color: theme.colorScheme.surfaceContainerHighest.withAlpha(102),
       borderRadius: BorderRadius.circular(8),
     );
     final contextualTextStyle = TextStyle(
@@ -149,8 +149,9 @@ class TarjetaActividad extends StatelessWidget {
           ),
         );
       case Fetcher.misComentarios:
-        if (reporte.miComentario == null || reporte.miComentario!.isEmpty)
+        if (reporte.miComentario == null || reporte.miComentario!.isEmpty) {
           return const SizedBox.shrink();
+        }
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(10),
@@ -173,7 +174,7 @@ class TarjetaActividad extends StatelessWidget {
           ),
         );
       case Fetcher.misReportes:
-        return const SizedBox.shrink(); // No contextual row for My Reports
+        return const SizedBox.shrink();
     }
   }
 
@@ -193,11 +194,9 @@ class TarjetaActividad extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Imagen y Badges Superpuestos ---
             if (showImage)
               Stack(
                 children: [
-                  // Imagen
                   Image.network(
                     reporte.fotoUrl!,
                     height: 140,
@@ -228,8 +227,8 @@ class TarjetaActividad extends StatelessWidget {
                         visualDensity: VisualDensity.compact,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 4, vertical: 0),
-                        backgroundColor: theme.colorScheme.secondaryContainer
-                            .withOpacity(0.9),
+                        backgroundColor:
+                            theme.colorScheme.secondaryContainer.withAlpha(230),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
@@ -240,7 +239,7 @@ class TarjetaActividad extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withAlpha(128),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.star,
@@ -249,8 +248,6 @@ class TarjetaActividad extends StatelessWidget {
                     ),
                 ],
               ),
-
-            // --- Detalles Debajo ---
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -258,24 +255,19 @@ class TarjetaActividad extends StatelessWidget {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start, // Alinea arriba
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(
-                          child: _buildStatusChip(context)), // Chip de estado
-                      const SizedBox(width: 8), // Espacio
-                      // Muestra la acción (ej. "Cancelar") si existe, si no, muestra la fecha.
+                      Flexible(child: _buildStatusChip(context)),
+                      const SizedBox(width: 8),
                       trailingAction ??
                           Text(
-                            reporte.fecha ?? '', // Fecha de la actividad
+                            reporte.fecha ?? '',
                             style: theme.textTheme.bodySmall
                                 ?.copyWith(color: Colors.grey[600]),
                           ),
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // --- Título ---
                   Text(
                     reporte.titulo,
                     style: theme.textTheme.titleMedium
@@ -284,8 +276,6 @@ class TarjetaActividad extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
-
-                  // --- Información Específica de "Mis Reportes" ---
                   if (fetcher == Fetcher.misReportes) ...[
                     Wrap(
                       spacing: 8.0,
@@ -300,11 +290,11 @@ class TarjetaActividad extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             backgroundColor: theme
                                 .colorScheme.secondaryContainer
-                                .withOpacity(0.7),
+                                .withAlpha(179),
                             materialTapTargetSize:
                                 MaterialTapTargetSize.shrinkWrap,
                           ),
-                        _buildUrgencyChip(context), // Muestra chip de urgencia
+                        _buildUrgencyChip(context),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -323,10 +313,8 @@ class TarjetaActividad extends StatelessWidget {
                           ),
                         ],
                       ),
-                    const SizedBox(height: 4), // Espacio extra
+                    const SizedBox(height: 4),
                   ],
-
-                  // --- Autor (si NO es "Mis Reportes") ---
                   if (fetcher != Fetcher.misReportes && reporte.autor != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
@@ -338,9 +326,7 @@ class TarjetaActividad extends StatelessWidget {
                       ),
                     ),
                   if (fetcher != Fetcher.misReportes) const Divider(height: 16),
-
-                  _buildContextualRow(context,
-                      theme), // Muestra la fila de apoyo/seguimiento/comentario
+                  _buildContextualRow(context, theme),
                 ],
               ),
             ),

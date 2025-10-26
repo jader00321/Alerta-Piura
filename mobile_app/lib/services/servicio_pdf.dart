@@ -1,7 +1,6 @@
-// lib/services/servicio_pdf.dart
 import 'dart:io';
 import 'package:flutter/services.dart';
-import 'package:mobile_app/screens/pantalla_panel_analitico.dart'; // Importa AnaliticasData
+import 'package:mobile_app/screens/pantalla_panel_analitico.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -11,10 +10,11 @@ class ServicioPdf {
   Future<File> generarInformeAnalitico(AnaliticasData data) async {
     final pdf = pw.Document();
 
-    final font = await pw.Font.ttf(
-        await rootBundle.load("assets/fonts/Roboto-Regular.ttf"));
-    final boldFont = await pw.Font.ttf(
-        await rootBundle.load("assets/fonts/Roboto-Bold.ttf"));
+    // CORREGIDO: await_only_futures
+    final fontData = await rootBundle.load("assets/fonts/Roboto-Regular.ttf");
+    final boldFontData = await rootBundle.load("assets/fonts/Roboto-Bold.ttf");
+    final font = pw.Font.ttf(fontData);
+    final boldFont = pw.Font.ttf(boldFontData);
 
     final style = pw.TextStyle(font: font, fontSize: 10);
     final titleStyle = pw.TextStyle(font: boldFont, fontSize: 18);
@@ -48,9 +48,11 @@ class ServicioPdf {
               'Generado el: ${DateFormat('dd/MM/yyyy HH:mm', 'es_ES').format(DateTime.now())}',
               style: style),
           pw.Divider(height: 24),
+
           pw.Text('Reportes por Categoría', style: headerStyle),
           pw.SizedBox(height: 8),
-          pw.Table.fromTextArray(
+          // CORREGIDO: deprecated_member_use
+          pw.TableHelper.fromTextArray(
             headers: ['Categoría', 'Total'],
             cellStyle: style,
             headerStyle: tableHeader,
@@ -59,9 +61,11 @@ class ServicioPdf {
                 .toList(),
           ),
           pw.SizedBox(height: 24),
+
           pw.Text('Reportes por Distrito', style: headerStyle),
           pw.SizedBox(height: 8),
-          pw.Table.fromTextArray(
+          // CORREGIDO: deprecated_member_use
+          pw.TableHelper.fromTextArray(
             headers: ['Distrito', 'Total'],
             cellStyle: style,
             headerStyle: tableHeader,
@@ -70,10 +74,12 @@ class ServicioPdf {
                 .toList(),
           ),
           pw.SizedBox(height: 24),
+
           pw.Text('Tendencia de Reportes (Últimos 30 días)',
               style: headerStyle),
           pw.SizedBox(height: 8),
-          pw.Table.fromTextArray(
+          // CORREGIDO: deprecated_member_use
+          pw.TableHelper.fromTextArray(
             headers: ['Fecha', 'Reportes'],
             cellStyle: style,
             headerStyle: tableHeader,

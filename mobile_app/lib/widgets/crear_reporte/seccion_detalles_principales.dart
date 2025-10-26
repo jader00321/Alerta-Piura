@@ -1,4 +1,3 @@
-// lib/widgets/crear_reporte/seccion_detalles_principales.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/categoria_model.dart';
 
@@ -10,9 +9,9 @@ class SeccionDetallesPrincipales extends StatelessWidget {
   final List<Categoria> categorias;
   final bool isLoadingCategories;
   final Function(int?) onCategoriaChanged;
-  final int otroCategoriaId; // ID de la categoría 'Otro'
+  final int otroCategoriaId;
   final TextEditingController categoriaSugeridaController;
-  final bool isEditing; // Nuevo parámetro, default a false
+  final bool isEditing;
 
   const SeccionDetallesPrincipales({
     super.key,
@@ -30,13 +29,11 @@ class SeccionDetallesPrincipales extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determinar si mostrar el campo de sugerencia
     final bool mostrarSugerencia = categoriaSeleccionada == otroCategoriaId;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // --- Título ---
         TextFormField(
           controller: tituloController,
           decoration: const InputDecoration(
@@ -49,8 +46,6 @@ class SeccionDetallesPrincipales extends StatelessWidget {
               : null,
         ),
         const SizedBox(height: 16),
-
-        // --- Urgencia ---
         DropdownButtonFormField<String>(
           value: urgenciaSeleccionada,
           decoration: const InputDecoration(
@@ -64,8 +59,6 @@ class SeccionDetallesPrincipales extends StatelessWidget {
           onChanged: (value) => onUrgenciaChanged(value!),
         ),
         const SizedBox(height: 16),
-
-        // --- Categoría ---
         isLoadingCategories
             ? const Center(
                 child: Padding(
@@ -86,10 +79,6 @@ class SeccionDetallesPrincipales extends StatelessWidget {
                     value == null ? 'Selecciona una categoría' : null,
               ),
         const SizedBox(height: 16),
-
-        // --- Sugerir Categoría (Condicional) ---
-        // Mostrar si (la categoría seleccionada es 'Otro') Y (NO estamos editando O SÍ estamos editando)
-        // Simplificado: Siempre mostrar si es 'Otro'
         if (mostrarSugerencia)
           TextFormField(
             controller: categoriaSugeridaController,
@@ -98,11 +87,13 @@ class SeccionDetallesPrincipales extends StatelessWidget {
               hintText: 'Ej. Poste caído, Semáforo malogrado',
               border: OutlineInputBorder(),
             ),
-            // La validación solo aplica si el campo es visible
-            validator: (value) =>
-                (mostrarSugerencia && (value == null || value.trim().isEmpty))
-                    ? 'Debes sugerir una categoría si eliges "Otro"'
-                    : null,
+            validator: (value) {
+              if (mostrarSugerencia &&
+                  (value == null || value.trim().isEmpty)) {
+                return 'Debes sugerir una categoría si eliges "Otro"';
+              }
+              return null;
+            },
           ),
       ],
     );

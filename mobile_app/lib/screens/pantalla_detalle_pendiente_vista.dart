@@ -1,11 +1,11 @@
-// lib/screens/pantalla_detalle_pendiente_vista.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobile_app/api/reporte_service.dart';
-import 'package:mobile_app/models/reporte_detallado_model.dart'; // Usamos el modelo detallado
+import 'package:mobile_app/models/reporte_detallado_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_reporte_detalle.dart';
-import 'package:mobile_app/widgets/reporte_detalle/reporte_header.dart'; // Reutilizamos el header
-import 'package:mobile_app/widgets/verificacion/mapa_verificacion.dart'; // Reutilizamos el mapa
-import 'package:provider/provider.dart'; // Para verificar si el usuario es el autor
+import 'package:mobile_app/widgets/reporte_detalle/reporte_header.dart';
+import 'package:mobile_app/widgets/verificacion/mapa_verificacion.dart';
+import 'package:provider/provider.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 
 class PantallaDetallePendienteVista extends StatefulWidget {
@@ -21,7 +21,7 @@ class _PantallaDetallePendienteVistaState
     extends State<PantallaDetallePendienteVista> {
   final ReporteService _reporteService = ReporteService();
   late Future<ReporteDetallado> _reporteFuture;
-  bool _isJoining = false; // Estado de carga para el botón Unirse
+  bool _isJoining = false;
 
   @override
   void initState() {
@@ -29,9 +29,10 @@ class _PantallaDetallePendienteVistaState
     _reporteFuture = _reporteService.getReporteById(widget.reporteId);
   }
 
-  // Lógica similar a _handleJoinReport en pantalla_cerca_de_ti
   Future<void> _handleJoinReport(int reporteId) async {
-    if (_isJoining) return;
+    if (_isJoining) {
+      return;
+    }
 
     setState(() => _isJoining = true);
 
@@ -43,7 +44,7 @@ class _PantallaDetallePendienteVistaState
         'statusCode': 500,
         'message': 'Error inesperado al intentar unirse.'
       };
-      print("Error en _handleJoinReport (Detalle Pendiente): $e");
+      debugPrint("Error en _handleJoinReport (Detalle Pendiente): $e");
     }
 
     if (!mounted) return;
@@ -60,19 +61,16 @@ class _PantallaDetallePendienteVistaState
           : (response['statusCode'] == 403 ? Colors.orange : Colors.red),
     ));
 
-    // Si tuvo éxito o ya estaba unido, cerramos esta pantalla y devolvemos true
-    // para que la pantalla anterior se refresque.
     if (success) {
       Navigator.pop(context, true);
     } else {
-      // Si falló, solo quitamos el estado de carga
       setState(() => _isJoining = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authNotifier = context.read<AuthNotifier>(); // Leer AuthNotifier
+    final authNotifier = context.read<AuthNotifier>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Detalle de Reporte Pendiente')),
@@ -89,17 +87,13 @@ class _PantallaDetallePendienteVistaState
           }
 
           final reporte = snapshot.data!;
-          // Verificamos si el usuario actual PUEDE unirse (no es el autor)
           final bool puedeUnirse = reporte.estado == 'pendiente_verificacion' &&
               reporte.idAutor != authNotifier.userId;
 
           return Column(
-            // Usar Column para añadir el botón al final
             children: [
               Expanded(
-                // Hacer que el ListView ocupe el espacio disponible
                 child: ListView(
-                  // Mantenemos el ListView para el contenido scrolleable
                   children: [
                     ReporteHeader(reporte: reporte),
                     const Divider(height: 24),
@@ -112,22 +106,17 @@ class _PantallaDetallePendienteVistaState
                               style: Theme.of(context).textTheme.titleLarge),
                           const SizedBox(height: 8),
                           MapaVerificacion(initialCenter: reporte.location),
-                          // No mostramos sección de comentarios para reportes pendientes
                         ],
                       ),
                     ),
-                    const SizedBox(
-                        height:
-                            80), // Espacio para el botón flotante o barra inferior
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
-              // --- Botón Unirse Condicional en Barra Inferior ---
               if (puedeUnirse)
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: SafeArea(
-                    // Para evitar que el botón quede debajo de elementos del sistema
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(

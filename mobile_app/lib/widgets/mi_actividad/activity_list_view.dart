@@ -1,4 +1,3 @@
-// lib/widgets/mi_actividad/activity_list_view.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_resumen_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
@@ -8,11 +7,11 @@ enum Fetcher { misReportes, misApoyos, misComentarios, misSeguimientos }
 
 class ActivityListView extends StatelessWidget {
   final Fetcher fetcher;
-  final List<ReporteResumen> reportes; // Recibe la lista de reportes ya cargada
-  final bool isLoading; // Recibe el estado de carga del padre
-  final Future<void> Function() onRefresh; // Callback para el RefreshIndicator
-  final Function(int) onCancelarReporte; // Callback para el botón "Cancelar"
-  final Function(int) onNavigateToDetail; // Callback para navegar
+  final List<ReporteResumen> reportes;
+  final bool isLoading;
+  final Future<void> Function() onRefresh;
+  final Function(int) onCancelarReporte;
+  final Function(int) onNavigateToDetail;
 
   const ActivityListView({
     super.key,
@@ -30,7 +29,6 @@ class ActivityListView extends StatelessWidget {
       return const EsqueletoListaActividad();
     }
 
-    // Muestra el mensaje de lista vacía
     if (reportes.isEmpty) {
       return RefreshIndicator(
         onRefresh: onRefresh,
@@ -55,9 +53,8 @@ class ActivityListView extends StatelessWidget {
       );
     }
 
-    // Muestra la lista de reportes
     return RefreshIndicator(
-      onRefresh: onRefresh, // Llama a la función de refresco del padre
+      onRefresh: onRefresh,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(8.0),
@@ -72,20 +69,19 @@ class ActivityListView extends StatelessWidget {
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact, // Más compacto
+                visualDensity: VisualDensity.compact,
               ),
               child: const Text('Cancelar',
                   style: TextStyle(color: Colors.red, fontSize: 12)),
-              onPressed: () =>
-                  onCancelarReporte(reporte.id), // Llama al callback del padre
+              onPressed: () => onCancelarReporte(reporte.id),
             );
           }
+
           return TarjetaActividad(
             reporte: reporte,
             fetcher: fetcher,
-            onTap: () =>
-                onNavigateToDetail(reporte.id), // Llama al callback del padre
-            trailingAction: trailingAction, // Pasa el botón "Cancelar" (o null)
+            onTap: () => onNavigateToDetail(reporte.id),
+            trailingAction: trailingAction,
           );
         },
       ),

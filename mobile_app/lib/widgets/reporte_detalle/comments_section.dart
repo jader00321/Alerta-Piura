@@ -1,5 +1,5 @@
-// lib/widgets/reporte_detalle/comments_section.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile_app/models/comentario_model.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
@@ -12,6 +12,8 @@ class CommentsSection extends StatelessWidget {
   final Function(int) onReportComment;
   final Function(int, String) onReportUser;
   final Function(int) onSupportComment;
+  final int? currentUserId;
+  final String? currentUserRole;
 
   const CommentsSection({
     super.key,
@@ -21,15 +23,15 @@ class CommentsSection extends StatelessWidget {
     required this.onReportComment,
     required this.onReportUser,
     required this.onSupportComment,
-    int? currentUserId,
-    String? currentUserRole,
+    this.currentUserId,
+    this.currentUserRole,
   });
 
   @override
   Widget build(BuildContext context) {
     final authNotifier = context.read<AuthNotifier>();
     final theme = Theme.of(context);
-    final locale = Localizations.localeOf(context).toString(); // 'es_ES'
+    final locale = Localizations.localeOf(context).toString();
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -54,21 +56,16 @@ class CommentsSection extends StatelessWidget {
                 final bool isOwner = c.idUsuario == authNotifier.userId;
                 final bool isLider = authNotifier.isLider;
 
-                // --- CORRECCIÓN MANEJO DE FECHA ---
                 String fechaFormateada = 'Fecha inválida';
                 try {
-                  // Parsear la fecha ISO 8601 que viene del backend
                   final dateTime = DateTime.parse(c.fechaCreacion);
-                  // Formatear para mostrar en español
                   fechaFormateada =
                       DateFormat('dd MMM yyyy, HH:mm', locale).format(dateTime);
                 } catch (e) {
-                  print(
+                  debugPrint(
                       "Error parseando fecha del comentario ${c.id}: ${c.fechaCreacion} - $e");
-                  // Fallback por si acaso la API antigua sigue enviando mal formato
                   fechaFormateada = c.fechaCreacion;
                 }
-                // --- FIN CORRECCIÓN ---
 
                 return Card(
                   elevation: 1,
@@ -96,7 +93,7 @@ class CommentsSection extends StatelessWidget {
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold)),
                                   Text(
-                                    fechaFormateada, // Usar fecha formateada
+                                    fechaFormateada,
                                     style: theme.textTheme.bodySmall
                                         ?.copyWith(color: Colors.grey[600]),
                                   ),
@@ -111,13 +108,18 @@ class CommentsSection extends StatelessWidget {
                                   icon: const Icon(Icons.more_vert, size: 20),
                                   tooltip: 'Más opciones',
                                   onSelected: (value) {
-                                    if (value == 'editar')
+                                    if (value == 'editar') {
                                       onEdit(c.id, c.comentario);
-                                    if (value == 'eliminar') onDelete(c.id);
-                                    if (value == 'reportar_comentario')
+                                    }
+                                    if (value == 'eliminar') {
+                                      onDelete(c.id);
+                                    }
+                                    if (value == 'reportar_comentario') {
                                       onReportComment(c.id);
-                                    if (value == 'reportar_usuario')
+                                    }
+                                    if (value == 'reportar_usuario') {
                                       onReportUser(c.idUsuario, c.autor);
+                                    }
                                   },
                                   itemBuilder: (BuildContext context) =>
                                       <PopupMenuEntry<String>>[

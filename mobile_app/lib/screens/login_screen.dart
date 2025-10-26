@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/api/auth_service.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
-
-// Importamos los nuevos widgets que hemos creado
 import 'package:mobile_app/widgets/login/login_header.dart';
 import 'package:mobile_app/widgets/login/login_form_fields.dart';
 import 'package:mobile_app/widgets/login/login_actions.dart';
 
+/// Pantalla de inicio de sesión para usuarios existentes.
+///
+/// Permite al usuario ingresar credenciales y autenticarse contra la API.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -15,6 +16,7 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
+/// Estado para [LoginScreen]. Maneja los controladores y el estado de carga.
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -30,8 +32,11 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Valida el formulario e intenta autenticar al usuario.
+  ///
+  /// Si tiene éxito, actualiza el [AuthNotifier] y navega a `/home`.
+  /// Si falla, muestra un [SnackBar] con el error.
   Future<void> _submitForm() async {
-    // La lógica de envío del formulario se mantiene aquí
     if (_formKey.currentState!.validate() && !_isLoading) {
       setState(() => _isLoading = true);
 
@@ -41,12 +46,14 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text.trim(),
         );
 
-        if (mounted && response['statusCode'] == 200) {
+        if (!mounted) return;
+
+        if (response['statusCode'] == 200) {
           final token = response['data']['token'];
           await Provider.of<AuthNotifier>(context, listen: false).login(token);
 
           Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-        } else if (mounted) {
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(response['data']['message'] ?? 'Ocurrió un error'),
@@ -75,35 +82,29 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // El AppBar ahora es transparente y sin elevación para un look más moderno
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading:
-            false, // Oculta la flecha de "atrás" por defecto
+        automaticallyImplyLeading: false,
         actions: [
-          // --- BOTÓN AÑADIDO PARA VOLVER AL MAPA ---
           IconButton(
             tooltip: 'Volver al mapa',
             icon: const Icon(Icons.close),
             onPressed: () {
-              // Navega a la pantalla de inicio y limpia el historial de rutas
               Navigator.pushNamedAndRemoveUntil(
                   context, '/home', (route) => false);
             },
           ),
         ],
       ),
-      // ExtendBodyBehindAppBar permite que el cuerpo se dibuje detrás del AppBar
       extendBodyBehindAppBar: true,
       body: Container(
-        // Fondo con degradado para un diseño más atractivo
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               Theme.of(context).colorScheme.surface,
-              Theme.of(context).colorScheme.surface.withOpacity(0.8),
+              Theme.of(context).colorScheme.surface.withAlpha(204),
             ],
           ),
         ),
@@ -116,18 +117,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 1. Usamos el widget de cabecera
                   const LoginHeader(),
                   const SizedBox(height: 40),
-
-                  // 2. Usamos el widget de campos del formulario
                   LoginFormFields(
                     emailController: _emailController,
                     passwordController: _passwordController,
                   ),
                   const SizedBox(height: 24),
-
-                  // 3. Usamos el widget de acciones
                   LoginActions(
                     isLoading: _isLoading,
                     onSubmit: _submitForm,

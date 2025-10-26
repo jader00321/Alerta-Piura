@@ -128,7 +128,7 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion>
           await _liderService.getMisSolicitudesRevision();
       final Map<int, String> nuevosEstados = {};
       for (var sol in solicitudes) {
-        nuevosEstados[sol.id_reporte] = sol.estado;
+        nuevosEstados[sol.idReporte] = sol.estado;
       }
       if (mounted) {
         setStateIfMounted(() => _estadoSolicitudes = nuevosEstados);

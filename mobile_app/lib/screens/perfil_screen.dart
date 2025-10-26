@@ -1,4 +1,3 @@
-// lib/screens/perfil_screen.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/perfil_service.dart';
 import 'package:mobile_app/models/perfil_model.dart';
@@ -57,7 +56,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
       ),
     );
 
-    if (confirm == true && mounted) {
+    if (confirm == true) {
+      if (!mounted) return;
       await context.read<AuthNotifier>().logout();
       if (mounted) {
         Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
@@ -86,14 +86,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      // --- CORRECCIÓN DE ESPACIADO ---
       appBar: AppBar(
         title: const Text('Mi Perfil'),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        // Quitar 'extendBodyBehindAppBar' del Scaffold
       ),
-      // --- FIN CORRECCIÓN ---
       body: RefreshIndicator(
         onRefresh: _refreshProfile,
         child: FutureBuilder<Perfil>(
@@ -116,46 +113,39 @@ class _PerfilScreenState extends State<PerfilScreen> {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16.0),
               children: [
-                // 1. Cabecera del Perfil
                 PerfilHeaderCard(perfil: perfil),
                 const SizedBox(height: 24),
-
-                // 2. Nuevo Widget de Estatus (simplificado)
                 InsigniaEstatusWidget(perfil: perfil),
                 const SizedBox(height: 24),
-
-                // 3. Agrupar Acciones Premium y de Actividad
                 _buildSectionCard(
                     theme: theme,
                     title: 'Actividad y Beneficios',
                     children: [
-                      // --- CORRECCIÓN: Botón "Mi Actividad" CONDICIONAL ---
-                      // Solo aparece si el usuario es 'lider_vecinal'
                       if (authNotifier.isLider)
                         PerfilActionTile(
                           icon: Icons.history_outlined,
-                          title: 'Mi Actividad Personal', // Texto más claro
-                          subtitle:
-                              'Ver mis reportes, apoyos y seguimientos', // Subtítulo
+                          title: 'Mi Actividad Personal',
+                          subtitle: 'Ver mis reportes, apoyos y seguimientos',
                           onTap: () =>
                               Navigator.pushNamed(context, '/mi_actividad'),
                         ),
-
-                      // --- NUEVO: Botón para Insignias ---
                       PerfilActionTile(
                         icon: Icons.emoji_events_outlined,
                         title: 'Mis Insignias y Progreso',
                         subtitle: 'Ver mis logros y próximos desafíos',
                         onTap: () => Navigator.pushNamed(context, '/insignias'),
                       ),
-
-                      // --- Acciones de Suscripción ---
                       if (authNotifier.isPremium)
                         PerfilActionTile(
                           icon: Icons.workspace_premium_outlined,
                           title: 'Gestionar Suscripción',
-                          onTap: () => Navigator.pushNamed(
-                              context, '/gestionar_suscripcion'),
+                          onTap: () async {
+                            final refreshed = await Navigator.pushNamed(
+                                context, '/gestionar_suscripcion');
+                            if (refreshed == true && mounted) {
+                              _refreshProfile();
+                            }
+                          },
                           color: Colors.amber.shade700,
                         )
                       else
@@ -166,8 +156,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
                               context, '/subscription_plans'),
                           color: Colors.amber.shade700,
                         ),
-
-                      // --- Acciones Premium (Premium o Reportero) ---
                       if (authNotifier.isPremium ||
                           authNotifier.userRole == 'reportero') ...[
                         if (authNotifier.userRole == 'reportero') ...[
@@ -193,8 +181,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
                             onTap: () => Navigator.pushNamed(
                                 context, '/alertas_personalizadas')),
                       ],
-
-                      // --- Postulación (Solo Ciudadano) ---
                       if (authNotifier.userRole == 'ciudadano')
                         PerfilActionTile(
                           icon: Icons.how_to_reg_outlined,
@@ -203,10 +189,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                           color: theme.colorScheme.primary,
                         ),
                     ]),
-
                 const SizedBox(height: 24),
-
-                // 4. Agrupar Acciones de Cuenta
                 _buildSectionCard(theme: theme, title: 'Mi Cuenta', children: [
                   PerfilActionTile(
                       icon: Icons.credit_card_outlined,
@@ -241,7 +224,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  // Helper para crear tarjetas de sección
   Widget _buildSectionCard(
       {required ThemeData theme,
       required String title,
@@ -249,25 +231,24 @@ class _PerfilScreenState extends State<PerfilScreen> {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16), // Bordes más redondeados
-          side: BorderSide(color: theme.dividerColor.withOpacity(0.5))),
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+              color: theme.dividerColor
+                  .withAlpha(128)) // CORREGIDO: withOpacity -> withAlpha
+          ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-            vertical: 8.0, horizontal: 8.0), // Padding ajustado
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(
-                  left: 12.0,
-                  top: 12.0,
-                  bottom: 4.0), // Ajuste de padding de título
+              padding:
+                  const EdgeInsets.only(left: 12.0, top: 12.0, bottom: 4.0),
               child: Text(title,
                   style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.onSurfaceVariant)),
             ),
-            // Los PerfilActionTile ya no tienen Card, así que están contenidos por esta
             ...children,
           ],
         ),

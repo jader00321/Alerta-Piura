@@ -1,10 +1,7 @@
-// lib/widgets/pago/formulario_pago.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class FormularioPago extends StatelessWidget {
-  // ELIMINAMOS formKey de los parámetros
   final TextEditingController numeroTarjetaController;
   final TextEditingController fechaExpController;
   final TextEditingController cvcController;
@@ -24,7 +21,6 @@ class FormularioPago extends StatelessWidget {
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        // ELIMINAMOS EL WIDGET 'Form' ANIDADO. AHORA ES SOLO UN 'Column'.
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -78,12 +74,14 @@ class FormularioPago extends StatelessWidget {
                       _CardExpirationInputFormatter(),
                     ],
                     validator: (value) {
-                      if ((value?.length ?? 0) != 5) return 'Fecha inválida';
+                      if ((value?.length ?? 0) != 5) {
+                        return 'Fecha inválida';
+                      }
                       final parts = value!.split('/');
                       final month = int.tryParse(parts[0]);
-                      if (month == null || month < 1 || month > 12)
+                      if (month == null || month < 1 || month > 12) {
                         return 'Mes inválido';
-                      // Podríamos añadir validación de año futuro aquí
+                      }
                       return null;
                     },
                   ),
@@ -114,13 +112,14 @@ class FormularioPago extends StatelessWidget {
   }
 }
 
-// Formatters para una mejor UX en los campos de tarjeta
 class _CardNumberInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text;
-    if (newValue.selection.baseOffset == 0) return newValue;
+    if (newValue.selection.baseOffset == 0) {
+      return newValue;
+    }
     var buffer = StringBuffer();
     for (int i = 0; i < text.length; i++) {
       buffer.write(text[i]);
@@ -141,7 +140,9 @@ class _CardExpirationInputFormatter extends TextInputFormatter {
   TextEditingValue formatEditUpdate(
       TextEditingValue oldValue, TextEditingValue newValue) {
     var newText = newValue.text;
-    if (newValue.selection.baseOffset == 0) return newValue;
+    if (newValue.selection.baseOffset == 0) {
+      return newValue;
+    }
     var buffer = StringBuffer();
     for (int i = 0; i < newText.length; i++) {
       buffer.write(newText[i]);

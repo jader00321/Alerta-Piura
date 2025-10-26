@@ -1,16 +1,13 @@
-// lib/screens/reporte_detalle_screen.dart
 import 'package:flutter/material.dart';
-//import 'package:mobile_app/api/lider_service.dart'; // Necesario para reportar usuario
+import 'package:flutter/foundation.dart';
+import 'package:mobile_app/api/perfil_service.dart';
 import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/api/seguimiento_service.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
-// Importar los widgets de layout
 import 'package:mobile_app/widgets/reporte_detalle/layout_detalle_reporte.dart';
-// Importar widgets existentes
 import 'package:mobile_app/widgets/esqueletos/esqueleto_reporte_detalle.dart';
-import 'package:mobile_app/api/perfil_service.dart';
 import 'package:mobile_app/screens/pantalla_editar_reporte_autor.dart';
 
 class ReporteDetalleScreen extends StatefulWidget {
@@ -22,20 +19,17 @@ class ReporteDetalleScreen extends StatefulWidget {
 }
 
 class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
-  // --- SERVICIOS ---
   final ReporteService _reporteService = ReporteService();
   final PerfilService _perfilService = PerfilService();
   final SeguimientoService _seguimientoService = SeguimientoService();
 
-  // --- ESTADO ---
   late Future<ReporteDetallado> _reporteFuture;
   final TextEditingController _comentarioController = TextEditingController();
   bool _isPostingComment = false;
   bool _isLoadingFollow = true;
   bool _isFollowing = false;
-  bool _dataChanged = false; // Flag para notificar a la pantalla anterior
+  bool _dataChanged = false;
 
-  // --- CICLO DE VIDA ---
   @override
   void initState() {
     super.initState();
@@ -54,13 +48,13 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
     }
   }
 
-  // --- LÓGICA DE DATOS ---
   Future<void> _loadReporteData({bool keepFollowState = false}) async {
     final reporteLoader = _reporteService.getReporteById(widget.reporteId);
-    if (mounted)
+    if (mounted) {
       setState(() {
         _reporteFuture = reporteLoader;
       });
+    }
 
     if (!keepFollowState) {
       await _verificarEstadoSeguimiento();
@@ -68,12 +62,11 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
     try {
       await reporteLoader;
     } catch (e) {
-      print("Error en _loadReporteData al esperar reporte: $e");
+      debugPrint("Error en _loadReporteData al esperar reporte: $e");
     }
   }
 
   Future<void> _verificarEstadoSeguimiento() async {
-    // ... (sin cambios) ...
     if (!mounted) return;
     final isAuthenticated = context.read<AuthNotifier>().isAuthenticated;
     if (!isAuthenticated) {
@@ -91,14 +84,14 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setStateIfMounted(() => _isLoadingFollow = false);
-      print("Error verificando seguimiento: $e");
+      if (mounted) {
+        setStateIfMounted(() => _isLoadingFollow = false);
+      }
+      debugPrint("Error verificando seguimiento: $e");
     }
   }
 
-  // --- HANDLERS (CALLBACKS) ---
   Future<void> _toggleFollow() async {
-    // ... (sin cambios) ...
     if (!mounted || _isLoadingFollow) return;
     final isAuthenticated = context.read<AuthNotifier>().isAuthenticated;
     if (!isAuthenticated) {
@@ -113,24 +106,30 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
       if (_isFollowing) {
         success =
             await _seguimientoService.dejarDeSeguirReporte(widget.reporteId);
-        if (success) message = 'Has dejado de seguir este reporte.';
+        if (success) {
+          message = 'Has dejado de seguir este reporte.';
+        }
       } else {
         success = await _seguimientoService.seguirReporte(widget.reporteId);
-        if (success) message = 'Ahora sigues este reporte.';
+        if (success) {
+          message = 'Ahora sigues este reporte.';
+        }
       }
 
-      if (success && mounted) {
-        _dataChanged = true;
-        setStateIfMounted(() {
-          _isFollowing = !_isFollowing;
-          _isLoadingFollow = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message), backgroundColor: Colors.green));
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message), backgroundColor: Colors.red));
-        setStateIfMounted(() => _isLoadingFollow = false);
+      if (mounted) {
+        if (success) {
+          _dataChanged = true;
+          setStateIfMounted(() {
+            _isFollowing = !_isFollowing;
+            _isLoadingFollow = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(message), backgroundColor: Colors.green));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(message), backgroundColor: Colors.red));
+          setStateIfMounted(() => _isLoadingFollow = false);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -142,7 +141,6 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
   }
 
   Future<void> _onSupportReport() async {
-    // ... (sin cambios) ...
     final response = await _reporteService.apoyarReporte(widget.reporteId);
     if (mounted) {
       final message = response['message'] ?? 'Acción procesada.';
@@ -154,23 +152,21 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
       ));
       if (success) {
         _dataChanged = true;
-        _loadReporteData(keepFollowState: true); // Recargar datos
+        _loadReporteData(keepFollowState: true);
       }
     }
   }
 
   Future<void> _onSupportComment(int commentId) async {
-    // ... (sin cambios) ...
     final response = await _reporteService.apoyarComentario(commentId);
     if (mounted) {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(response['message'])));
-      _loadReporteData(keepFollowState: true); // Recargar datos
+      _loadReporteData(keepFollowState: true);
     }
   }
 
   Future<void> _postComentario() async {
-    // ... (sin cambios) ...
     if (_comentarioController.text.trim().isEmpty || _isPostingComment) return;
     setStateIfMounted(() => _isPostingComment = true);
 
@@ -181,7 +177,7 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
       if (success) {
         _comentarioController.clear();
         _dataChanged = true;
-        _loadReporteData(keepFollowState: true); // Recargar datos
+        _loadReporteData(keepFollowState: true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -194,7 +190,6 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
   }
 
   void _showEditCommentDialog(int commentId, String currentText) {
-    // ... (sin cambios) ...
     final textController = TextEditingController(text: currentText);
     showDialog(
       context: context,
@@ -225,7 +220,6 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
   }
 
   void _showConfirmDeleteDialog(int commentId) {
-    // ... (sin cambios) ...
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -251,7 +245,6 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
   }
 
   void _showReportCommentDialog(int commentId) {
-    // ... (sin cambios) ...
     final textController = TextEditingController();
     showDialog(
       context: context,
@@ -271,9 +264,10 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
                 Navigator.pop(ctx);
                 await _reporteService.reportarComentario(
                     commentId, textController.text);
-                if (mounted)
+                if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                       content: Text('Gracias, tu reporte ha sido enviado.')));
+                }
               }
             },
             child: const Text('Reportar'),
@@ -284,11 +278,9 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
   }
 
   void _showReportUserDialog(int userId, String userAlias) {
-    // Obtener el ID del usuario actual
     final authNotifier = context.read<AuthNotifier>();
     final currentUserId = authNotifier.userId;
 
-    // Validar que no se reporte a sí mismo
     if (currentUserId == userId) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -316,12 +308,10 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
             onPressed: () async {
               final motivo = textController.text.trim();
               if (motivo.isNotEmpty) {
-                Navigator.pop(ctx); // Cerrar dialogo ANTES de la llamada async
+                Navigator.pop(ctx);
                 try {
-                  // *** LLAMAR AL SERVICIO CORRECTO ***
-                  final response = await _perfilService.reportarUsuario(
-                      userId, motivo); // Usa PerfilService
-                  // *** FIN LLAMADA ***
+                  final response =
+                      await _perfilService.reportarUsuario(userId, motivo);
 
                   if (mounted) {
                     final message = response['message'] ?? 'Error desconocido';
@@ -347,47 +337,42 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
     );
   }
 
-  // --- NUEVOS HANDLERS PARA BOTONES DE AUTOR ---
   Future<void> _handleEditReportAuthor(ReporteDetallado reporte) async {
-    // Navega a la nueva pantalla de edición
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
           builder: (context) =>
               PantallaEditarReporteAutor(reporteInicial: reporte)),
     );
-    // Si la pantalla de edición devolvió true (cambios guardados), recarga los datos
     if (result == true && mounted) {
-      _loadReporteData(keepFollowState: true); // Mantiene estado de 'Seguir'
+      _loadReporteData(keepFollowState: true);
     }
   }
 
   void _handleChatAuthor(ReporteDetallado reporte) {
-    // Reutilizar la navegación existente al chat
     Navigator.pushNamed(context, '/chat', arguments: {
       'reporteId': reporte.id,
       'reporteTitulo': reporte.titulo,
     });
   }
-  // --- FIN NUEVOS HANDLERS ---
 
-  // --- BUILD METHOD ---
   @override
   Widget build(BuildContext context) {
     final authNotifier = context.watch<AuthNotifier>();
 
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(context, _dataChanged); // Notifica si hubo cambios
-        return false; // Previene el pop automático
+    return PopScope(
+      // CORREGIDO: WillPopScope -> PopScope
+      canPop: false, // Prevent default pop
+      onPopInvoked: (didPop) async {
+        if (didPop) return; // If already popped, do nothing
+        Navigator.pop(context, _dataChanged); // Manual pop with data
       },
       child: FutureBuilder<ReporteDetallado>(
         future: _reporteFuture,
         builder: (context, snapshot) {
           Widget body;
-          ReporteDetallado? reporte; // Hacerlo nullable
+          ReporteDetallado? reporte;
 
-          // Manejo de estados de carga y error
           if (snapshot.connectionState == ConnectionState.waiting &&
               !_dataChanged) {
             body = const EsqueletoReporteDetalle();
@@ -400,7 +385,6 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
           } else if (!snapshot.hasData) {
             body = const Center(child: Text('Reporte no encontrado.'));
           } else {
-            // Tenemos datos
             reporte = snapshot.data!;
             body = LayoutDetalleReporte(
               reporte: reporte,
@@ -418,7 +402,6 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
             );
           }
 
-          // Construcción del Scaffold principal
           return Scaffold(
             appBar: AppBar(
               title: const Text('Detalles del Reporte'),
@@ -426,9 +409,7 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => Navigator.pop(context, _dataChanged),
               ),
-              // --- ACTIONS MODIFICADOS ---
               actions: [
-                // Botón Seguir (solo si hay datos, está verificado y user logueado)
                 if (reporte != null &&
                     reporte.estado == 'verificado' &&
                     authNotifier.isAuthenticated)
@@ -453,28 +434,23 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
                                 foregroundColor: Colors.white),
                           ),
                   ),
-
-                // NUEVO: Botones para Autor si está Pendiente y hay datos
                 if (reporte != null &&
                     reporte.estado == 'pendiente_verificacion' &&
                     authNotifier.userId == reporte.idAutor) ...[
                   IconButton(
                     icon: const Icon(Icons.edit_note_outlined),
-                    onPressed: () => _handleEditReportAuthor(
-                        reporte!), // Llamar al nuevo handler
+                    onPressed: () => _handleEditReportAuthor(reporte!),
                     tooltip: 'Editar Mi Reporte',
                   ),
                   IconButton(
                     icon: const Icon(Icons.chat_bubble_outline),
-                    onPressed: () =>
-                        _handleChatAuthor(reporte!), // Llamar al nuevo handler
+                    onPressed: () => _handleChatAuthor(reporte!),
                     tooltip: 'Abrir Chat',
                   ),
                 ],
               ],
-              // --- FIN ACTIONS MODIFICADOS ---
             ),
-            body: body, // El body es el FutureBuilder o estado correspondiente
+            body: body,
           );
         },
       ),

@@ -1,20 +1,17 @@
-// lib/widgets/cerca_de_ti/panel_filtros_cercanos.dart
 import 'package:flutter/material.dart';
-import 'package:mobile_app/api/reporte_service.dart'; // Para FiltrosCercanos
-import 'package:mobile_app/models/categoria_model.dart'; // Para Categoria
+import 'package:mobile_app/api/reporte_service.dart';
+import 'package:mobile_app/models/categoria_model.dart';
 
-// Clase simple para manejar las opciones de fecha
 class OpcionFecha {
   final String etiqueta;
-  final int? dias; // null significa 'Cualquier fecha'
+  final int? dias;
   const OpcionFecha(this.etiqueta, this.dias);
 }
 
 class PanelFiltrosCercanos extends StatefulWidget {
   final FiltrosCercanos filtrosActuales;
   final Function(FiltrosCercanos) onAplicarFiltros;
-  final List<Categoria>
-      categoriasDisponibles; // Pasamos las categorías cargadas
+  final List<Categoria> categoriasDisponibles;
 
   const PanelFiltrosCercanos({
     super.key,
@@ -30,7 +27,6 @@ class PanelFiltrosCercanos extends StatefulWidget {
 class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
   late FiltrosCercanos _filtrosSeleccionados;
 
-  // Opciones predefinidas con mapeo a valores de API
   final Map<String, String?> _estadosMap = {
     'Todos': null,
     'Verificado': 'verificado',
@@ -52,7 +48,6 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
   @override
   void initState() {
     super.initState();
-    // Clonamos los filtros iniciales para poder modificarlos
     _filtrosSeleccionados = FiltrosCercanos(
       categoriaId: widget.filtrosActuales.categoriaId,
       estado: widget.filtrosActuales.estado,
@@ -61,7 +56,6 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
     );
   }
 
-  // Helper para construir secciones de Chips
   Widget _buildChipSection<T>({
     required String title,
     required List<T> items,
@@ -69,8 +63,7 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
     required Function(T?) onSelected,
     required String Function(T) getLabel,
     required bool Function(T, T?) isSelected,
-    bool useFilterChip =
-        false, // Flag para usar FilterChip en lugar de ChoiceChip
+    bool useFilterChip = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,7 +82,6 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                 selected: isSelected(item, currentSelection),
                 onSelected: (selected) {
                   setState(() {
-                    // FilterChip permite deselección, onSelected pasa true/false
                     onSelected(selected ? item : null);
                   });
                 },
@@ -99,9 +91,6 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                 label: Text(getLabel(item)),
                 selected: isSelected(item, currentSelection),
                 onSelected: (selected) {
-                  // ChoiceChip siempre devuelve true en onSelected
-                  // Si el seleccionado es el mismo que el actual, NO lo deseleccionamos (comportamiento estándar)
-                  // Simplemente seleccionamos el nuevo item.
                   if (selected) {
                     setState(() {
                       onSelected(item);
@@ -118,16 +107,15 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
 
   @override
   Widget build(BuildContext context) {
-    // Lista para categorías, incluyendo 'Todas' (representado por null)
     final List<Categoria?> categoriasConTodos = [
       null,
       ...widget.categoriasDisponibles
     ];
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.6, // Inicia al 60%
-      minChildSize: 0.3, // Mínimo 30%
-      maxChildSize: 0.9, // Máximo 90%
+      initialChildSize: 0.6,
+      minChildSize: 0.3,
+      maxChildSize: 0.9,
       expand: false,
       builder: (_, scrollController) {
         return Container(
@@ -137,11 +125,11 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(20)),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)
-              ]),
+                BoxShadow(color: Colors.black.withAlpha(26), blurRadius: 10)
+              ] // CORREGIDO: withOpacity -> withAlpha
+              ),
           child: Column(
             children: [
-              // Handle
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                 child: Container(
@@ -152,7 +140,6 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                       borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-              // Header y Botón Aplicar
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -168,12 +155,10 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                 ],
               ),
               const Divider(height: 24),
-              // Opciones de Filtro (Scrollable)
               Expanded(
                 child: ListView(
                   controller: scrollController,
                   children: [
-                    // Filtro de Estado
                     _buildChipSection<String>(
                         title: 'Estado',
                         items: _estadosMap.keys.toList(),
@@ -185,7 +170,6 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                         getLabel: (s) => s,
                         isSelected: (item, current) => item == current,
                         onSelected: (selectedKey) {
-                          // ChoiceChip siempre selecciona, no deselecciona
                           if (selectedKey != null) {
                             setState(() {
                               _filtrosSeleccionados = FiltrosCercanos(
@@ -197,7 +181,6 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                             });
                           }
                         }),
-                    // Filtro de Categoría (Usando FilterChip)
                     _buildChipSection<Categoria?>(
                         title: 'Categoría',
                         items: categoriasConTodos,
@@ -206,9 +189,8 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                             orElse: () => null),
                         getLabel: (c) => c?.nombre ?? 'Todas',
                         isSelected: (item, current) => item?.id == current?.id,
-                        useFilterChip: true, // Usar FilterChip aquí
+                        useFilterChip: true,
                         onSelected: (selectedCategoria) {
-                          // onSelected para FilterChip puede dar null si se deselecciona
                           setState(() {
                             _filtrosSeleccionados = FiltrosCercanos(
                               categoriaId: selectedCategoria?.id,
@@ -218,7 +200,6 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                             );
                           });
                         }),
-                    // Filtro de Urgencia
                     _buildChipSection<String>(
                         title: 'Urgencia',
                         items: _urgenciasMap.keys.toList(),
@@ -242,7 +223,6 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                             });
                           }
                         }),
-                    // Filtro de Fecha
                     _buildChipSection<OpcionFecha>(
                         title: 'Fecha de Creación',
                         items: _fechas,
@@ -264,8 +244,7 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                             });
                           }
                         }),
-                    const SizedBox(
-                        height: 30), // Espacio extra al final del scroll
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the build method from the TarjetaVerificacion class, for the Dart programming language.">
+  <title>build method - TarjetaVerificacion class - tarjeta_verificacion library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">mobile_app</a></li>
+    <li><a href="../../widgets_verificacion_tarjeta_verificacion/">widgets\verificacion\tarjeta_verificacion.dart</a></li>
+    <li><a href="../../widgets_verificacion_tarjeta_verificacion/TarjetaVerificacion-class.html">TarjetaVerificacion</a></li>
+    <li class="self-crumb">build method</li>
+  </ol>
+  <div class="self-name">build</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="widgets_verificacion_tarjeta_verificacion&#47;TarjetaVerificacion-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">build</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+  <div>
+    <ol class="annotation-list">
+        <li>@<a href="https://api.flutter.dev/flutter/dart-core/override-constant.html">override</a></li>
+    </ol>
+  </div>
+<span class="returntype"><a href="https://api.flutter.dev/flutter/widgets/Widget-class.html">Widget</a></span>
+<span class="name ">build</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="build-param-context"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a></span> <span class="parameter-name">context</span></span></li>
+</ol>)
+
+      <div class="features"><span class="feature">override</span></div>
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Describes the part of the user interface represented by this widget.</p>
+<p>The framework calls this method when this widget is inserted into the tree
+in a given <a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a> and when the dependencies of this widget change
+(e.g., an <a href="https://api.flutter.dev/flutter/widgets/InheritedWidget-class.html">InheritedWidget</a> referenced by this widget changes). This
+method can potentially be called in every frame and should not have any side
+effects beyond building a widget.</p>
+<p>The framework replaces the subtree below this widget with the widget
+returned by this method, either by updating the existing subtree or by
+removing the subtree and inflating a new subtree, depending on whether the
+widget returned by this method can update the root of the existing
+subtree, as determined by calling <a href="https://api.flutter.dev/flutter/widgets/Widget/canUpdate.html">Widget.canUpdate</a>.</p>
+<p>Typically implementations return a newly created constellation of widgets
+that are configured with information from this widget's constructor and
+from the given <a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a>.</p>
+<p>The given <a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a> contains information about the location in the
+tree at which this widget is being built. For example, the context
+provides the set of inherited widgets for this location in the tree. A
+given widget might be built with multiple different <a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a>
+arguments over time if the widget is moved around the tree or if the
+widget is inserted into the tree in multiple places at once.</p>
+<p>The implementation of this method must only depend on:</p>
+<ul>
+<li>the fields of the widget, which themselves must not change over time,
+and</li>
+<li>any ambient state obtained from the <code>context</code> using
+<a href="https://api.flutter.dev/flutter/widgets/BuildContext/dependOnInheritedWidgetOfExactType.html">BuildContext.dependOnInheritedWidgetOfExactType</a>.</li>
+</ul>
+<p>If a widget's <a href="../../widgets_verificacion_tarjeta_verificacion/TarjetaVerificacion/build.html">build</a> method is to depend on anything else, use a
+<a href="https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html">StatefulWidget</a> instead.</p>
+<p>See also:</p>
+<ul>
+<li><a href="https://api.flutter.dev/flutter/widgets/StatelessWidget-class.html">StatelessWidget</a>, which contains the discussion on performance considerations.</li>
+</ul>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">@override
+Widget build(BuildContext context) {
+  final theme = Theme.of(context);
+  final hasPendingSupport = reporte.apoyosPendientes &gt; 0;
+  final isPriority = reporte.esPrioritario;
+  final bool hasPhoto =
+      reporte.fotoUrl != null &amp;&amp; reporte.fotoUrl!.isNotEmpty;
+
+  return Card(
+    margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+    clipBehavior: Clip.antiAlias,
+    elevation: 2,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    child: InkWell(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          &#47;&#47; --- Sección Imagen (Condicional) ---
+          if (hasPhoto)
+            SizedBox(
+              height: 100,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    reporte.fotoUrl!,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, progress) =&gt; progress ==
+                            null
+                        ? child
+                        : const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2)),
+                    errorBuilder: (context, error, stackTrace) =&gt; Container(
+                        color: Colors.grey.shade300,
+                        child: const Center(
+                            child: Icon(Icons.broken_image,
+                                size: 30, color: Colors.grey))),
+                  ),
+                  &#47;&#47; Degradado
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.5),
+                          Colors.transparent
+                        ],
+                        stops: const [0.0, 0.6],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ), &#47;&#47; Fin SizedBox Imagen
+
+          &#47;&#47; --- Sección Detalles Debajo ---
+          Padding(
+            padding:
+                EdgeInsets.fromLTRB(12.0, hasPhoto ? 12.0 : 16.0, 12.0, 12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                &#47;&#47; --- NUEVO: Fila 1 - Chips de Estado&#47;Prioridad ---
+                if (isPriority || hasPendingSupport) ...[
+                  &#47;&#47; Solo mostrar la fila si hay al menos un chip
+                  Row(
+                    children: [
+                      &#47;&#47; Chip de Prioridad (si es premium)
+                      if (isPriority)
+                        Chip(
+                          avatar: Icon(Icons.star_rounded,
+                              size: 14, color: Colors.amber.shade800),
+                          label: const Text(&#39;Premium&#39;),
+                          backgroundColor:
+                              Colors.amber.shade100.withOpacity(0.9),
+                          labelStyle: TextStyle(
+                              fontSize: 11,
+                              color: Colors.amber.shade800,
+                              fontWeight: FontWeight.bold),
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      if (isPriority &amp;&amp; hasPendingSupport)
+                        const SizedBox(width: 8), &#47;&#47; Espacio entre chips
+                      &#47;&#47; Chip de Apoyos Pendientes (si existen)
+                      if (hasPendingSupport)
+                        Chip(
+                          avatar: Icon(Icons.local_fire_department_rounded,
+                              size: 14, color: Colors.red.shade800),
+                          label: Text(&#39;+${reporte.apoyosPendientes}&#39;),
+                          backgroundColor:
+                              Colors.red.shade100.withOpacity(0.9),
+                          labelStyle: TextStyle(
+                              fontSize: 11,
+                              color: Colors.red.shade900,
+                              fontWeight: FontWeight.bold),
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(
+                      height:
+                          8), &#47;&#47; Espacio después de la primera fila de chips
+                ],
+                &#47;&#47; --- FIN NUEVO ---
+
+                &#47;&#47; Fila 2 - Categoría y Urgencia
+                Row(
+                  children: [
+                    Flexible(
+                      child: Chip(
+                        label: Text(
+                          reporte.categoria,
+                          style: const TextStyle(
+                              fontSize: 11, fontWeight: FontWeight.w500),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 0),
+                        backgroundColor: theme.colorScheme.secondaryContainer
+                            .withOpacity(0.7),
+                        materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (reporte.urgencia != null)
+                      Chip(
+                        avatar: Icon(_getUrgencyIcon(reporte.urgencia),
+                            size: 14,
+                            color: _getUrgencyColor(reporte.urgencia)),
+                        label: Text(reporte.urgencia!,
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: _getUrgencyColor(reporte.urgencia),
+                                fontWeight: FontWeight.bold)),
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 0),
+                        backgroundColor: _getUrgencyColor(reporte.urgencia)
+                            .withOpacity(0.15),
+                        materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    &#47;&#47; Los chips de Premium y Apoyos se movieron a la fila anterior
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                &#47;&#47; Título
+                Text(
+                  reporte.titulo,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+
+                &#47;&#47; Autor y Fecha
+                Text(
+                  &#39;Por ${reporte.autor} • ${reporte.fecha}&#39;,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color:
+                          theme.textTheme.bodySmall?.color?.withOpacity(0.8)),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ), &#47;&#47; Fin Padding Detalles
+        ],
+      ),
+    ),
+  );
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">mobile_app</a></li>
+    <li><a href="../../widgets_verificacion_tarjeta_verificacion/">tarjeta_verificacion</a></li>
+    <li><a href="../../widgets_verificacion_tarjeta_verificacion/TarjetaVerificacion-class.html">TarjetaVerificacion</a></li>
+    <li class="self-crumb">build method</li>
+</ol>
+
+    <h5>TarjetaVerificacion class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    mobile_app
+      1.0.0+1
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

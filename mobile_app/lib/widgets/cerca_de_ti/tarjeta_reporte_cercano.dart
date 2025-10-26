@@ -1,26 +1,24 @@
-// lib/widgets/cerca_de_ti/tarjeta_reporte_cercano.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_cercano_model.dart';
 
 class TarjetaReporteCercano extends StatelessWidget {
   final ReporteCercano reporte;
-  final bool isJoining; // Estado de carga para Unirse
-  final bool isUnjoining; // Estado de carga para Quitar Apoyo
+  final bool isJoining;
+  final bool isUnjoining;
   final VoidCallback onCardTap;
   final VoidCallback onJoinTap;
-  final VoidCallback onUnjoinTap; // Nuevo callback para Quitar Apoyo
+  final VoidCallback onUnjoinTap;
 
   const TarjetaReporteCercano({
     super.key,
     required this.reporte,
     required this.onCardTap,
     required this.onJoinTap,
-    required this.onUnjoinTap, // Añadir al constructor
+    required this.onUnjoinTap,
     this.isJoining = false,
-    this.isUnjoining = false, // Añadir al constructor
+    this.isUnjoining = false,
   });
 
-  // Helper para color de urgencia
   Color _getUrgencyColor(String? urgency) {
     switch (urgency?.toLowerCase()) {
       case 'alta':
@@ -34,7 +32,6 @@ class TarjetaReporteCercano extends StatelessWidget {
     }
   }
 
-  // Helper para el icono de urgencia
   IconData _getUrgencyIcon(String? urgency) {
     switch (urgency?.toLowerCase()) {
       case 'alta':
@@ -60,18 +57,16 @@ class TarjetaReporteCercano extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        // Solo navega al detalle si está verificado, de lo contrario onCardTap no hará nada útil
         onTap: isLoadingAction ? null : onCardTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Imagen y Badges Superpuestos ---
             Stack(
               children: [
                 if (reporte.fotoUrl != null)
                   Image.network(
                     reporte.fotoUrl!,
-                    height: 160, // Ligeramente más alta
+                    height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, progress) => progress ==
@@ -94,8 +89,6 @@ class TarjetaReporteCercano extends StatelessWidget {
                       child: Center(
                           child: Icon(Icons.image_not_supported,
                               size: 40, color: Colors.grey.shade400))),
-
-                // Badges/Chips superpuestos
                 Positioned(
                   top: 8,
                   left: 8,
@@ -109,7 +102,8 @@ class TarjetaReporteCercano extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 4, vertical: 0),
                         backgroundColor: theme.colorScheme.secondaryContainer
-                            .withOpacity(0.9),
+                            .withAlpha(
+                                230), // CORREGIDO: withOpacity -> withAlpha
                       ),
                       if (reporte.urgencia != null)
                         Chip(
@@ -125,7 +119,8 @@ class TarjetaReporteCercano extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 4, vertical: 0),
                           backgroundColor: _getUrgencyColor(reporte.urgencia)
-                              .withOpacity(0.2),
+                              .withAlpha(
+                                  38), // CORREGIDO: withOpacity -> withAlpha
                         ),
                     ],
                   ),
@@ -141,10 +136,10 @@ class TarjetaReporteCercano extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                     padding:
                         const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                    backgroundColor: Colors.black.withOpacity(0.6),
+                    backgroundColor: Colors.black
+                        .withAlpha(153), // CORREGIDO: withOpacity -> withAlpha
                   ),
                 ),
-                // Estrella de Prioridad (si aplica)
                 if (reporte.esPrioritario)
                   Positioned(
                     bottom: 8,
@@ -152,7 +147,8 @@ class TarjetaReporteCercano extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withAlpha(
+                            128), // CORREGIDO: withOpacity -> withAlpha
                         shape: BoxShape.circle,
                       ),
                       child:
@@ -161,7 +157,6 @@ class TarjetaReporteCercano extends StatelessWidget {
                   ),
               ],
             ),
-            // --- Detalles Debajo de la Imagen ---
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -178,7 +173,6 @@ class TarjetaReporteCercano extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Información del Autor y Fecha
                       Expanded(
                         child: Text(
                           'Por ${reporte.autor} • ${reporte.fechaCreacionFormateada}',
@@ -188,7 +182,6 @@ class TarjetaReporteCercano extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Estado y Apoyos Pendientes
                       Chip(
                         avatar: Icon(
                           esPendiente
@@ -216,78 +209,61 @@ class TarjetaReporteCercano extends StatelessWidget {
                       ),
                     ],
                   ),
-                  // --- BOTÓN "UNIRSE" CONDICIONAL ---
                   if (esPendiente) ...[
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: reporte.usuarioActualUnido
                           ? ElevatedButton.icon(
-                              // Botón "UNIDO" (ahora permite quitar apoyo)
-                              icon:
-                                  isUnjoining // Muestra carga si se está quitando apoyo
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white))
-                                      : const Icon(Icons.check_circle,
-                                          size: 18), // Icono de check
+                              icon: isUnjoining
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white))
+                                  : const Icon(Icons.check_circle, size: 18),
                               label: Text(
                                 reporte.apoyosPendientes > 0
                                     ? 'Unido (+${reporte.apoyosPendientes})'
                                     : 'Unido',
                               ),
-                              // Llama a onUnjoinTap al presionar
-                              onPressed: isLoadingAction
-                                  ? null
-                                  : onUnjoinTap, // Deshabilitar si cualquier acción carga
+                              onPressed: isLoadingAction ? null : onUnjoinTap,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Colors.green.shade600, // Color verde
-                                foregroundColor: Colors.white, // Texto blanco
+                                backgroundColor: Colors.green.shade600,
+                                foregroundColor: Colors.white,
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 8),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                        8)), // Opcional: bordes menos redondeados
+                                    borderRadius: BorderRadius.circular(8)),
                               ),
                             )
                           : reporte.puedeUnirse
                               ? OutlinedButton.icon(
-                                  // Botón "UNIRME"
-                                  icon:
-                                      isJoining // Muestra carga si se está uniendo
-                                          ? const SizedBox(
-                                              width: 16,
-                                              height: 16,
-                                              child: CircularProgressIndicator(
-                                                  strokeWidth: 2))
-                                          : const Icon(Icons.add, size: 18),
+                                  icon: isJoining
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2))
+                                      : const Icon(Icons.add, size: 18),
                                   label: Text(
                                     reporte.apoyosPendientes > 0
                                         ? 'Unirme (+${reporte.apoyosPendientes})'
                                         : '¡Yo también! Unirme',
                                     style: TextStyle(
-                                      color: theme.colorScheme
-                                          .primary, // Color primario
+                                      color: theme.colorScheme.primary,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  onPressed: isLoadingAction
-                                      ? null
-                                      : onJoinTap, // Llama a onJoinTap
+                                  onPressed: isLoadingAction ? null : onJoinTap,
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
-                                        color: theme.colorScheme
-                                            .primary), // Borde primario
+                                        color: theme.colorScheme.primary),
                                     padding:
                                         const EdgeInsets.symmetric(vertical: 8),
                                   ),
                                 )
                               : ElevatedButton.icon(
-                                  // Botón "ES TU REPORTE" (deshabilitado)
                                   icon: const Icon(Icons.person_outline,
                                       size: 18, color: Colors.white70),
                                   label: Text(
@@ -296,10 +272,9 @@ class TarjetaReporteCercano extends StatelessWidget {
                                           : 'Es tu reporte',
                                       style: const TextStyle(
                                           color: Colors.white70)),
-                                  onPressed: null, // Siempre deshabilitado
+                                  onPressed: null,
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blueGrey
-                                          .shade400, // Color azul grisáceo
+                                      backgroundColor: Colors.blueGrey.shade400,
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 8)),
                                 ),

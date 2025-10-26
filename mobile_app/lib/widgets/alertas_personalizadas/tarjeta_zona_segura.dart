@@ -1,5 +1,3 @@
-// lib/widgets/alertas_personalizadas/tarjeta_zona_segura.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -8,7 +6,6 @@ class TarjetaZonaSegura extends StatelessWidget {
   final String nombreZona;
   final LatLng centro;
   final double radio;
-  // NUEVO: Callback para la acción de eliminar
   final VoidCallback onDelete;
 
   const TarjetaZonaSegura({
@@ -16,7 +13,7 @@ class TarjetaZonaSegura extends StatelessWidget {
     required this.nombreZona,
     required this.centro,
     required this.radio,
-    required this.onDelete, // <-- Requerido en el constructor
+    required this.onDelete,
   });
 
   @override
@@ -48,7 +45,8 @@ class TarjetaZonaSegura extends StatelessWidget {
                       point: centro,
                       radius: radio,
                       useRadiusInMeter: true,
-                      color: theme.colorScheme.primary.withOpacity(0.2),
+                      color: theme.colorScheme.primary
+                          .withAlpha(51), // CORREGIDO: withOpacity -> withAlpha
                       borderColor: theme.colorScheme.primary,
                       borderStrokeWidth: 2,
                     ),
@@ -80,7 +78,6 @@ class TarjetaZonaSegura extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Botón de eliminar ahora es funcional
                 IconButton(
                   icon: Icon(Icons.delete_outline, color: Colors.red.shade300),
                   onPressed: onDelete,

@@ -68,7 +68,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _sendMessage() {
     final text = _messageController.text.trim();
-    if (text.isEmpty || _currentUserId == null) return;
+    if (text.isEmpty || _currentUserId == null) {
+      return;
+    }
 
     final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
     final senderAlias = authNotifier.userAlias ?? 'Usuario';
@@ -96,7 +98,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    // Al salir, dejamos la sala, pero no desconectamos el socket principal
     _socketService.emit('leave-room', widget.reporteId.toString());
     _socketService.off('receive-message');
     _messageController.dispose();
@@ -137,7 +138,6 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-// Widget para la burbuja de chat
 class _ChatMessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isMe;
@@ -148,8 +148,10 @@ class _ChatMessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final alignment = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final color =
-        isMe ? theme.colorScheme.primary : theme.colorScheme.surfaceVariant;
+    final color = isMe
+        ? theme.colorScheme.primary
+        : theme.colorScheme
+            .surfaceContainerHighest; // CORREGIDO: surfaceVariant -> surfaceContainerHighest
     final textColor =
         isMe ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant;
 
@@ -203,7 +205,6 @@ class _ChatMessageBubble extends StatelessWidget {
   }
 }
 
-// Widget para la barra de entrada de texto
 class _ChatInput extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
@@ -220,7 +221,8 @@ class _ChatInput extends StatelessWidget {
           BoxShadow(
             offset: const Offset(0, -1),
             blurRadius: 4,
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black
+                .withAlpha(13), // CORREGIDO: withOpacity -> withAlpha
           )
         ],
       ),
@@ -233,7 +235,9 @@ class _ChatInput extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'Escribe un mensaje...',
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                  fillColor: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest, // CORREGIDO: surfaceVariant -> surfaceContainerHighest
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,

@@ -1,8 +1,8 @@
-// lib/screens/pantalla_buscar_reporte_original.dart (NUEVO ARCHIVO)
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:mobile_app/api/reporte_service.dart'; // Usamos el servicio público de reportes
-import 'package:mobile_app/models/reporte_model.dart'; // Usamos el modelo simple
+import 'package:flutter/foundation.dart';
+import 'package:mobile_app/api/reporte_service.dart';
+import 'package:mobile_app/models/reporte_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_reportes.dart';
 
 class PantallaBuscarReporteOriginal extends StatefulWidget {
@@ -27,7 +27,7 @@ class _PantallaBuscarReporteOriginalState
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    _performSearch(); // Carga inicial (últimos reportes verificados)
+    _performSearch();
   }
 
   @override
@@ -38,7 +38,9 @@ class _PantallaBuscarReporteOriginalState
   }
 
   void _onSearchChanged() {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+    }
     _debounce = Timer(const Duration(milliseconds: 500), () {
       if (mounted && _searchController.text != _searchTerm) {
         _performSearch();
@@ -47,18 +49,19 @@ class _PantallaBuscarReporteOriginalState
   }
 
   Future<void> _performSearch() async {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _isLoading = true;
       _searchTerm = _searchController.text;
     });
 
     try {
-      // Usamos getAllReports (público) para buscar reportes VERIFICADOS
       final results = await _reporteService.getAllReports(
         search: _searchTerm,
-        estado: 'verificado', // Solo buscar entre reportes ya verificados
-        limit: 20, // Limitar resultados
+        estado: 'verificado',
+        limit: 20,
       );
       if (mounted) {
         setState(() {
@@ -67,7 +70,7 @@ class _PantallaBuscarReporteOriginalState
         });
       }
     } catch (e) {
-      print("Error buscando reporte original: $e");
+      debugPrint("Error buscando reporte original: $e");
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -95,8 +98,9 @@ class _PantallaBuscarReporteOriginalState
                 filled: true,
                 fillColor: Theme.of(context)
                     .colorScheme
-                    .surfaceVariant
-                    .withOpacity(0.5),
+                    .surfaceContainerHighest
+                    .withAlpha(
+                        128), // CORREGIDO: surfaceVariant -> surfaceContainerHighest, withOpacity -> withAlpha
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide.none,
@@ -107,7 +111,7 @@ class _PantallaBuscarReporteOriginalState
         ),
       ),
       body: _isLoading
-          ? const EsqueletoListaReportes() // Mostrar esqueleto mientras busca
+          ? const EsqueletoListaReportes()
           : _searchResults.isEmpty
               ? const Center(
                   child: Padding(
@@ -134,7 +138,6 @@ class _PantallaBuscarReporteOriginalState
                         ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () {
-                          // Devolver el ID seleccionado a la pantalla anterior
                           Navigator.pop(context, reporte.id);
                         },
                       ),
