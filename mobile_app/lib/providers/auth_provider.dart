@@ -65,7 +65,7 @@ class AuthNotifier with ChangeNotifier {
     final socketService = SocketService();
     // 1. Pasar el token directamente al conectar
     socketService.connect(token);
-    
+
     // 2. Esta línea ya no es necesaria, la autenticación
     //    se maneja en el momento de la conexión.
     // socketService.emit('authenticate', {'token': token});

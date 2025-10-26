@@ -18,13 +18,14 @@ class Perfil {
     required this.puntos,
     this.telefono,
     required this.insignias,
-    this.nombrePlan, 
-    this.fechaFinSuscripcion, 
+    this.nombrePlan,
+    this.fechaFinSuscripcion,
   });
 
   factory Perfil.fromJson(Map<String, dynamic> json) {
     var list = json['insignias'] as List;
-    List<Insignia> insigniasList = list.map((i) => Insignia.fromJson(i)).toList();
+    List<Insignia> insigniasList =
+        list.map((i) => Insignia.fromJson(i)).toList();
 
     return Perfil(
       nombre: json['nombre'],

@@ -35,10 +35,13 @@ class _PantallaDetalleBoletaState extends State<PantallaDetalleBoleta> {
             return const EsqueletoDetalleBoleta();
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar la boleta: ${snapshot.error}'));
+            return Center(
+                child: Text('Error al cargar la boleta: ${snapshot.error}'));
           }
           if (!snapshot.hasData) {
-            return const Center(child: Text('No se encontraron los detalles de la transacción.'));
+            return const Center(
+                child:
+                    Text('No se encontraron los detalles de la transacción.'));
           }
 
           final boleta = snapshot.data!;

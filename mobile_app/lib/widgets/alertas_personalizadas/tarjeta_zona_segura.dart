@@ -68,12 +68,14 @@ class TarjetaZonaSegura extends StatelessWidget {
                     children: [
                       Text(
                         nombreZona,
-                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                        style: theme.textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Radio: ${(radio / 1000).toStringAsFixed(1)} km',
-                        style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: Colors.grey[600]),
                       ),
                     ],
                   ),

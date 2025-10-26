@@ -37,7 +37,8 @@ class ReporteResumen {
       fecha: json['fecha'],
       fotoUrl: json['foto_url'],
       categoria: json['categoria'],
-      autor: json['autor'], // Aunque no se use en "Mis Reportes", mantener por consistencia
+      autor: json[
+          'autor'], // Aunque no se use en "Mis Reportes", mantener por consistencia
       esPrioritario: json['es_prioritario'] ?? false,
       miComentario: json['mi_comentario'],
       // --- PARSEAR NUEVOS CAMPOS ---

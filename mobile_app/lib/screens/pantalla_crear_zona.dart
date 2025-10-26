@@ -17,7 +17,8 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
   final _nombreController = TextEditingController();
   final _mapController = MapController();
 
-  LatLng _centroZona = const LatLng(-5.19449, -80.63282); // Centro de Piura por defecto
+  LatLng _centroZona =
+      const LatLng(-5.19449, -80.63282); // Centro de Piura por defecto
   double _radioMetros = 500.0; // 500m por defecto
   bool _isLoading = false;
 
@@ -42,12 +43,15 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success ? 'Zona Segura creada con éxito' : 'Error al crear la zona'),
+          content: Text(success
+              ? 'Zona Segura creada con éxito'
+              : 'Error al crear la zona'),
           backgroundColor: success ? Colors.green : Colors.red,
         ),
       );
       if (success) {
-        Navigator.pop(context, true); // Devuelve 'true' para indicar que se debe refrescar
+        Navigator.pop(context,
+            true); // Devuelve 'true' para indicar que se debe refrescar
       }
     }
 
@@ -86,7 +90,8 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
                 ),
                 children: [
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.example.mobile_app',
                   ),
                   // Círculo que muestra el radio de la zona
@@ -96,7 +101,10 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
                         point: _centroZona,
                         radius: _radioMetros,
                         useRadiusInMeter: true,
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withOpacity(0.2),
                         borderColor: Theme.of(context).colorScheme.primary,
                         borderStrokeWidth: 2,
                       ),
@@ -104,7 +112,8 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
                   ),
                   // Pin central fijo
                   const Center(
-                    child: Icon(Icons.location_pin, size: 50, color: Colors.red),
+                    child:
+                        Icon(Icons.location_pin, size: 50, color: Colors.red),
                   ),
                 ],
               ),
@@ -124,7 +133,9 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
                         labelText: 'Nombre de la Zona (ej. "Casa", "Oficina")',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) => (value?.isEmpty ?? true) ? 'El nombre es requerido' : null,
+                      validator: (value) => (value?.isEmpty ?? true)
+                          ? 'El nombre es requerido'
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     Text('Radio de la zona: ${_radioMetros.toInt()} metros'),

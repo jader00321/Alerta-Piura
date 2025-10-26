@@ -15,10 +15,7 @@ class TopSearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final authNotifier = context.watch<AuthNotifier>();
 
-    // --- REMOVED Positioned WIDGET ---
-    // The parent Stack in mapa_view.dart handles positioning.
-    // We just return the content directly.
-    return SafeArea( // Keep SafeArea for status bar spacing
+    return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
@@ -34,7 +31,7 @@ class TopSearchBar extends StatelessWidget {
                     hintText: 'Buscar por código o título...',
                     prefixIcon: const Icon(Icons.search),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14.0), // Adjust padding as needed
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14.0),
                   ),
                   onChanged: onSearchChanged,
                 ),
@@ -52,7 +49,8 @@ class TopSearchBar extends StatelessWidget {
               child: CircleAvatar(
                 radius: 24,
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                child: authNotifier.isAuthenticated && authNotifier.userAlias != null
+                child: authNotifier.isAuthenticated &&
+                        authNotifier.userAlias != null
                     ? Text(
                         authNotifier.userAlias![0].toUpperCase(),
                         style: const TextStyle(
@@ -72,6 +70,5 @@ class TopSearchBar extends StatelessWidget {
         ),
       ),
     );
-    // --- END OF REMOVED Positioned WIDGET ---
   }
 }

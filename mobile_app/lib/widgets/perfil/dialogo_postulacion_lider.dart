@@ -6,7 +6,8 @@ class DialogoPostulacionLider extends StatefulWidget {
   const DialogoPostulacionLider({super.key});
 
   @override
-  State<DialogoPostulacionLider> createState() => _DialogoPostulacionLiderState();
+  State<DialogoPostulacionLider> createState() =>
+      _DialogoPostulacionLiderState();
 }
 
 class _DialogoPostulacionLiderState extends State<DialogoPostulacionLider> {
@@ -72,11 +73,13 @@ class _DialogoPostulacionLiderState extends State<DialogoPostulacionLider> {
       title: const Text('Postular como Líder Vecinal'),
       content: Form(
         key: _formKey,
-        child: SingleChildScrollView( // Evitar overflow por teclado
+        child: SingleChildScrollView(
+          // Evitar overflow por teclado
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Describe brevemente por qué quieres ser líder y qué zona te gustaría representar.'),
+              const Text(
+                  'Describe brevemente por qué quieres ser líder y qué zona te gustaría representar.'),
               const SizedBox(height: 24),
               TextFormField(
                 controller: _motivacionController,
@@ -86,7 +89,9 @@ class _DialogoPostulacionLiderState extends State<DialogoPostulacionLider> {
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
-                validator: (value) => (value?.trim().isEmpty ?? true) ? 'La motivación es requerida' : null,
+                validator: (value) => (value?.trim().isEmpty ?? true)
+                    ? 'La motivación es requerida'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -96,12 +101,16 @@ class _DialogoPostulacionLiderState extends State<DialogoPostulacionLider> {
                   hintText: 'Ej. "Urb. Santa María del Pinar"',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) => (value?.trim().isEmpty ?? true) ? 'La zona es requerida' : null,
+                validator: (value) => (value?.trim().isEmpty ?? true)
+                    ? 'La zona es requerida'
+                    : null,
               ),
               if (_errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0),
-                  child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  child: Text(_errorMessage!,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.error)),
                 ),
             ],
           ),
@@ -115,7 +124,10 @@ class _DialogoPostulacionLiderState extends State<DialogoPostulacionLider> {
         ElevatedButton(
           onPressed: _isLoading ? null : _enviarPostulacion,
           child: _isLoading
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2))
               : const Text('Enviar Postulación'),
         ),
       ],

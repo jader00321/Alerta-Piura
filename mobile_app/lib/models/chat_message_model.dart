@@ -1,4 +1,5 @@
-// lib/models/chat_message_model.dart
+import 'package:flutter/foundation.dart';
+
 class ChatMessage {
   final int id;
   final int idSender;
@@ -15,26 +16,23 @@ class ChatMessage {
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
-    // Determina la clave correcta para el timestamp (prefiere ISO)
-    String timestampString = json['fecha_envio_iso'] // Enviado por el backend al guardar
-                       ?? json['timestamp']       // Enviado por el backend al cargar historial
-                       ?? DateTime.now().toIso8601String(); // Fallback muy improbable
+    String timestampString = json['fecha_envio_iso']
+                       ?? json['timestamp']
+                       ?? DateTime.now().toIso8601String();
 
     DateTime parsedTimestamp;
     try {
-      // Parsea la fecha ISO 8601
-      parsedTimestamp = DateTime.parse(timestampString).toLocal(); // Convierte a local
+      parsedTimestamp = DateTime.parse(timestampString).toLocal();
     } catch (e) {
-      print("Error parseando chat timestamp: $timestampString. Usando hora actual.");
+      debugPrint("Error parseando chat timestamp: $timestampString. Usando hora actual.");
       parsedTimestamp = DateTime.now();
     }
 
     return ChatMessage(
-      id: (json['id'] as num?)?.toInt() ?? 0, // Manejo seguro de ID
-      // --- CLAVES CORREGIDAS ---
-      idSender: (json['id_remitente'] as num?)?.toInt() ?? 0, // Clave del backend
-      messageText: json['mensaje'] as String? ?? '',       // Clave del backend
-      senderAlias: json['remitente_alias'] as String? ?? 'Usuario', // Clave del backend
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      idSender: (json['id_remitente'] as num?)?.toInt() ?? 0,
+      messageText: json['mensaje'] as String? ?? '',
+      senderAlias: json['remitente_alias'] as String? ?? 'Usuario',
       timestamp: parsedTimestamp,
     );
   }

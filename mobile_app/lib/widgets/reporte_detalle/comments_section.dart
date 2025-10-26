@@ -20,7 +20,9 @@ class CommentsSection extends StatelessWidget {
     required this.onDelete,
     required this.onReportComment,
     required this.onReportUser,
-    required this.onSupportComment, int? currentUserId, String? currentUserRole,
+    required this.onSupportComment,
+    int? currentUserId,
+    String? currentUserRole,
   });
 
   @override
@@ -37,7 +39,10 @@ class CommentsSection extends StatelessWidget {
           Text('Comentarios', style: theme.textTheme.titleLarge),
           const SizedBox(height: 16),
           if (comentarios.isEmpty)
-            const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Text('No hay comentarios aún.')))
+            const Center(
+                child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Text('No hay comentarios aún.')))
           else
             ListView.separated(
               shrinkWrap: true,
@@ -55,9 +60,11 @@ class CommentsSection extends StatelessWidget {
                   // Parsear la fecha ISO 8601 que viene del backend
                   final dateTime = DateTime.parse(c.fechaCreacion);
                   // Formatear para mostrar en español
-                  fechaFormateada = DateFormat('dd MMM yyyy, HH:mm', locale).format(dateTime);
+                  fechaFormateada =
+                      DateFormat('dd MMM yyyy, HH:mm', locale).format(dateTime);
                 } catch (e) {
-                  print("Error parseando fecha del comentario ${c.id}: ${c.fechaCreacion} - $e");
+                  print(
+                      "Error parseando fecha del comentario ${c.id}: ${c.fechaCreacion} - $e");
                   // Fallback por si acaso la API antigua sigue enviando mal formato
                   fechaFormateada = c.fechaCreacion;
                 }
@@ -65,7 +72,8 @@ class CommentsSection extends StatelessWidget {
 
                 return Card(
                   elevation: 1,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
@@ -74,16 +82,23 @@ class CommentsSection extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            CircleAvatar(radius: 16, child: Text(c.autor.isNotEmpty ? c.autor[0].toUpperCase() : '?')),
+                            CircleAvatar(
+                                radius: 16,
+                                child: Text(c.autor.isNotEmpty
+                                    ? c.autor[0].toUpperCase()
+                                    : '?')),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(c.autor, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text(c.autor,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                   Text(
                                     fechaFormateada, // Usar fecha formateada
-                                    style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                                    style: theme.textTheme.bodySmall
+                                        ?.copyWith(color: Colors.grey[600]),
                                   ),
                                 ],
                               ),
@@ -96,16 +111,35 @@ class CommentsSection extends StatelessWidget {
                                   icon: const Icon(Icons.more_vert, size: 20),
                                   tooltip: 'Más opciones',
                                   onSelected: (value) {
-                                    if (value == 'editar') onEdit(c.id, c.comentario);
+                                    if (value == 'editar')
+                                      onEdit(c.id, c.comentario);
                                     if (value == 'eliminar') onDelete(c.id);
-                                    if (value == 'reportar_comentario') onReportComment(c.id);
-                                    if (value == 'reportar_usuario') onReportUser(c.idUsuario, c.autor);
+                                    if (value == 'reportar_comentario')
+                                      onReportComment(c.id);
+                                    if (value == 'reportar_usuario')
+                                      onReportUser(c.idUsuario, c.autor);
                                   },
-                                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                                    if (isOwner) const PopupMenuItem<String>(value: 'editar', child: Text('Editar')),
-                                    if (isOwner || isLider || authNotifier.isAdmin) const PopupMenuItem<String>(value: 'eliminar', child: Text('Eliminar')),
-                                    if (!isOwner) const PopupMenuItem<String>(value: 'reportar_comentario', child: Text('Reportar Comentario')),
-                                    if ((isLider || authNotifier.isAdmin) && !isOwner) const PopupMenuItem<String>(value: 'reportar_usuario', child: Text('Reportar Usuario')),
+                                  itemBuilder: (BuildContext context) =>
+                                      <PopupMenuEntry<String>>[
+                                    if (isOwner)
+                                      const PopupMenuItem<String>(
+                                          value: 'editar',
+                                          child: Text('Editar')),
+                                    if (isOwner ||
+                                        isLider ||
+                                        authNotifier.isAdmin)
+                                      const PopupMenuItem<String>(
+                                          value: 'eliminar',
+                                          child: Text('Eliminar')),
+                                    if (!isOwner)
+                                      const PopupMenuItem<String>(
+                                          value: 'reportar_comentario',
+                                          child: Text('Reportar Comentario')),
+                                    if ((isLider || authNotifier.isAdmin) &&
+                                        !isOwner)
+                                      const PopupMenuItem<String>(
+                                          value: 'reportar_usuario',
+                                          child: Text('Reportar Usuario')),
                                   ],
                                   padding: EdgeInsets.zero,
                                 ),
@@ -122,7 +156,8 @@ class CommentsSection extends StatelessWidget {
                               minimumSize: const Size(50, 30),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
+                            icon: const Icon(Icons.thumb_up_alt_outlined,
+                                size: 16),
                             label: Text(c.apoyosCount.toString()),
                             onPressed: () {
                               if (!authNotifier.isAuthenticated) {

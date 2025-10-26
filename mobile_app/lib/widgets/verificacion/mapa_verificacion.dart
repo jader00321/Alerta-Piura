@@ -47,7 +47,8 @@ class _MapaVerificacionState extends State<MapaVerificacion> {
                       point: widget.initialCenter,
                       width: 80,
                       height: 80,
-                      child: const Icon(Icons.location_pin, color: Colors.red, size: 40),
+                      child: const Icon(Icons.location_pin,
+                          color: Colors.red, size: 40),
                     )
                   ],
                 ),
@@ -60,19 +61,24 @@ class _MapaVerificacionState extends State<MapaVerificacion> {
                 children: [
                   FloatingActionButton.small(
                     heroTag: 'zoomInBtn_verif',
-                    onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom + 1),
+                    onPressed: () => _mapController.move(
+                        _mapController.camera.center,
+                        _mapController.camera.zoom + 1),
                     child: const Icon(Icons.add),
                   ),
                   const SizedBox(height: 8),
                   FloatingActionButton.small(
                     heroTag: 'zoomOutBtn_verif',
-                    onPressed: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom - 1),
+                    onPressed: () => _mapController.move(
+                        _mapController.camera.center,
+                        _mapController.camera.zoom - 1),
                     child: const Icon(Icons.remove),
                   ),
                   const SizedBox(height: 8),
                   FloatingActionButton.small(
                     heroTag: 'centerBtn_verif',
-                    onPressed: () => _mapController.move(widget.initialCenter, 16.0),
+                    onPressed: () =>
+                        _mapController.move(widget.initialCenter, 16.0),
                     child: const Icon(Icons.my_location),
                   ),
                 ],

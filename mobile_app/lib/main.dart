@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/services/background_service.dart';
 import 'package:mobile_app/services/notification_service.dart';
-import 'package:mobile_app/services/socket_service.dart'; // <-- IMPORTAR SOCKET SERVICE
+import 'package:mobile_app/services/socket_service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
-// Importación de todas las pantallas...
 import 'package:mobile_app/screens/splash_screen.dart';
 import 'package:mobile_app/screens/home_screen.dart';
 import 'package:mobile_app/screens/login_screen.dart';
@@ -18,11 +18,10 @@ import 'package:mobile_app/screens/perfil_screen.dart';
 import 'package:mobile_app/screens/editar_perfil_screen.dart';
 import 'package:mobile_app/screens/settings_screen.dart';
 import 'package:mobile_app/screens/editar_contacto_screen.dart';
-import 'package:mobile_app/screens/mi_actividad_screen.dart'; // <-- IMPORTAR
+import 'package:mobile_app/screens/mi_actividad_screen.dart';
 import 'package:mobile_app/screens/create_report_screen.dart';
 import 'package:mobile_app/screens/reporte_detalle_screen.dart';
 import 'package:mobile_app/screens/pantalla_cerca_de_ti.dart';
-// import 'package:mobile_app/screens/verificacion_screen.dart'; // No se necesita ruta directa
 import 'package:mobile_app/screens/verificacion_detalle_screen.dart';
 import 'package:mobile_app/screens/chat_screen.dart';
 import 'package:mobile_app/screens/conversaciones_screen.dart';
@@ -42,7 +41,7 @@ import 'package:mobile_app/screens/pantalla_detalle_pendiente_vista.dart';
 import 'package:mobile_app/models/plan_suscripcion_model.dart';
 import 'package:mobile_app/screens/pantalla_pago.dart';
 import 'package:mobile_app/screens/pantalla_buscar_reporte_original.dart';
-import 'package:mobile_app/screens/pantalla_insignias.dart'; // <-- NUEVA IMPORTACIÓN
+import 'package:mobile_app/screens/pantalla_insignias.dart';
 import 'package:mobile_app/navigator_key.dart';
 
 void main() async {
@@ -57,10 +56,8 @@ void main() async {
   await authProvider.checkAuthStatus();
 
   if (authProvider.isAuthenticated) {
-    // Escuchar el stream 'onStopSos' del SocketService
     SocketService().onStopSos.listen((data) {
-      print("MAIN.DART: Evento stopSos recibido. Invocando al servicio de fondo.");
-      // Invocar al servicio en segundo plano para que se detenga
+      debugPrint("MAIN.DART: Evento stopSos recibido. Invocando al servicio de fondo.");
       FlutterBackgroundService().invoke('serverForceStop', data);
     });
   }
@@ -88,7 +85,6 @@ class AlertaPiuraApp extends StatelessWidget {
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          // ... (temas claro y oscuro) ...
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light),
             useMaterial3: true,
@@ -111,8 +107,6 @@ class AlertaPiuraApp extends StatelessWidget {
             Locale('es', 'ES'),
           ],
           locale: const Locale('es', 'ES'),
-
-          // Rutas de la aplicación
           initialRoute: '/',
           routes: {
             '/': (context) => const SplashScreen(),
@@ -123,11 +117,7 @@ class AlertaPiuraApp extends StatelessWidget {
             '/editar-perfil': (context) => const EditarPerfilScreen(),
             '/settings': (context) => const SettingsScreen(),
             '/editar-contacto': (context) => const EditarContactoScreen(),
-            
-            // --- CORRECCIÓN: Ruta de Mi Actividad (para líderes) ---
-            // Le pasamos un PageController nuevo que no afectará al de HomeScreen
             '/mi_actividad': (context) => MiActividadScreen(mainPageController: PageController()),
-            
             '/cerca_de_ti': (context) => const PantallaCercaDeTi(),
             '/create_report': (context) => const CreateReportScreen(),
             '/conversaciones': (context) => const ConversacionesScreen(),
@@ -143,12 +133,8 @@ class AlertaPiuraApp extends StatelessWidget {
             '/panel_analitico': (context) => const PantallaPanelAnalitico(),
             '/mis_informes': (context) => const PantallaInformesGuardados(),
             '/buscar_reporte_original': (context) => const PantallaBuscarReporteOriginal(),
-            
-            // --- NUEVA RUTA ---
             '/insignias': (context) => const PantallaInsignias(),
           },
-
-          // Rutas que requieren argumentos (onGenerateRoute)
           onGenerateRoute: (settings) {
             if (settings.name == '/reporte_detalle') {
               final args = settings.arguments as int;
@@ -171,10 +157,10 @@ class AlertaPiuraApp extends StatelessWidget {
               return MaterialPageRoute(builder: (context) => PantallaDetalleBoleta(transactionId: args));
             }
             if (settings.name == '/pago') {
-               final args = settings.arguments as PlanSuscripcion;
-               return MaterialPageRoute(builder: (context) => PantallaPago(plan: args));
+              final args = settings.arguments as PlanSuscripcion;
+              return MaterialPageRoute(builder: (context) => PantallaPago(plan: args));
             }
-            return null; // Asegurarse de retornar null si no se maneja
+            return null;
           },
         );
       },

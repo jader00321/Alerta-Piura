@@ -8,13 +8,15 @@ class DialogoSolicitudRevision extends StatefulWidget {
   const DialogoSolicitudRevision({super.key, required this.reporte});
 
   @override
-  State<DialogoSolicitudRevision> createState() => _DialogoSolicitudRevisionState();
+  State<DialogoSolicitudRevision> createState() =>
+      _DialogoSolicitudRevisionState();
 }
 
 class _DialogoSolicitudRevisionState extends State<DialogoSolicitudRevision> {
   final _formKey = GlobalKey<FormState>();
   final _motivoController = TextEditingController();
-  bool _isLoading = false; // Puedes añadir estado de carga si la llamada API se hiciera aquí
+  bool _isLoading =
+      false; // Puedes añadir estado de carga si la llamada API se hiciera aquí
 
   @override
   void dispose() {
@@ -45,13 +47,15 @@ class _DialogoSolicitudRevisionState extends State<DialogoSolicitudRevision> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 16),
-              const Text('Indica el motivo por el cual solicitas una revisión para este reporte:'),
+              const Text(
+                  'Indica el motivo por el cual solicitas una revisión para este reporte:'),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _motivoController,
                 decoration: const InputDecoration(
                   labelText: 'Motivo de la Solicitud',
-                  hintText: 'Ej. "Error al rechazar", "Necesita corrección de datos"...',
+                  hintText:
+                      'Ej. "Error al rechazar", "Necesita corrección de datos"...',
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 4,
@@ -61,11 +65,17 @@ class _DialogoSolicitudRevisionState extends State<DialogoSolicitudRevision> {
               ),
               // Recomendación: Podrías añadir aquí botones con motivos comunes
               Wrap(
-                 spacing: 8.0,
-                 children: [
-                   ActionChip(label: Text('Corregir datos'), onPressed: () => _motivoController.text = 'Corregir datos'),
-                   ActionChip(label: Text('Reevaluar estado'), onPressed: () => _motivoController.text = 'Reevaluar estado'),
-                 ],
+                spacing: 8.0,
+                children: [
+                  ActionChip(
+                      label: Text('Corregir datos'),
+                      onPressed: () =>
+                          _motivoController.text = 'Corregir datos'),
+                  ActionChip(
+                      label: Text('Reevaluar estado'),
+                      onPressed: () =>
+                          _motivoController.text = 'Reevaluar estado'),
+                ],
               )
             ],
           ),
@@ -73,13 +83,18 @@ class _DialogoSolicitudRevisionState extends State<DialogoSolicitudRevision> {
       ),
       actions: [
         TextButton(
-          onPressed: _isLoading ? null : () => Navigator.pop(context, null), // Devolver null al cancelar
+          onPressed: _isLoading
+              ? null
+              : () => Navigator.pop(context, null), // Devolver null al cancelar
           child: const Text('Cancelar'),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _enviar,
           child: _isLoading
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2))
               : const Text('Enviar Solicitud'),
         ),
       ],

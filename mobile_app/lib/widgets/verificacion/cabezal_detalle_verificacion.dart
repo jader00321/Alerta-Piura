@@ -6,12 +6,15 @@ import 'package:flutter/material.dart';
 // para mantener la organización, o puedes mover esta lógica directamente
 // al AppBar de VerificacionDetalleScreen. Usaremos una función estática aquí.
 
-class CabezalDetalleVerificacion { // Mantenemos la clase como contenedor de la función
-  static AppBar buildAppBar(BuildContext context, {
+class CabezalDetalleVerificacion {
+  // Mantenemos la clase como contenedor de la función
+  static AppBar buildAppBar(
+    BuildContext context, {
     required bool isLoadingAction,
     required VoidCallback onEditar,
     required VoidCallback onChat,
-    required String? reporteEstado, // Necesitamos el estado para la lógica condicional
+    required String?
+        reporteEstado, // Necesitamos el estado para la lógica condicional
   }) {
     return AppBar(
       title: const Text('Verificar Reporte'), // Título fijo

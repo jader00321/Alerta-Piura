@@ -17,9 +17,9 @@ import 'package:mobile_app/widgets/verificacion/filtros_pendientes.dart';
 import 'package:mobile_app/widgets/verificacion/filtros_historial.dart';
 import 'package:mobile_app/widgets/verificacion/dialogo_solicitud_revision.dart';
 
-
 // Enums para filtros (se quedan aquí para que los widgets los usen)
 enum FiltroPendiente { todos, prioritarios, conApoyos }
+
 enum FiltroHistorialEstado { todos, verificado, rechazado, fusionado }
 
 class ListaReportesVerificacion extends StatefulWidget {
@@ -31,10 +31,12 @@ class ListaReportesVerificacion extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ListaReportesVerificacion> createState() => ListaReportesVerificacionState();
+  State<ListaReportesVerificacion> createState() =>
+      ListaReportesVerificacionState();
 }
 
-class ListaReportesVerificacionState extends State<ListaReportesVerificacion> with AutomaticKeepAliveClientMixin {
+class ListaReportesVerificacionState extends State<ListaReportesVerificacion>
+    with AutomaticKeepAliveClientMixin {
   // --- ESTADO Y SERVICIOS ---
   final LiderService _liderService = LiderService();
   final ReporteService _reporteService = ReporteService();
@@ -96,7 +98,7 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
     _debounce?.cancel();
     super.dispose();
   }
-  
+
   // Helper para setState seguro
   void setStateIfMounted(VoidCallback fn) {
     if (mounted) {
@@ -118,24 +120,29 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
   }
 
   Future<void> _cargarEstadosSolicitudes() async {
-     if (!widget.isHistory || !mounted) return;
-     if (_isLoadingSolicitudes) return;
-     setStateIfMounted(() => _isLoadingSolicitudes = true);
-     try {
-       final List<SolicitudRevision> solicitudes = await _liderService.getMisSolicitudesRevision();
-       final Map<int, String> nuevosEstados = {};
-       for (var sol in solicitudes) {
-         nuevosEstados[sol.id_reporte] = sol.estado;
-       }
-       if (mounted) {
-         setStateIfMounted(() => _estadoSolicitudes = nuevosEstados);
-       }
-     } catch (e) {
-       print("Error cargando estados de solicitudes: $e");
-       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cargar estado de solicitudes: $e'), backgroundColor: Colors.orange,));
-     } finally {
-        if (mounted) setStateIfMounted(() => _isLoadingSolicitudes = false);
-     }
+    if (!widget.isHistory || !mounted) return;
+    if (_isLoadingSolicitudes) return;
+    setStateIfMounted(() => _isLoadingSolicitudes = true);
+    try {
+      final List<SolicitudRevision> solicitudes =
+          await _liderService.getMisSolicitudesRevision();
+      final Map<int, String> nuevosEstados = {};
+      for (var sol in solicitudes) {
+        nuevosEstados[sol.id_reporte] = sol.estado;
+      }
+      if (mounted) {
+        setStateIfMounted(() => _estadoSolicitudes = nuevosEstados);
+      }
+    } catch (e) {
+      print("Error cargando estados de solicitudes: $e");
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error al cargar estado de solicitudes: $e'),
+          backgroundColor: Colors.orange,
+        ));
+    } finally {
+      if (mounted) setStateIfMounted(() => _isLoadingSolicitudes = false);
+    }
   }
 
   Future<int> refreshData() async {
@@ -152,7 +159,7 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
     } else {
       await _fetchData(isRefresh: true);
     }
-    
+
     if (mounted) setStateIfMounted(() => _isLoading = false);
     return _totalFiltrado;
   }
@@ -170,19 +177,37 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
       PagedResult<dynamic> result;
       if (widget.isHistory) {
         String? estadoFilterApi;
-        if (_filtroHistorialEstado != FiltroHistorialEstado.todos) { estadoFilterApi = _filtroHistorialEstado.name; }
-        result = await _liderService.getReportesModerados( page: _currentPage, estado: estadoFilterApi, startDate: _startDate, endDate: _endDate, );
+        if (_filtroHistorialEstado != FiltroHistorialEstado.todos) {
+          estadoFilterApi = _filtroHistorialEstado.name;
+        }
+        result = await _liderService.getReportesModerados(
+          page: _currentPage,
+          estado: estadoFilterApi,
+          startDate: _startDate,
+          endDate: _endDate,
+        );
       } else {
-         bool? prioritarioFilterApi = _filtroPendiente == FiltroPendiente.prioritarios ? true : null;
-         bool? conApoyosFilterApi = _filtroPendiente == FiltroPendiente.conApoyos ? true : null;
-         String? searchFilterApi = _searchTerm.isNotEmpty ? _searchTerm : null;
-         result = await _liderService.getReportesPendientes( page: _currentPage, categoriaId: _filtroCategoriaId, prioritario: prioritarioFilterApi, conApoyos: conApoyosFilterApi, search: searchFilterApi, sortBy: _sortBy );
+        bool? prioritarioFilterApi =
+            _filtroPendiente == FiltroPendiente.prioritarios ? true : null;
+        bool? conApoyosFilterApi =
+            _filtroPendiente == FiltroPendiente.conApoyos ? true : null;
+        String? searchFilterApi = _searchTerm.isNotEmpty ? _searchTerm : null;
+        result = await _liderService.getReportesPendientes(
+            page: _currentPage,
+            categoriaId: _filtroCategoriaId,
+            prioritario: prioritarioFilterApi,
+            conApoyos: conApoyosFilterApi,
+            search: searchFilterApi,
+            sortBy: _sortBy);
       }
 
       if (!mounted) return;
       setStateIfMounted(() {
-        if (isRefresh) { _reportes = result.items; }
-        else { _reportes.addAll(result.items); }
+        if (isRefresh) {
+          _reportes = result.items;
+        } else {
+          _reportes.addAll(result.items);
+        }
         _currentPage++;
         _hasMore = result.hasMore;
         _totalFiltrado = result.totalFiltrado;
@@ -190,17 +215,20 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
         _errorMessage = null;
       });
     } catch (e) {
-      print("Error fetching data (${widget.isHistory ? 'Hist' : 'Pend'} - Pág $_currentPage): $e");
+      print(
+          "Error fetching data (${widget.isHistory ? 'Hist' : 'Pend'} - Pág $_currentPage): $e");
       if (mounted) {
         setStateIfMounted(() {
           _isLoadingMore = false;
           _totalFiltrado = 0;
           if (isRefresh) {
-             _errorMessage = e.toString().replaceFirst('Exception: ', '');
-             _reportes = [];
+            _errorMessage = e.toString().replaceFirst('Exception: ', '');
+            _reportes = [];
           } else {
-             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cargar más: $e'), backgroundColor: Colors.orange));
-             _hasMore = false;
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('Error al cargar más: $e'),
+                backgroundColor: Colors.orange));
+            _hasMore = false;
           }
         });
       }
@@ -209,8 +237,11 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
 
   // --- HANDLERS (CALLBACKS) ---
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.9 &&
-        _hasMore && !_isLoading && !_isLoadingMore) {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent * 0.9 &&
+        _hasMore &&
+        !_isLoading &&
+        !_isLoadingMore) {
       _fetchData();
     }
   }
@@ -219,8 +250,8 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 600), () {
       if (mounted && _searchController.text != _searchTerm) {
-         _searchTerm = _searchController.text;
-         refreshData(); // Reiniciar búsqueda
+        _searchTerm = _searchController.text;
+        refreshData(); // Reiniciar búsqueda
       }
     });
   }
@@ -244,8 +275,10 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
     }
   }
 
-  Future<void> _handleSolicitarRevision(ReporteHistorialModerado reporte) async {
-    if (_isRequestingReview[reporte.id] == true || _isLoadingSolicitudes) return;
+  Future<void> _handleSolicitarRevision(
+      ReporteHistorialModerado reporte) async {
+    if (_isRequestingReview[reporte.id] == true || _isLoadingSolicitudes)
+      return;
 
     final motivo = await showDialog<String>(
       context: context,
@@ -255,23 +288,28 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
     if (motivo == null || motivo.isEmpty || !mounted) return;
     setStateIfMounted(() => _isRequestingReview[reporte.id] = true);
     try {
-      final response = await _liderService.solicitarRevision(reporte.id, motivo);
+      final response =
+          await _liderService.solicitarRevision(reporte.id, motivo);
       if (!mounted) return;
       final message = response['message'] ?? 'Error desconocido';
       final success = response['statusCode'] == 201;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(message),
-        backgroundColor: success ? Colors.green : (response['statusCode'] == 409 ? Colors.orange : Colors.red),
+        backgroundColor: success
+            ? Colors.green
+            : (response['statusCode'] == 409 ? Colors.orange : Colors.red),
       ));
       if (success) {
         await _cargarEstadosSolicitudes();
       }
     } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
     } finally {
-        if (mounted) setStateIfMounted(() => _isRequestingReview.remove(reporte.id));
+      if (mounted)
+        setStateIfMounted(() => _isRequestingReview.remove(reporte.id));
     }
   }
 
@@ -279,17 +317,18 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
     String routeName;
     int idToNavigate;
     if (widget.isHistory && item is ReporteHistorialModerado) {
-        routeName = '/reporte_detalle';
-        idToNavigate = item.id;
+      routeName = '/reporte_detalle';
+      idToNavigate = item.id;
     } else if (!widget.isHistory && item is ReportePendiente) {
-        routeName = '/verificacion_detalle';
-        idToNavigate = item.id;
+      routeName = '/verificacion_detalle';
+      idToNavigate = item.id;
     } else {
-        return;
+      return;
     }
-    final result = await Navigator.pushNamed(context, routeName, arguments: idToNavigate);
+    final result =
+        await Navigator.pushNamed(context, routeName, arguments: idToNavigate);
     if (result == true && mounted) {
-        refreshData();
+      refreshData();
     }
   }
 
@@ -311,9 +350,17 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
 
     Widget listContent;
     if (_errorMessage != null && _reportes.isEmpty) {
-      listContent = Center(child: Padding(padding: const EdgeInsets.all(16), child: Text('Error: $_errorMessage')));
+      listContent = Center(
+          child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Error: $_errorMessage')));
     } else if (_reportes.isEmpty) {
-      listContent = Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(widget.isHistory ? 'No hay historial con estos filtros.' : 'No hay reportes pendientes con estos filtros.')));
+      listContent = Center(
+          child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(widget.isHistory
+                  ? 'No hay historial con estos filtros.'
+                  : 'No hay reportes pendientes con estos filtros.')));
     } else {
       listContent = ListView.builder(
         controller: _scrollController,
@@ -324,26 +371,29 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
           if (index == _reportes.length) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Center(child: _isLoadingMore ? const CircularProgressIndicator() : const SizedBox.shrink()),
+              child: Center(
+                  child: _isLoadingMore
+                      ? const CircularProgressIndicator()
+                      : const SizedBox.shrink()),
             );
           }
           final item = _reportes[index];
           if (widget.isHistory && item is ReporteHistorialModerado) {
-             final estadoSolicitudActual = _estadoSolicitudes[item.id];
-             return TarjetaHistorialModerado(
-                reporte: item,
-                estadoSolicitud: estadoSolicitudActual,
-                onTap: () => _handleNavigation(item),
-                onSolicitarRevision: () => _handleSolicitarRevision(item),
-                onIrAlOriginal: item.idReporteOriginal != null
-                    ? () => _handleIrAlOriginal(item.idReporteOriginal)
-                    : null,
-             );
+            final estadoSolicitudActual = _estadoSolicitudes[item.id];
+            return TarjetaHistorialModerado(
+              reporte: item,
+              estadoSolicitud: estadoSolicitudActual,
+              onTap: () => _handleNavigation(item),
+              onSolicitarRevision: () => _handleSolicitarRevision(item),
+              onIrAlOriginal: item.idReporteOriginal != null
+                  ? () => _handleIrAlOriginal(item.idReporteOriginal)
+                  : null,
+            );
           } else if (!widget.isHistory && item is ReportePendiente) {
-              return TarjetaVerificacion(
-                  reporte: item,
-                  onTap: () => _handleNavigation(item),
-              );
+            return TarjetaVerificacion(
+              reporte: item,
+              onTap: () => _handleNavigation(item),
+            );
           }
           return const SizedBox.shrink();
         },
@@ -388,11 +438,13 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion> wi
             onSelectDateRange: _selectDateRange,
           ),
         // --- FIN ---
-        
+
         const Divider(height: 1, thickness: 1),
         Expanded(
           child: RefreshIndicator(
-            onRefresh: () async { await refreshData(); },
+            onRefresh: () async {
+              await refreshData();
+            },
             child: listContent,
           ),
         ),

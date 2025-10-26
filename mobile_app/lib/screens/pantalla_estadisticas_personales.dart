@@ -9,10 +9,12 @@ class PantallaEstadisticasPersonales extends StatefulWidget {
   const PantallaEstadisticasPersonales({super.key});
 
   @override
-  State<PantallaEstadisticasPersonales> createState() => _PantallaEstadisticasPersonalesState();
+  State<PantallaEstadisticasPersonales> createState() =>
+      _PantallaEstadisticasPersonalesState();
 }
 
-class _PantallaEstadisticasPersonalesState extends State<PantallaEstadisticasPersonales> {
+class _PantallaEstadisticasPersonalesState
+    extends State<PantallaEstadisticasPersonales> {
   late Future<Map<String, dynamic>> _estadisticasFuture;
   final PerfilService _perfilService = PerfilService();
 
@@ -85,9 +87,12 @@ class _ResumenCard extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _StatItem(value: resumen.totalReportes.toString(), label: 'Reportes'),
+            _StatItem(
+                value: resumen.totalReportes.toString(), label: 'Reportes'),
             _StatItem(value: resumen.totalApoyos.toString(), label: 'Apoyos'),
-            _StatItem(value: resumen.totalComentarios.toString(), label: 'Comentarios'),
+            _StatItem(
+                value: resumen.totalComentarios.toString(),
+                label: 'Comentarios'),
           ],
         ),
       ),
@@ -124,7 +129,8 @@ class _GraficoCategorias extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Mis Reportes por Categoría', style: Theme.of(context).textTheme.titleLarge),
+            Text('Mis Reportes por Categoría',
+                style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 24),
             SizedBox(
               height: 200,
@@ -173,7 +179,8 @@ class _Indicator extends StatelessWidget {
   final Color color;
   final String text;
   final bool isSquare;
-  const _Indicator({required this.color, required this.text, this.isSquare = true});
+  const _Indicator(
+      {required this.color, required this.text, this.isSquare = true});
 
   @override
   Widget build(BuildContext context) {

@@ -10,7 +10,8 @@ class PantallaInformesGuardados extends StatefulWidget {
   const PantallaInformesGuardados({super.key});
 
   @override
-  State<PantallaInformesGuardados> createState() => _PantallaInformesGuardadosState();
+  State<PantallaInformesGuardados> createState() =>
+      _PantallaInformesGuardadosState();
 }
 
 class _PantallaInformesGuardadosState extends State<PantallaInformesGuardados> {
@@ -28,8 +29,10 @@ class _PantallaInformesGuardadosState extends State<PantallaInformesGuardados> {
     final dir = Directory(path);
 
     if (await dir.exists()) {
-      final files = await dir.list().where((item) => item.path.endsWith('.pdf')).toList();
-      files.sort((a, b) => b.statSync().modified.compareTo(a.statSync().modified));
+      final files =
+          await dir.list().where((item) => item.path.endsWith('.pdf')).toList();
+      files.sort(
+          (a, b) => b.statSync().modified.compareTo(a.statSync().modified));
       return files.cast<File>();
     }
     return [];
@@ -43,11 +46,12 @@ class _PantallaInformesGuardadosState extends State<PantallaInformesGuardados> {
 
   Future<void> _abrirInforme(File file) async {
     // La sintaxis de la API es idéntica
-    final result = await OpenFile.open(file.path); 
+    final result = await OpenFile.open(file.path);
     if (result.type != ResultType.done) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo abrir el archivo: ${result.message}')),
+          SnackBar(
+              content: Text('No se pudo abrir el archivo: ${result.message}')),
         );
       }
     }
@@ -56,9 +60,9 @@ class _PantallaInformesGuardadosState extends State<PantallaInformesGuardados> {
   Future<void> _guardarEnDescargas(File file) async {
     var status = await Permission.storage.request();
     if (!status.isGranted) {
-       status = await Permission.manageExternalStorage.request();
+      status = await Permission.manageExternalStorage.request();
     }
-    
+
     if (status.isGranted) {
       try {
         Directory? downloadsDir;
@@ -76,23 +80,29 @@ class _PantallaInformesGuardadosState extends State<PantallaInformesGuardados> {
 
         final fileName = file.path.split('/').last;
         await file.copy('${downloadsDir.path}/$fileName');
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Guardado en Descargas/ReportaPiura/$fileName')),
+            SnackBar(
+                content: Text('Guardado en Descargas/ReportaPiura/$fileName')),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al guardar: $e'), backgroundColor: Colors.red),
+            SnackBar(
+                content: Text('Error al guardar: $e'),
+                backgroundColor: Colors.red),
           );
         }
       }
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Se requiere permiso de almacenamiento para guardar.'), backgroundColor: Colors.red),
+          const SnackBar(
+              content:
+                  Text('Se requiere permiso de almacenamiento para guardar.'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -125,12 +135,16 @@ class _PantallaInformesGuardadosState extends State<PantallaInformesGuardados> {
                 final file = files[index];
                 final fileName = file.path.split('/').last;
                 final fileStat = file.statSync();
-                
+
                 return Card(
                   child: ListTile(
-                    leading: const Icon(Icons.picture_as_pdf, color: Colors.red, size: 36),
-                    title: Text(fileName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    subtitle: Text('Guardado: ${DateFormat('dd/MM/yy, HH:mm').format(fileStat.modified)}'),
+                    leading: const Icon(Icons.picture_as_pdf,
+                        color: Colors.red, size: 36),
+                    title: Text(fileName,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14)),
+                    subtitle: Text(
+                        'Guardado: ${DateFormat('dd/MM/yy, HH:mm').format(fileStat.modified)}'),
                     trailing: PopupMenuButton<String>(
                       onSelected: (value) {
                         if (value == 'open') _abrirInforme(file);
@@ -140,9 +154,12 @@ class _PantallaInformesGuardadosState extends State<PantallaInformesGuardados> {
                         }
                       },
                       itemBuilder: (context) => [
-                        const PopupMenuItem(value: 'open', child: Text('Abrir')),
-                        const PopupMenuItem(value: 'save', child: Text('Guardar en Descargas')),
-                        const PopupMenuItem(value: 'delete', child: Text('Eliminar')),
+                        const PopupMenuItem(
+                            value: 'open', child: Text('Abrir')),
+                        const PopupMenuItem(
+                            value: 'save', child: Text('Guardar en Descargas')),
+                        const PopupMenuItem(
+                            value: 'delete', child: Text('Eliminar')),
                       ],
                     ),
                     onTap: () => _abrirInforme(file),

@@ -1,5 +1,5 @@
-// lib/api/sos_service.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app/utils/api_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,16 +10,17 @@ class SosService {
     return prefs.getString('authToken');
   }
 
-  // --- FUNCIÓN MODIFICADA ---
   Future<int?> activateSos({
-    required double lat, 
+    required double lat,
     required double lon,
     Map<String, String?>? emergencyContact,
-    required int durationInSeconds, 
+    required int durationInSeconds,
   }) async {
     final token = await _getToken();
-    if (token == null) return null;
-    
+    if (token == null) {
+      return null;
+    }
+
     final url = Uri.parse('${ApiConstants.baseUrl}/api/sos/activate');
     try {
       final response = await http.post(
@@ -29,29 +30,28 @@ class SosService {
           'Authorization': 'Bearer $token',
         },
         body: json.encode({
-          'lat': lat, 
+          'lat': lat,
           'lon': lon,
-          'emergencyContact': emergencyContact, // Enviar el mapa de contacto
-          'durationInSeconds': durationInSeconds, // Enviar la duración
+          'emergencyContact': emergencyContact,
+          'durationInSeconds': durationInSeconds,
         }),
       );
-      
-      // --- MODIFICADO: Leer el ID de la alerta devuelta ---
+
       if (response.statusCode == 201) {
-        // El backend ahora devuelve { message: '...', alert: {...} }
         final responseData = json.decode(response.body);
-        // Devolvemos el ID de la alerta creada
         return responseData['alert']['id'];
       }
     } catch (e) {
-      print('Error al activar SOS: $e');
+      debugPrint('Error al activar SOS: $e');
     }
-    return null; // Retorna null si falla
+    return null;
   }
 
   Future<bool> addLocationUpdate({required int alertId, required double lat, required double lon}) async {
     final token = await _getToken();
-    if (token == null) return false;
+    if (token == null) {
+      return false;
+    }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/sos/$alertId/location');
     try {
@@ -65,14 +65,16 @@ class SosService {
       );
       return response.statusCode == 200;
     } catch (e) {
-      print('Error al enviar actualización de ubicación: $e');
+      debugPrint('Error al enviar actualización de ubicación: $e');
       return false;
     }
   }
 
   Future<bool> deactivateSos(int alertId) async {
     final token = await _getToken();
-    if (token == null) return false;
+    if (token == null) {
+      return false;
+    }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/sos/$alertId/deactivate');
     try {
@@ -82,7 +84,7 @@ class SosService {
       );
       return response.statusCode == 200;
     } catch (e) {
-      print('Error al desactivar SOS: $e');
+      debugPrint('Error al desactivar SOS: $e');
       return false;
     }
   }

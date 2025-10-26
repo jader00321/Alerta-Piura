@@ -13,10 +13,9 @@ class BannerReporteOculto extends StatelessWidget {
       padding: const EdgeInsets.all(12.0),
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
-        color: Colors.amber.shade100,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.amber.shade700)
-      ),
+          color: Colors.amber.shade100,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.amber.shade700)),
       child: Row(
         children: [
           Icon(Icons.visibility_off_outlined, color: Colors.amber.shade900),
@@ -24,7 +23,8 @@ class BannerReporteOculto extends StatelessWidget {
           Expanded(
             child: Text(
               'Este reporte está oculto. Solo tú y los moderadores pueden verlo.',
-              style: TextStyle(color: Colors.amber.shade900, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                  color: Colors.amber.shade900, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -46,11 +46,15 @@ class VistaReporteFusionado extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.merge_type_outlined, size: 80, color: Colors.purple.shade300),
+            Icon(Icons.merge_type_outlined,
+                size: 80, color: Colors.purple.shade300),
             const SizedBox(height: 24),
             Text(
               'Reporte Fusionado',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -66,8 +70,8 @@ class VistaReporteFusionado extends StatelessWidget {
                 label: const Text('Ver Reporte Original'),
                 onPressed: () {
                   Navigator.pushReplacementNamed(
-                    context, 
-                    '/reporte_detalle', 
+                    context,
+                    '/reporte_detalle',
                     arguments: reporte.idReporteOriginal,
                   );
                 },

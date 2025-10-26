@@ -12,7 +12,6 @@ class SeccionDetallesPrincipales extends StatelessWidget {
   final Function(int?) onCategoriaChanged;
   final int otroCategoriaId; // ID de la categoría 'Otro'
   final TextEditingController categoriaSugeridaController;
-  // --- PARÁMETRO AÑADIDO ---
   final bool isEditing; // Nuevo parámetro, default a false
 
   const SeccionDetallesPrincipales({
@@ -26,7 +25,7 @@ class SeccionDetallesPrincipales extends StatelessWidget {
     required this.onCategoriaChanged,
     required this.otroCategoriaId,
     required this.categoriaSugeridaController,
-    this.isEditing = false, // --- AÑADIDO: Default a false ---
+    this.isEditing = false,
   });
 
   @override
@@ -45,8 +44,9 @@ class SeccionDetallesPrincipales extends StatelessWidget {
             hintText: 'Ej. Bache peligroso en Av. Grau',
             border: OutlineInputBorder(),
           ),
-          validator: (value) =>
-              (value == null || value.trim().isEmpty) ? 'El título es requerido' : null,
+          validator: (value) => (value == null || value.trim().isEmpty)
+              ? 'El título es requerido'
+              : null,
         ),
         const SizedBox(height: 16),
 
@@ -58,7 +58,8 @@ class SeccionDetallesPrincipales extends StatelessWidget {
             border: OutlineInputBorder(),
           ),
           items: ['Baja', 'Media', 'Alta']
-              .map((label) => DropdownMenuItem(value: label, child: Text(label)))
+              .map(
+                  (label) => DropdownMenuItem(value: label, child: Text(label)))
               .toList(),
           onChanged: (value) => onUrgenciaChanged(value!),
         ),
@@ -66,7 +67,10 @@ class SeccionDetallesPrincipales extends StatelessWidget {
 
         // --- Categoría ---
         isLoadingCategories
-            ? const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
+            ? const Center(
+                child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator()))
             : DropdownButtonFormField<int>(
                 value: categoriaSeleccionada,
                 decoration: const InputDecoration(
@@ -74,15 +78,16 @@ class SeccionDetallesPrincipales extends StatelessWidget {
                   border: OutlineInputBorder(),
                 ),
                 items: categorias
-                    .map((cat) => DropdownMenuItem(value: cat.id, child: Text(cat.nombre)))
+                    .map((cat) => DropdownMenuItem(
+                        value: cat.id, child: Text(cat.nombre)))
                     .toList(),
                 onChanged: onCategoriaChanged,
-                validator: (value) => value == null ? 'Selecciona una categoría' : null,
+                validator: (value) =>
+                    value == null ? 'Selecciona una categoría' : null,
               ),
         const SizedBox(height: 16),
 
         // --- Sugerir Categoría (Condicional) ---
-        // --- LÓGICA ACTUALIZADA ---
         // Mostrar si (la categoría seleccionada es 'Otro') Y (NO estamos editando O SÍ estamos editando)
         // Simplificado: Siempre mostrar si es 'Otro'
         if (mostrarSugerencia)
@@ -94,11 +99,11 @@ class SeccionDetallesPrincipales extends StatelessWidget {
               border: OutlineInputBorder(),
             ),
             // La validación solo aplica si el campo es visible
-            validator: (value) => (mostrarSugerencia && (value == null || value.trim().isEmpty))
-                ? 'Debes sugerir una categoría si eliges "Otro"'
-                : null,
+            validator: (value) =>
+                (mostrarSugerencia && (value == null || value.trim().isEmpty))
+                    ? 'Debes sugerir una categoría si eliges "Otro"'
+                    : null,
           ),
-        // --- FIN LÓGICA ACTUALIZADA ---
       ],
     );
   }

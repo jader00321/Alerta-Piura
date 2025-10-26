@@ -1,7 +1,7 @@
-// lib/models/reporte_detallado_model.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:mobile_app/models/comentario_model.dart'; // Asegúrate que esta importación sea correcta
+import 'package:mobile_app/models/comentario_model.dart';
 
 class ReporteDetallado {
   final int id;
@@ -52,12 +52,19 @@ class ReporteDetallado {
     required this.reportesVinculadosCount,
   });
 
-  // Helper function for safe integer parsing from various types
   static int _parseInt(dynamic value, [int defaultValue = 0]) {
-    if (value == null) return defaultValue;
-    if (value is int) return value;
-    if (value is double) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? defaultValue;
+    if (value == null) {
+      return defaultValue;
+    }
+    if (value is int) {
+      return value;
+    }
+    if (value is double) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? defaultValue;
+    }
     return defaultValue;
   }
 
@@ -72,7 +79,6 @@ class ReporteDetallado {
       if (locationData is String) {
         locationData = jsonDecode(locationData);
       }
-      // Added null checks for safety
       final coords = locationData?['coordinates'];
       if (coords != null && coords is List && coords.length >= 2) {
          parsedLocation = LatLng(coords[1], coords[0]);
@@ -80,29 +86,28 @@ class ReporteDetallado {
          throw Exception('Invalid coordinates format');
       }
     } catch (e) {
-      print("Error parseando location, usando default: $e");
-      parsedLocation = const LatLng(0, 0); // Fallback seguro
+      debugPrint("Error parseando location, usando default: $e");
+      parsedLocation = const LatLng(0, 0);
     }
 
     List<String> tagsList = [];
     if (json['tags'] != null && json['tags'] is List) {
       try {
-        // Ensure all elements are strings before converting
         tagsList = List<String>.from(json['tags'].map((tag) => tag.toString()));
       } catch (e) {
-        print("Error parseando tags: $e");
+        debugPrint("Error parseando tags: $e");
       }
     }
 
     return ReporteDetallado(
-      id: _parseInt(json['id']), // Usar helper
+      id: _parseInt(json['id']),
       titulo: json['titulo'] ?? 'Sin Título',
       descripcion: json['descripcion'],
       fotoUrl: json['foto_url'],
       fechaCreacion: json['fecha_creacion'] ?? 'Fecha desconocida',
       autor: json['autor'] ?? 'Anónimo',
-      idAutor: _parseInt(json['id_autor']), // Usar helper
-      apoyosCount: _parseInt(json['apoyos_count']), // Usar helper
+      idAutor: _parseInt(json['id_autor']),
+      apoyosCount: _parseInt(json['apoyos_count']),
       estado: json['estado'] ?? 'desconocido',
       esAnonimo: json['es_anonimo'] ?? false,
       categoria: json['categoria'] ?? 'Sin Categoría',
@@ -115,9 +120,7 @@ class ReporteDetallado {
       tags: tagsList,
       impacto: json['impacto'],
       codigoReporte: json['codigo_reporte'],
-      idReporteOriginal: _parseInt(json['id_reporte_original'], -1) == -1 ? null : _parseInt(json['id_reporte_original']), // Maneja null/int/string
-      // --- CORRECCIÓN APLICADA ---
-      // Usar el helper _parseInt que maneja String, int, double o null
+      idReporteOriginal: _parseInt(json['id_reporte_original'], -1) == -1 ? null : _parseInt(json['id_reporte_original']),
       reportesVinculadosCount: _parseInt(json['reportes_vinculados_count']),
     );
   }

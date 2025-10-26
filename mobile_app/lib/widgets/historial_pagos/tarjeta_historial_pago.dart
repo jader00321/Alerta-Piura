@@ -21,7 +21,8 @@ class TarjetaHistorialPago extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: isApproved ? Colors.green.shade100 : Colors.red.shade100,
+          backgroundColor:
+              isApproved ? Colors.green.shade100 : Colors.red.shade100,
           child: Icon(
             isApproved ? Icons.check_circle_outline : Icons.error_outline,
             color: isApproved ? Colors.green.shade800 : Colors.red.shade800,

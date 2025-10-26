@@ -10,10 +10,12 @@ class PantallaAlertasPersonalizadas extends StatefulWidget {
   const PantallaAlertasPersonalizadas({super.key});
 
   @override
-  State<PantallaAlertasPersonalizadas> createState() => _PantallaAlertasPersonalizadasState();
+  State<PantallaAlertasPersonalizadas> createState() =>
+      _PantallaAlertasPersonalizadasState();
 }
 
-class _PantallaAlertasPersonalizadasState extends State<PantallaAlertasPersonalizadas> {
+class _PantallaAlertasPersonalizadasState
+    extends State<PantallaAlertasPersonalizadas> {
   late Future<List<ZonaSegura>> _zonasFuture;
   final PerfilService _perfilService = PerfilService();
 
@@ -34,9 +36,12 @@ class _PantallaAlertasPersonalizadasState extends State<PantallaAlertasPersonali
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar Zona Segura'),
-        content: const Text('¿Estás seguro de que quieres eliminar esta zona? Dejarás de recibir notificaciones para esta área.'),
+        content: const Text(
+            '¿Estás seguro de que quieres eliminar esta zona? Dejarás de recibir notificaciones para esta área.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
@@ -51,7 +56,9 @@ class _PantallaAlertasPersonalizadasState extends State<PantallaAlertasPersonali
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success ? 'Zona eliminada correctamente.' : 'Error al eliminar la zona.'),
+            content: Text(success
+                ? 'Zona eliminada correctamente.'
+                : 'Error al eliminar la zona.'),
             backgroundColor: success ? Colors.green : Colors.red,
           ),
         );
@@ -112,7 +119,8 @@ class _PantallaAlertasPersonalizadasState extends State<PantallaAlertasPersonali
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           // Navegamos a la pantalla de creación y esperamos un resultado.
-          final result = await Navigator.pushNamed(context, '/crear_zona_segura');
+          final result =
+              await Navigator.pushNamed(context, '/crear_zona_segura');
           // Si el resultado es 'true', significa que se creó una zona y debemos refrescar.
           if (result == true) {
             _cargarZonas();

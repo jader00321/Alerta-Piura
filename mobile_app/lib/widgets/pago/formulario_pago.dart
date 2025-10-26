@@ -28,7 +28,8 @@ class FormularioPago extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Información de Pago', style: Theme.of(context).textTheme.titleLarge),
+            Text('Información de Pago',
+                style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 24),
             TextFormField(
               controller: nombreTitularController,
@@ -37,7 +38,9 @@ class FormularioPago extends StatelessWidget {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.person_outline),
               ),
-              validator: (value) => (value?.trim().isEmpty ?? true) ? 'El nombre es requerido' : null,
+              validator: (value) => (value?.trim().isEmpty ?? true)
+                  ? 'El nombre es requerido'
+                  : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -53,7 +56,10 @@ class FormularioPago extends StatelessWidget {
                 LengthLimitingTextInputFormatter(16),
                 _CardNumberInputFormatter(),
               ],
-              validator: (value) => (value?.replaceAll(' ', '').length ?? 0) != 16 ? 'Número de tarjeta inválido' : null,
+              validator: (value) =>
+                  (value?.replaceAll(' ', '').length ?? 0) != 16
+                      ? 'Número de tarjeta inválido'
+                      : null,
             ),
             const SizedBox(height: 16),
             Row(
@@ -75,7 +81,8 @@ class FormularioPago extends StatelessWidget {
                       if ((value?.length ?? 0) != 5) return 'Fecha inválida';
                       final parts = value!.split('/');
                       final month = int.tryParse(parts[0]);
-                      if (month == null || month < 1 || month > 12) return 'Mes inválido';
+                      if (month == null || month < 1 || month > 12)
+                        return 'Mes inválido';
                       // Podríamos añadir validación de año futuro aquí
                       return null;
                     },
@@ -94,7 +101,8 @@ class FormularioPago extends StatelessWidget {
                       FilteringTextInputFormatter.digitsOnly,
                       LengthLimitingTextInputFormatter(3),
                     ],
-                    validator: (value) => (value?.length ?? 0) != 3 ? 'CVC inválido' : null,
+                    validator: (value) =>
+                        (value?.length ?? 0) != 3 ? 'CVC inválido' : null,
                   ),
                 ),
               ],
@@ -109,7 +117,8 @@ class FormularioPago extends StatelessWidget {
 // Formatters para una mejor UX en los campos de tarjeta
 class _CardNumberInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text;
     if (newValue.selection.baseOffset == 0) return newValue;
     var buffer = StringBuffer();
@@ -121,13 +130,16 @@ class _CardNumberInputFormatter extends TextInputFormatter {
       }
     }
     var string = buffer.toString();
-    return newValue.copyWith(text: string, selection: TextSelection.collapsed(offset: string.length));
+    return newValue.copyWith(
+        text: string,
+        selection: TextSelection.collapsed(offset: string.length));
   }
 }
 
 class _CardExpirationInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     var newText = newValue.text;
     if (newValue.selection.baseOffset == 0) return newValue;
     var buffer = StringBuffer();
@@ -138,6 +150,8 @@ class _CardExpirationInputFormatter extends TextInputFormatter {
       }
     }
     var string = buffer.toString();
-    return newValue.copyWith(text: string, selection: TextSelection.collapsed(offset: string.length));
+    return newValue.copyWith(
+        text: string,
+        selection: TextSelection.collapsed(offset: string.length));
   }
 }

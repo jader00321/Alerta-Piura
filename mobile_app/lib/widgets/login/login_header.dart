@@ -13,7 +13,8 @@ class LoginHeader extends StatelessWidget {
         Text(
           'Bienvenido a Reporta Piura',
           textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
         Text(
           'Inicia sesión para continuar',

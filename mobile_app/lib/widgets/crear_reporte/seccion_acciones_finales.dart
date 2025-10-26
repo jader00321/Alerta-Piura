@@ -50,7 +50,9 @@ class SeccionAccionesFinales extends StatelessWidget {
                 child: Text(
                   'Ubicación obtenida: ${currentLocation!.latitude.toStringAsFixed(4)}, ${currentLocation!.longitude.toStringAsFixed(4)}',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.green.shade700, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             const SizedBox(height: 24),
@@ -58,13 +60,15 @@ class SeccionAccionesFinales extends StatelessWidget {
               onPressed: isLoading ? null : onSubmitReport,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: isLoading
                   ? const SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 3, color: Colors.white),
                     )
                   : const Text('Enviar Reporte'),
             ),

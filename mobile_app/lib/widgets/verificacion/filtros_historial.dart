@@ -33,11 +33,19 @@ class FiltrosHistorial extends StatelessWidget {
               spacing: 8.0,
               children: FiltroHistorialEstado.values.map((filtro) {
                 String label;
-                switch(filtro) {
-                   case FiltroHistorialEstado.verificado: label = 'Verificados'; break;
-                   case FiltroHistorialEstado.rechazado: label = 'Rechazados'; break;
-                   case FiltroHistorialEstado.fusionado: label = 'Fusionados'; break;
-                   default: label = 'Todos'; break;
+                switch (filtro) {
+                  case FiltroHistorialEstado.verificado:
+                    label = 'Verificados';
+                    break;
+                  case FiltroHistorialEstado.rechazado:
+                    label = 'Rechazados';
+                    break;
+                  case FiltroHistorialEstado.fusionado:
+                    label = 'Fusionados';
+                    break;
+                  default:
+                    label = 'Todos';
+                    break;
                 }
                 return ChoiceChip(
                   label: Text(label, style: const TextStyle(fontSize: 12)),
@@ -54,8 +62,8 @@ class FiltrosHistorial extends StatelessWidget {
               icon: const Icon(Icons.calendar_today, size: 16),
               label: Text(
                 startDate != null && endDate != null
-                  ? '${dateFormat.format(startDate!)} - ${dateFormat.format(endDate!)}'
-                  : 'Seleccionar Fechas',
+                    ? '${dateFormat.format(startDate!)} - ${dateFormat.format(endDate!)}'
+                    : 'Seleccionar Fechas',
                 style: const TextStyle(fontSize: 12),
               ),
               onPressed: onSelectDateRange,

@@ -17,7 +17,11 @@ class TarjetaPlan extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     // LÓGICA CORREGIDA: Usamos una expresión regular para dividir por \n o \\n
-    final features = plan.descripcion?.split(RegExp(r'\\n|\n')).where((s) => s.trim().isNotEmpty).toList() ?? [];
+    final features = plan.descripcion
+            ?.split(RegExp(r'\\n|\n'))
+            .where((s) => s.trim().isNotEmpty)
+            .toList() ??
+        [];
 
     return Card(
       elevation: 4.0,
@@ -42,7 +46,8 @@ class TarjetaPlan extends StatelessWidget {
             if (isRecommended) const SizedBox(height: 8),
             Text(
               plan.nombrePublico,
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
@@ -59,18 +64,23 @@ class TarjetaPlan extends StatelessWidget {
             else
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: features.map((feature) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.check_circle_outline, color: Colors.green.shade600, size: 20),
-                      const SizedBox(width: 12),
-                      // Limpiamos guiones y espacios extra
-                      Expanded(child: Text(feature.trim().replaceFirst('- ', ''))),
-                    ],
-                  ),
-                )).toList(),
+                children: features
+                    .map((feature) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.check_circle_outline,
+                                  color: Colors.green.shade600, size: 20),
+                              const SizedBox(width: 12),
+                              // Limpiamos guiones y espacios extra
+                              Expanded(
+                                  child: Text(
+                                      feature.trim().replaceFirst('- ', ''))),
+                            ],
+                          ),
+                        ))
+                    .toList(),
               ),
             const SizedBox(height: 16),
             ElevatedButton(

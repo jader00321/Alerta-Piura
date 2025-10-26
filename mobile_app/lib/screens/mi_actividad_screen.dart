@@ -15,17 +15,15 @@ import 'package:mobile_app/widgets/mi_actividad/solicitudes_revision_view.dart';
 class MiActividadScreen extends StatefulWidget {
   // --- NUEVO: Aceptar el PageController principal ---
   final PageController mainPageController;
-  
-  const MiActividadScreen({
-    super.key, 
-    required this.mainPageController
-  });
+
+  const MiActividadScreen({super.key, required this.mainPageController});
 
   @override
   State<MiActividadScreen> createState() => _MiActividadScreenState();
 }
 
-class _MiActividadScreenState extends State<MiActividadScreen> with TickerProviderStateMixin {
+class _MiActividadScreenState extends State<MiActividadScreen>
+    with TickerProviderStateMixin {
   // Servicios
   final PerfilService _perfilService = PerfilService();
   final ReporteService _reporteService = ReporteService();
@@ -53,8 +51,8 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
     _isLider = context.read<AuthNotifier>().isLider;
     _tabLength = _isLider ? 5 : 4;
     _tabController = TabController(length: _tabLength, vsync: this);
-    
-    _tabController?.addListener(() { 
+
+    _tabController?.addListener(() {
       if (!_tabController!.indexIsChanging) {
         setState(() {
           _isSwipingScreens = false; // Resetear al cambiar de pestaña
@@ -91,7 +89,8 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
           _misApoyos = resultados[1] as List<ReporteResumen>;
           _misSeguimientos = resultados[2] as List<ReporteResumen>;
           _misComentarios = resultados[3] as List<ReporteResumen>;
-          if (_isLider) _misRevisiones = resultados[4] as List<SolicitudRevision>;
+          if (_isLider)
+            _misRevisiones = resultados[4] as List<SolicitudRevision>;
           _isLoading = false;
         });
       }
@@ -100,7 +99,9 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar la actividad: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Error al cargar la actividad: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
@@ -114,7 +115,9 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
         title: const Text('Cancelar Reporte'),
         content: const Text('¿Estás seguro? Esta acción no se puede deshacer.'),
         actions: [
-          TextButton(child: const Text('No'), onPressed: () => Navigator.pop(ctx, false)),
+          TextButton(
+              child: const Text('No'),
+              onPressed: () => Navigator.pop(ctx, false)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Sí, Cancelar'),
@@ -128,40 +131,45 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
       try {
         final success = await _reporteService.eliminarReporte(reporteId);
         if (success && mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('Reporte cancelado exitosamente.'), backgroundColor: Colors.green),
-           );
-           _fetchAllData(); // Recargar todos los datos para actualizar contadores y listas
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Reporte cancelado exitosamente.'),
+                backgroundColor: Colors.green),
+          );
+          _fetchAllData(); // Recargar todos los datos para actualizar contadores y listas
         } else if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('No se pudo cancelar el reporte.'), backgroundColor: Colors.red),
-           );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('No se pudo cancelar el reporte.'),
+                backgroundColor: Colors.red),
+          );
         }
       } catch (e) {
-         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-           );
-         }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
       }
     }
   }
 
   /// Maneja la navegación al detalle y refresca si es necesario
   Future<void> _handleNavigateToDetail(int reporteId) async {
-    final result = await Navigator.pushNamed(context, '/reporte_detalle', arguments: reporteId);
+    final result = await Navigator.pushNamed(context, '/reporte_detalle',
+        arguments: reporteId);
     // Si la pantalla de detalle devuelve 'true' (porque se siguió/comentó/etc.),
     // recargamos todos los datos para mantener la consistencia.
     if (result == true && mounted) {
       _fetchAllData();
     }
   }
-  
+
   bool _handleScrollNotification(ScrollNotification notification) {
     // Solo nos interesa el Overscroll (cuando el usuario llega al borde)
     if (notification is OverscrollNotification) {
       // Evitar múltiples triggers
-      if (_isSwipingScreens) return false; 
+      if (_isSwipingScreens) return false;
 
       // Si el overscroll es negativo (hacia la derecha) y estamos en la primera pestaña (index 0)
       if (notification.overscroll < 0 && _tabController?.index == 0) {
@@ -175,7 +183,8 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
       }
 
       // Si el overscroll es positivo (hacia la izquierda) y estamos en la última pestaña
-      if (notification.overscroll > 0 && _tabController?.index == _tabLength - 1) {
+      if (notification.overscroll > 0 &&
+          _tabController?.index == _tabLength - 1) {
         setState(() => _isSwipingScreens = true);
         // Navegar a la pantalla principal siguiente (Perfil)
         widget.mainPageController.nextPage(

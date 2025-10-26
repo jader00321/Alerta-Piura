@@ -62,7 +62,8 @@ class _SeccionDatosPersonalesState extends State<SeccionDatosPersonales> {
 
       // Si el email ha cambiado, actualizarlo también
       if (_emailController.text != widget.emailInicial) {
-        final emailResponse = await _perfilService.updateMyEmail(_emailController.text, password);
+        final emailResponse =
+            await _perfilService.updateMyEmail(_emailController.text, password);
         if (emailResponse['statusCode'] != 200) {
           finalMessage = emailResponse['data']['message'];
           profileUpdated = false; // Marcar como fallido si el email falla
@@ -99,17 +100,21 @@ class _SeccionDatosPersonalesState extends State<SeccionDatosPersonales> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Para guardar los cambios, por favor ingresa tu contraseña actual.'),
+            const Text(
+                'Para guardar los cambios, por favor ingresa tu contraseña actual.'),
             const SizedBox(height: 16),
             TextField(
               controller: passwordConfirmController,
               obscureText: true,
-              decoration: const InputDecoration(labelText: 'Contraseña Actual', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'Contraseña Actual', border: OutlineInputBorder()),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () {
               final password = passwordConfirmController.text;
@@ -134,20 +139,46 @@ class _SeccionDatosPersonalesState extends State<SeccionDatosPersonales> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Datos Personales', style: Theme.of(context).textTheme.titleLarge),
+            Text('Datos Personales',
+                style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
-            TextFormField(controller: _nombreController, decoration: const InputDecoration(labelText: 'Nombre Completo', border: OutlineInputBorder(), prefixIcon: Icon(Icons.person_outline))),
+            TextFormField(
+                controller: _nombreController,
+                decoration: const InputDecoration(
+                    labelText: 'Nombre Completo',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person_outline))),
             const SizedBox(height: 16),
-            TextFormField(controller: _aliasController, decoration: const InputDecoration(labelText: 'Alias (Público)', border: OutlineInputBorder(), prefixIcon: Icon(Icons.alternate_email))),
+            TextFormField(
+                controller: _aliasController,
+                decoration: const InputDecoration(
+                    labelText: 'Alias (Público)',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.alternate_email))),
             const SizedBox(height: 16),
-            TextFormField(controller: _telefonoController, decoration: const InputDecoration(labelText: 'Teléfono', border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone_outlined)), keyboardType: TextInputType.phone),
+            TextFormField(
+                controller: _telefonoController,
+                decoration: const InputDecoration(
+                    labelText: 'Teléfono',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.phone_outlined)),
+                keyboardType: TextInputType.phone),
             const SizedBox(height: 16),
-            TextFormField(controller: _emailController, decoration: const InputDecoration(labelText: 'Correo Electrónico', border: OutlineInputBorder(), prefixIcon: Icon(Icons.email_outlined)), keyboardType: TextInputType.emailAddress),
+            TextFormField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                    labelText: 'Correo Electrónico',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.email_outlined)),
+                keyboardType: TextInputType.emailAddress),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _isSaving ? null : _showConfirmationDialog,
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-              child: _isSaving ? const CircularProgressIndicator() : const Text('Guardar Datos Personales'),
+              style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16)),
+              child: _isSaving
+                  ? const CircularProgressIndicator()
+                  : const Text('Guardar Datos Personales'),
             ),
           ],
         ),

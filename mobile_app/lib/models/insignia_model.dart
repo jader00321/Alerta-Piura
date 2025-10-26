@@ -7,7 +7,7 @@ class Insignia {
   final int? puntosNecesarios;
 
   Insignia({
-    required this.nombre, 
+    required this.nombre,
     required this.descripcion,
     this.iconoUrl,
     this.puntosNecesarios,

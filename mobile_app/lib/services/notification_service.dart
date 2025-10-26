@@ -13,26 +13,31 @@ class NotificationService {
   static const String SOS_CHANNEL_ID = 'sos_service_channel';
   static const int SOS_NOTIFICATION_ID = 888;
 
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   GlobalKey<NavigatorState>? _navigatorKey;
 
   // --- Canales de Notificación para Android ---
-  static const AndroidNotificationChannel _generalChannel = AndroidNotificationChannel(
+  static const AndroidNotificationChannel _generalChannel =
+      AndroidNotificationChannel(
     'general_channel',
     'Alertas Generales',
     description: 'Notificaciones y anuncios del sistema.',
     importance: Importance.max,
   );
 
-  static const AndroidNotificationChannel _reportChannel = AndroidNotificationChannel(
+  static const AndroidNotificationChannel _reportChannel =
+      AndroidNotificationChannel(
     'report_updates_channel',
     'Actualizaciones de Reportes',
-    description: 'Notificaciones sobre el estado de tus reportes y comentarios.',
+    description:
+        'Notificaciones sobre el estado de tus reportes y comentarios.',
     importance: Importance.high,
   );
 
   // --- CORRECCIÓN: Canal de SOS añadido ---
-  static const AndroidNotificationChannel _sosChannel = AndroidNotificationChannel(
+  static const AndroidNotificationChannel _sosChannel =
+      AndroidNotificationChannel(
     SOS_CHANNEL_ID,
     'Alertas SOS',
     description: 'Notificaciones para el estado de la alerta SOS.',
@@ -44,22 +49,26 @@ class NotificationService {
     _navigatorKey = navigatorKey;
 
     // --- CORRECCIÓN: Crear todos los canales aquí ---
-    final androidPlugin = _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    
+    final androidPlugin =
+        _flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
     await androidPlugin?.createNotificationChannel(_generalChannel);
     await androidPlugin?.createNotificationChannel(_reportChannel);
     await androidPlugin?.createNotificationChannel(_sosChannel); // <-- AÑADIDO
 
     // Configuración para Android y iOS
-    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-    final DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings(
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    final DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-    
-    final InitializationSettings initializationSettings = InitializationSettings(
+
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
     );
@@ -80,7 +89,8 @@ class NotificationService {
 
         if (_navigatorKey?.currentState != null) {
           if (type == 'report_detail' && id != null) {
-            _navigatorKey!.currentState!.pushNamed('/reporte_detalle', arguments: int.parse(id.toString()));
+            _navigatorKey!.currentState!.pushNamed('/reporte_detalle',
+                arguments: int.parse(id.toString()));
           } else if (type == 'alerts_screen') {
             _navigatorKey!.currentState!.pushNamed('/alertas');
           }
@@ -92,8 +102,10 @@ class NotificationService {
   }
 
   /// Muestra una notificación local en el dispositivo.
-  Future<void> showNotification(String title, String body, {String? payload}) async {
-    final AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+  Future<void> showNotification(String title, String body,
+      {String? payload}) async {
+    final AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
       _reportChannel.id, // Usamos el canal de reportes por defecto
       _reportChannel.name,
       channelDescription: _reportChannel.description,
@@ -101,8 +113,9 @@ class NotificationService {
       priority: Priority.high,
       ticker: 'ticker',
     );
-    
-    final NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    final NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await _flutterLocalNotificationsPlugin.show(
       DateTime.now().millisecondsSinceEpoch.remainder(100000), // ID único

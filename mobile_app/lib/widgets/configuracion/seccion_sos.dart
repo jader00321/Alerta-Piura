@@ -37,7 +37,7 @@ class SeccionSOS extends StatelessWidget {
               value: sosDurationInMinutes,
               min: 5,
               max: 30,
-              divisions: 5, // Intervalos de 5 minutos
+              divisions: 5,
               label: '${sosDurationInMinutes.toInt()} min',
               onChanged: onDurationChanged,
               onChangeEnd: onDurationChangeEnd,

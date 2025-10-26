@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   bool _isLoading = false;
   final AuthService _authService = AuthService();
 
@@ -78,7 +78,8 @@ class _LoginScreenState extends State<LoginScreen> {
         // El AppBar ahora es transparente y sin elevación para un look más moderno
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false, // Oculta la flecha de "atrás" por defecto
+        automaticallyImplyLeading:
+            false, // Oculta la flecha de "atrás" por defecto
         actions: [
           // --- BOTÓN AÑADIDO PARA VOLVER AL MAPA ---
           IconButton(
@@ -86,7 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
             icon: const Icon(Icons.close),
             onPressed: () {
               // Navega a la pantalla de inicio y limpia el historial de rutas
-              Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+              Navigator.pushNamedAndRemoveUntil(
+                  context, '/home', (route) => false);
             },
           ),
         ],

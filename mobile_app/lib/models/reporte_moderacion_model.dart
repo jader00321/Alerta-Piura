@@ -13,7 +13,8 @@ class ReporteModeracion {
   final int? idReporte; // ID del reporte original (si tipo == comentario)
   final int? idUsuarioReportado; // ID del usuario (si tipo == usuario)
   // --- NUEVO CAMPO ---
-  final String? codigoReporte; // Código del reporte original (si tipo == comentario)
+  final String?
+      codigoReporte; // Código del reporte original (si tipo == comentario)
 
   ReporteModeracion({
     required this.id,
@@ -28,7 +29,8 @@ class ReporteModeracion {
     this.codigoReporte, // <-- Añadido al constructor
   });
 
-  factory ReporteModeracion.fromJson(Map<String, dynamic> json, TipoReporteModeracion tipo) {
+  factory ReporteModeracion.fromJson(
+      Map<String, dynamic> json, TipoReporteModeracion tipo) {
     return ReporteModeracion(
       id: json['id'],
       motivo: json['motivo'] ?? 'Sin motivo',
@@ -38,10 +40,15 @@ class ReporteModeracion {
       sortDate: DateTime.tryParse(json['sort_date'] ?? '') ?? DateTime.now(),
       contenido: json['contenido'] ?? '-',
       tipo: tipo,
-      idReporte: tipo == TipoReporteModeracion.comentario ? json['id_reporte'] : null,
-      idUsuarioReportado: tipo == TipoReporteModeracion.usuario ? json['id_usuario_reportado'] : null,
+      idReporte:
+          tipo == TipoReporteModeracion.comentario ? json['id_reporte'] : null,
+      idUsuarioReportado: tipo == TipoReporteModeracion.usuario
+          ? json['id_usuario_reportado']
+          : null,
       // --- PARSEAR NUEVO CAMPO ---
-      codigoReporte: tipo == TipoReporteModeracion.comentario ? json['codigo_reporte'] : null, // <-- Añadido
+      codigoReporte: tipo == TipoReporteModeracion.comentario
+          ? json['codigo_reporte']
+          : null, // <-- Añadido
     );
   }
 }

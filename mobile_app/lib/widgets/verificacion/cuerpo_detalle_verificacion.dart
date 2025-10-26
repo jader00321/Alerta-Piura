@@ -26,7 +26,8 @@ class CuerpoDetalleVerificacion extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Ubicación del Reporte', style: Theme.of(context).textTheme.titleLarge),
+                Text('Ubicación del Reporte',
+                    style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 // --- CORRECCIÓN: Eliminar el widget Hero ---
                 // El Hero causaba el error rojo en el mapa.

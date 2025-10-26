@@ -42,7 +42,9 @@ class _PantallaHistorialPagosState extends State<PantallaHistorialPagos> {
               return const EsqueletoHistorialPagos();
             }
             if (snapshot.hasError) {
-              return Center(child: Text('Error al cargar el historial: ${snapshot.error}'));
+              return Center(
+                  child:
+                      Text('Error al cargar el historial: ${snapshot.error}'));
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return const Center(
@@ -67,7 +69,8 @@ class _PantallaHistorialPagosState extends State<PantallaHistorialPagos> {
                   pago: pago,
                   onTap: () {
                     // Navega a la pantalla de detalle de la boleta
-                    Navigator.pushNamed(context, '/detalle_boleta', arguments: pago.id);
+                    Navigator.pushNamed(context, '/detalle_boleta',
+                        arguments: pago.id);
                   },
                 );
               },

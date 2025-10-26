@@ -4,52 +4,31 @@ import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
 class AccionesMapa extends StatelessWidget {
-  // ELIMINADOS:
-  // final VoidCallback onToggleHeatmap;
-  // final bool isHeatmapVisible;
   final VoidCallback onShowFilterSheet;
   final VoidCallback onCenterOnUser;
   final VoidCallback onCreateReport;
-  
-  // --- Parámetros SOS Simplificados ---
+
   final bool isSosActive;
   final int sosRemainingSeconds;
-  final VoidCallback onActivateSos; // <--- NUEVO
+  final VoidCallback onActivateSos;
   final VoidCallback onDeactivateSos;
-  
-  // --- ELIMINADOS ---
-  // final double sosHoldProgress; 
-  // final Animation<double> sosActiveAnimation;
-  // final Function(LongPressStartDetails) onSosPressStart;
-  // final Function(LongPressEndDetails) onSosPressEnd;
-
 
   const AccionesMapa({
     super.key,
-    // ELIMINADOS:
-    // required this.onToggleHeatmap,
-    // required this.isHeatmapVisible,
     required this.onShowFilterSheet,
     required this.onCenterOnUser,
     required this.onCreateReport,
     required this.isSosActive,
     required this.sosRemainingSeconds,
-    required this.onActivateSos, // <--- NUEVO
+    required this.onActivateSos,
     required this.onDeactivateSos,
-    // --- ELIMINADOS DEL CONSTRUCTOR ---
-    // required this.sosHoldProgress,
-    // required this.sosActiveAnimation,
-    // required this.onSosPressStart,
-    // required this.onSosPressEnd,
   });
 
   @override
   Widget build(BuildContext context) {
     final authNotifier = context.watch<AuthNotifier>();
-    // Determina si el usuario puede activar el SOS (autenticado y premium)
-    final bool canActivateSos = authNotifier.isAuthenticated && authNotifier.isPremium;
-    
-    // --- ELIMINADO 'isHoldingSos' ---
+    final bool canActivateSos =
+        authNotifier.isAuthenticated && authNotifier.isPremium;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 80.0),
@@ -57,31 +36,19 @@ class AccionesMapa extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // --- Botones de la Izquierda (MODIFICADO) ---
           Padding(
-            padding: const EdgeInsets.only(left: 32.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // --- BOTÓN DE CAPAS ELIMINADO ---
-                // FloatingActionButton(
-                //   heroTag: 'layers_btn',
-                //   ...
-                // ),
-                // const SizedBox(height: 16), // <-- Eliminado Sizedbox
-
-                // Botón de Filtros (ahora es el único a la izquierda)
-                FloatingActionButton(
-                  heroTag: 'filter_btn',
-                  onPressed: onShowFilterSheet,
-                  tooltip: 'Filtros',
-                  child: const Icon(Icons.filter_list),
-                ),
-              ],
-            )
-          ),
-
-          // --- Botones de la Derecha (SOS MODIFICADO, SIN CAMBIOS EN ESTA SECCIÓN) ---
+              padding: const EdgeInsets.only(left: 32.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FloatingActionButton(
+                    heroTag: 'filter_btn',
+                    onPressed: onShowFilterSheet,
+                    tooltip: 'Filtros',
+                    child: const Icon(Icons.filter_list),
+                  ),
+                ],
+              )),
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -102,53 +69,54 @@ class AccionesMapa extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // --- WIDGET SOS SIMPLIFICADO ---
               if (authNotifier.isAuthenticated)
                 GestureDetector(
-                  // --- LÓGICA DE TAP SIMPLIFICADA ---
                   onTap: () {
-                      // Caso 1: SOS está activo. Tocar desactiva.
-                      if (isSosActive) {
-                        if (canActivateSos) { // Si es premium (debería serlo si está activo)
-                          onDeactivateSos();
-                        }
-                      } 
-                      // Caso 2: SOS está inactivo. Tocar activa (si es premium) o muestra planes.
-                      else {
-                        if (canActivateSos) {
-                          // Es premium -> Activar SOS
-                          onActivateSos(); 
-                        }
-                        else if (authNotifier.isAuthenticated) {
-                          // No es premium -> Ir a planes
-                          Navigator.pushNamed(context, '/subscription_plans');
-                        }
+                    // Caso 1: SOS está activo. Tocar desactiva.
+                    if (isSosActive) {
+                      if (canActivateSos) {
+                        // Si es premium (debería serlo si está activo)
+                        onDeactivateSos();
                       }
+                    }
+                    // Caso 2: SOS está inactivo. Tocar activa (si es premium) o muestra planes.
+                    else {
+                      if (canActivateSos) {
+                        // Es premium -> Activar SOS
+                        onActivateSos();
+                      } else if (authNotifier.isAuthenticated) {
+                        // No es premium -> Ir a planes
+                        Navigator.pushNamed(context, '/subscription_plans');
+                      }
+                    }
                   },
-                  // --- ELIMINADOS onLongPressStart y onLongPressEnd ---
                   child: FloatingActionButton(
                     heroTag: 'sos_btn',
-                    onPressed: null, // GestureDector maneja los taps
-                    
-                    // --- Color de fondo SIMPLIFICADO ---
+                    onPressed: null,
+
                     backgroundColor: isSosActive
-                        ? Colors.red // Rojo brillante si SOS está activo
+                        ? Colors.red
                         : canActivateSos
-                            ? Colors.red.shade300 // Rojo claro si es premium y listo
+                            ? Colors.red
+                                .shade300 // Rojo claro si es premium y listo
                             : Colors.grey, // Gris si no es premium
-                            
+
                     tooltip: canActivateSos
-                        ? (isSosActive ? 'Finalizar Alerta' : 'Presiona para SOS') // Tooltip actualizado
+                        ? (isSosActive
+                            ? 'Finalizar Alerta'
+                            : 'Presiona para SOS') // Tooltip actualizado
                         : 'Activa Premium para usar SOS',
                     child: isSosActive
-                        ? Text( // Mostrar contador
+                        ? Text(
+                            // Mostrar contador
                             '${(sosRemainingSeconds ~/ 60).toString().padLeft(2, '0')}:${(sosRemainingSeconds % 60).toString().padLeft(2, '0')}',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16)
-                          )
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 16))
                         : const Icon(Icons.sos, color: Colors.white, size: 28),
                   ),
                 ),
-                // --- Fin Widget SOS ---
             ],
           ),
         ],

@@ -22,17 +22,26 @@ class ResumenPago extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(plan.nombrePublico, style: theme.textTheme.bodyLarge),
-                Text('S/ ${plan.precioMensual}', style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text('S/ ${plan.precioMensual}',
+                    style: theme.textTheme.bodyLarge
+                        ?.copyWith(fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(height: 8),
-            Text('Suscripción mensual, renovable automáticamente.', style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
+            Text('Suscripción mensual, renovable automáticamente.',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: Colors.grey[600])),
             const Divider(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Total a Pagar:', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                Text('S/ ${plan.precioMensual}', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                Text('Total a Pagar:',
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
+                Text('S/ ${plan.precioMensual}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary)),
               ],
             ),
           ],

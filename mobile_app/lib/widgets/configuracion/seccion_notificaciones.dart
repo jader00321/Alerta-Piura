@@ -13,7 +13,7 @@ class SeccionNotificaciones extends StatelessWidget {
         subtitle: const Text('Ver mensajes y alertas del sistema.'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {
-          Navigator.pushNamed(context, '/alertas'); // Navega a la pantalla de alertas
+          Navigator.pushNamed(context, '/alertas');
         },
       ),
     );

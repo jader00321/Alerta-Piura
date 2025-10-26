@@ -19,7 +19,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _initializeApp() async {
     // Espera un momento para que la pantalla de bienvenida sea visible.
     await Future.delayed(const Duration(seconds: 2));
-    
+
     if (mounted) {
       final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
 

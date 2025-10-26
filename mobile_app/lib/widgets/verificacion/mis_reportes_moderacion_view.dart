@@ -16,10 +16,12 @@ class MisReportesModeracionView extends StatefulWidget {
   const MisReportesModeracionView({required Key key}) : super(key: key);
 
   @override
-  State<MisReportesModeracionView> createState() => MisReportesModeracionViewState();
+  State<MisReportesModeracionView> createState() =>
+      MisReportesModeracionViewState();
 }
 
-class MisReportesModeracionViewState extends State<MisReportesModeracionView> with AutomaticKeepAliveClientMixin {
+class MisReportesModeracionViewState extends State<MisReportesModeracionView>
+    with AutomaticKeepAliveClientMixin {
   final LiderService _liderService = LiderService();
   final ScrollController _scrollController = ScrollController();
 
@@ -52,7 +54,8 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
     super.initState();
     // --- CORRECCIÓN: Inicializar fechas ---
     final now = DateTime.now();
-    _startDate = now.subtract(const Duration(days: 7)); // Última semana por defecto
+    _startDate =
+        now.subtract(const Duration(days: 7)); // Última semana por defecto
     _endDate = now;
     // --- FIN CORRECCIÓN ---
     refreshData(); // Carga inicial
@@ -78,13 +81,14 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
   }
   // --- FIN CORRECCIÓN ---
 
-
   Future<void> _fetchCombinedReports({bool isRefresh = false}) async {
-    if (!mounted || ( _isLoading && !isRefresh) || _isLoadingMore) return;
+    if (!mounted || (_isLoading && !isRefresh) || _isLoadingMore) return;
 
     setState(() {
-      if (isRefresh) _isLoading = true;
-      else _isLoadingMore = true;
+      if (isRefresh)
+        _isLoading = true;
+      else
+        _isLoadingMore = true;
       _errorMessage = null;
     });
 
@@ -96,59 +100,68 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
     int pageCom = isRefresh ? 1 : _currentPageComentarios;
     int pageUsr = isRefresh ? 1 : _currentPageUsuarios;
 
-    bool loadComentarios = (_filtroTipo == FiltroTipoModeracion.todos || _filtroTipo == FiltroTipoModeracion.comentario) && moreCom;
-    bool loadUsuarios = (_filtroTipo == FiltroTipoModeracion.todos || _filtroTipo == FiltroTipoModeracion.usuario) && moreUsr;
+    bool loadComentarios = (_filtroTipo == FiltroTipoModeracion.todos ||
+            _filtroTipo == FiltroTipoModeracion.comentario) &&
+        moreCom;
+    bool loadUsuarios = (_filtroTipo == FiltroTipoModeracion.todos ||
+            _filtroTipo == FiltroTipoModeracion.usuario) &&
+        moreUsr;
 
     try {
-        List<Future<PagedResult<ReporteModeracion>>> futures = [];
+      List<Future<PagedResult<ReporteModeracion>>> futures = [];
+      if (loadComentarios) {
+        futures.add(_liderService.getMisComentariosReportados(
+            page: pageCom,
+            startDate: _startDate, // Pasar fechas
+            endDate: _endDate // Pasar fechas
+            ));
+      }
+      if (loadUsuarios) {
+        futures.add(_liderService.getMisUsuariosReportados(
+            page: pageUsr,
+            startDate: _startDate, // Pasar fechas
+            endDate: _endDate // Pasar fechas
+            ));
+      }
+
+      if (futures.isNotEmpty) {
+        final results = await Future.wait(futures);
+        int resultIndex = 0;
         if (loadComentarios) {
-           futures.add(_liderService.getMisComentariosReportados(
-             page: pageCom,
-             startDate: _startDate, // Pasar fechas
-             endDate: _endDate      // Pasar fechas
-           ));
+          final commentResult = results[resultIndex++];
+          nuevosReportes.addAll(commentResult.items);
+          moreCom = commentResult.hasMore;
+          // --- CORRECCIÓN: Guardar total filtrado ---
+          totalComentarios = commentResult.totalFiltrado;
         }
         if (loadUsuarios) {
-           futures.add(_liderService.getMisUsuariosReportados(
-             page: pageUsr,
-             startDate: _startDate, // Pasar fechas
-             endDate: _endDate      // Pasar fechas
-           ));
+          final userResult = results[resultIndex];
+          nuevosReportes.addAll(userResult.items);
+          moreUsr = userResult.hasMore;
+          // --- CORRECCIÓN: Guardar total filtrado ---
+          totalUsuarios = userResult.totalFiltrado;
         }
-
-       if (futures.isNotEmpty) {
-           final results = await Future.wait(futures);
-           int resultIndex = 0;
-           if (loadComentarios) {
-               final commentResult = results[resultIndex++];
-               nuevosReportes.addAll(commentResult.items);
-               moreCom = commentResult.hasMore;
-               // --- CORRECCIÓN: Guardar total filtrado ---
-               totalComentarios = commentResult.totalFiltrado;
-           }
-           if (loadUsuarios) {
-               final userResult = results[resultIndex];
-               nuevosReportes.addAll(userResult.items);
-               moreUsr = userResult.hasMore;
-               // --- CORRECCIÓN: Guardar total filtrado ---
-               totalUsuarios = userResult.totalFiltrado;
-           }
-       } else {
-           moreCom = false;
-           moreUsr = false;
-       }
-
+      } else {
+        moreCom = false;
+        moreUsr = false;
+      }
 
       if (mounted) {
         setState(() {
           if (isRefresh) {
-             _reportes = nuevosReportes; // Reemplazar
+            _reportes = nuevosReportes; // Reemplazar
           } else {
-             _reportes.addAll(nuevosReportes); // Añadir
+            _reportes.addAll(nuevosReportes); // Añadir
           }
 
-          if (loadComentarios && nuevosReportes.any((r) => r.tipo == TipoReporteModeracion.comentario)) _currentPageComentarios++;
-          if (loadUsuarios && nuevosReportes.any((r) => r.tipo == TipoReporteModeracion.usuario)) _currentPageUsuarios++;
+          if (loadComentarios &&
+              nuevosReportes
+                  .any((r) => r.tipo == TipoReporteModeracion.comentario))
+            _currentPageComentarios++;
+          if (loadUsuarios &&
+              nuevosReportes
+                  .any((r) => r.tipo == TipoReporteModeracion.usuario))
+            _currentPageUsuarios++;
 
           _reportes.sort((a, b) => b.sortDate.compareTo(a.sortDate));
 
@@ -163,35 +176,41 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
         });
       }
     } catch (e) {
-        print("Error fetching combined moderation reports: $e");
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _isLoadingMore = false;
-            // --- CORRECCIÓN: Resetear total ---
-            _totalFiltrado = 0;
-            // --- FIN CORRECCIÓN ---
-            if (isRefresh) {
-               _errorMessage = e.toString().replaceFirst('Exception: ', '');
-               _reportes = [];
-            } else {
-               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cargar más: $e'), backgroundColor: Colors.orange));
-               _hasMoreComentarios = false;
-               _hasMoreUsuarios = false;
-            }
-          });
-        }
+      print("Error fetching combined moderation reports: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+          // --- CORRECCIÓN: Resetear total ---
+          _totalFiltrado = 0;
+          // --- FIN CORRECCIÓN ---
+          if (isRefresh) {
+            _errorMessage = e.toString().replaceFirst('Exception: ', '');
+            _reportes = [];
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('Error al cargar más: $e'),
+                backgroundColor: Colors.orange));
+            _hasMoreComentarios = false;
+            _hasMoreUsuarios = false;
+          }
+        });
+      }
     }
   }
 
   void _onScroll() {
-    bool hasMoreFiltered =
-        (_filtroTipo == FiltroTipoModeracion.comentario && _hasMoreComentarios) ||
+    bool hasMoreFiltered = (_filtroTipo == FiltroTipoModeracion.comentario &&
+            _hasMoreComentarios) ||
         (_filtroTipo == FiltroTipoModeracion.usuario && _hasMoreUsuarios) ||
-        (_filtroTipo == FiltroTipoModeracion.todos && (_hasMoreComentarios || _hasMoreUsuarios));
+        (_filtroTipo == FiltroTipoModeracion.todos &&
+            (_hasMoreComentarios || _hasMoreUsuarios));
 
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.9 &&
-        hasMoreFiltered && !_isLoading && !_isLoadingMore) {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent * 0.9 &&
+        hasMoreFiltered &&
+        !_isLoading &&
+        !_isLoadingMore) {
       _fetchCombinedReports();
     }
   }
@@ -218,7 +237,8 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
   // --- FIN CORRECCIÓN ---
 
   // Lógica Quitar Reporte (sin cambios funcionales)
-  Future<void> _handleQuitarReporte(int moderacionReporteId, TipoReporteModeracion tipo) async {
+  Future<void> _handleQuitarReporte(
+      int moderacionReporteId, TipoReporteModeracion tipo) async {
     final String loadingKey = '${tipo.name}-$moderacionReporteId';
     if (_deletingStatus[loadingKey] == true) return;
 
@@ -226,9 +246,12 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Quitar Reporte'),
-        content: const Text('¿Estás seguro de que quieres eliminar este reporte de moderación pendiente? Esta acción no se puede deshacer.'),
+        content: const Text(
+            '¿Estás seguro de que quieres eliminar este reporte de moderación pendiente? Esta acción no se puede deshacer.'),
         actions: [
-          TextButton(child: const Text('No'), onPressed: () => Navigator.pop(ctx, false)),
+          TextButton(
+              child: const Text('No'),
+              onPressed: () => Navigator.pop(ctx, false)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Sí, Quitar'),
@@ -244,7 +267,8 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
 
     Map<String, dynamic> response = {};
     try {
-      response = await _liderService.eliminarReporteModeracion(moderacionReporteId, tipo);
+      response = await _liderService.eliminarReporteModeracion(
+          moderacionReporteId, tipo);
       if (!mounted) return;
 
       final message = response['message'] ?? 'Error';
@@ -257,19 +281,21 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
 
       if (success) {
         setState(() {
-           _reportes.removeWhere((r) => r.id == moderacionReporteId && r.tipo == tipo);
-           _deletingStatus.remove(loadingKey);
-           // Decrementar contador localmente para UI instantánea
-           if (_totalFiltrado > 0) _totalFiltrado--;
+          _reportes.removeWhere(
+              (r) => r.id == moderacionReporteId && r.tipo == tipo);
+          _deletingStatus.remove(loadingKey);
+          // Decrementar contador localmente para UI instantánea
+          if (_totalFiltrado > 0) _totalFiltrado--;
         });
         // Podríamos notificar al padre, pero el refresh global lo hará eventualmente
       } else {
-         if (mounted) setState(() => _deletingStatus.remove(loadingKey));
+        if (mounted) setState(() => _deletingStatus.remove(loadingKey));
       }
     } catch (e) {
       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-         setState(() => _deletingStatus.remove(loadingKey));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        setState(() => _deletingStatus.remove(loadingKey));
       }
     }
   }
@@ -277,7 +303,8 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
   @override
   Widget build(BuildContext context) {
     super.build(context); // Mantener estado de pestaña
-    final DateFormat dateFormat = DateFormat('dd MMM', 'es_ES'); // Formateador para botón de fecha
+    final DateFormat dateFormat =
+        DateFormat('dd MMM', 'es_ES'); // Formateador para botón de fecha
 
     // --- UI de Filtros ---
     Widget buildFiltros() {
@@ -288,46 +315,52 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-               // Filtro Tipo
-               Wrap(
-                 spacing: 8.0,
-                 children: FiltroTipoModeracion.values.map((filtro) {
-                   String label;
-                   switch(filtro){
-                      case FiltroTipoModeracion.comentario: label = 'Comentarios'; break;
-                      case FiltroTipoModeracion.usuario: label = 'Usuarios'; break;
-                      default: label = 'Todos'; break;
-                   }
-                   return ChoiceChip(
-                     label: Text(label, style: const TextStyle(fontSize: 12)),
-                     selected: _filtroTipo == filtro,
-                     onSelected: (selected) {
-                       if (selected) {
-                         setState(() => _filtroTipo = filtro);
-                         refreshData(); // Refrescar con nuevo filtro
-                       }
-                     },
-                     visualDensity: VisualDensity.compact,
-                   );
-                 }).toList(),
-               ),
-               const SizedBox(width: 16), // Espacio antes de fecha
-               // --- CORRECCIÓN: Botón para DateRangePicker ---
-               TextButton.icon(
-                 icon: const Icon(Icons.calendar_today, size: 16),
-                 label: Text(
-                   _startDate != null && _endDate != null
-                     ? '${dateFormat.format(_startDate!)} - ${dateFormat.format(_endDate!)}'
-                     : 'Seleccionar Fechas',
-                   style: const TextStyle(fontSize: 12),
-                 ),
-                 onPressed: _selectDateRange,
-                 style: TextButton.styleFrom(
-                   visualDensity: VisualDensity.compact,
-                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                 ),
-               ),
-               // --- FIN CORRECCIÓN ---
+              // Filtro Tipo
+              Wrap(
+                spacing: 8.0,
+                children: FiltroTipoModeracion.values.map((filtro) {
+                  String label;
+                  switch (filtro) {
+                    case FiltroTipoModeracion.comentario:
+                      label = 'Comentarios';
+                      break;
+                    case FiltroTipoModeracion.usuario:
+                      label = 'Usuarios';
+                      break;
+                    default:
+                      label = 'Todos';
+                      break;
+                  }
+                  return ChoiceChip(
+                    label: Text(label, style: const TextStyle(fontSize: 12)),
+                    selected: _filtroTipo == filtro,
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => _filtroTipo = filtro);
+                        refreshData(); // Refrescar con nuevo filtro
+                      }
+                    },
+                    visualDensity: VisualDensity.compact,
+                  );
+                }).toList(),
+              ),
+              const SizedBox(width: 16), // Espacio antes de fecha
+              // --- CORRECCIÓN: Botón para DateRangePicker ---
+              TextButton.icon(
+                icon: const Icon(Icons.calendar_today, size: 16),
+                label: Text(
+                  _startDate != null && _endDate != null
+                      ? '${dateFormat.format(_startDate!)} - ${dateFormat.format(_endDate!)}'
+                      : 'Seleccionar Fechas',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                onPressed: _selectDateRange,
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+              // --- FIN CORRECCIÓN ---
             ],
           ),
         ),
@@ -341,23 +374,33 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
       return const EsqueletoListaActividad();
     }
     if (_errorMessage != null && _reportes.isEmpty) {
-      return Center(child: Padding(padding: const EdgeInsets.all(16), child: Text('Error: $_errorMessage')));
+      return Center(
+          child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Error: $_errorMessage')));
     }
 
     Widget listContent;
     if (_reportes.isEmpty) {
-      listContent = const Center(child: Padding(padding: EdgeInsets.all(16), child: Text('No hay reportes de moderación con estos filtros.')));
+      listContent = const Center(
+          child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('No hay reportes de moderación con estos filtros.')));
     } else {
       listContent = ListView.builder(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 80),
-        itemCount: _reportes.length + ((_hasMoreComentarios || _hasMoreUsuarios) ? 1 : 0),
+        itemCount: _reportes.length +
+            ((_hasMoreComentarios || _hasMoreUsuarios) ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == _reportes.length) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Center(child: _isLoadingMore ? const CircularProgressIndicator() : const SizedBox.shrink()),
+              child: Center(
+                  child: _isLoadingMore
+                      ? const CircularProgressIndicator()
+                      : const SizedBox.shrink()),
             );
           }
           final reporte = _reportes[index];
@@ -368,11 +411,14 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
             reporteModeracion: reporte,
             isDeleting: isDeleting,
             onTap: () {
-              if (reporte.tipo == TipoReporteModeracion.comentario && reporte.idReporte != null) {
-                Navigator.pushNamed(context, '/reporte_detalle', arguments: reporte.idReporte);
+              if (reporte.tipo == TipoReporteModeracion.comentario &&
+                  reporte.idReporte != null) {
+                Navigator.pushNamed(context, '/reporte_detalle',
+                    arguments: reporte.idReporte);
               }
             },
-            onQuitar: reporte.estado == 'pendiente' ? _handleQuitarReporte : null,
+            onQuitar:
+                reporte.estado == 'pendiente' ? _handleQuitarReporte : null,
           );
         },
       );
@@ -384,7 +430,9 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView> wi
         const Divider(height: 1, thickness: 1),
         Expanded(
           child: RefreshIndicator(
-            onRefresh: () async { await refreshData(); }, // Llama al método público
+            onRefresh: () async {
+              await refreshData();
+            }, // Llama al método público
             child: listContent,
           ),
         ),

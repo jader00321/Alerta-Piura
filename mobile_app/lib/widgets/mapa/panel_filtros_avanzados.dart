@@ -48,8 +48,8 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       initialChildSize: 0.5, // Start at 50% of the screen height
-      minChildSize: 0.3,   // Can be dragged down to 30%
-      maxChildSize: 0.8,   // Can be dragged up to 80%
+      minChildSize: 0.3, // Can be dragged down to 30%
+      maxChildSize: 0.8, // Can be dragged up to 80%
       expand: false,
       builder: (_, scrollController) {
         return Container(
@@ -103,12 +103,13 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
                     _buildSectionHeader('Estado del Reporte'),
                     Wrap(
                       spacing: 8.0,
-                      children: [ 'Verificado', 'Pendiente'].map((status) {
+                      children: ['Verificado', 'Pendiente'].map((status) {
                         return ChoiceChip(
                           label: Text(status),
                           selected: _filtrosSeleccionados.estado == status,
                           onSelected: (selected) {
-                            setState(() => _filtrosSeleccionados.estado = selected ? status : null);
+                            setState(() => _filtrosSeleccionados.estado =
+                                selected ? status : null);
                           },
                         );
                       }).toList(),
@@ -116,12 +117,17 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
                     _buildSectionHeader('Rango de Fechas'),
                     Wrap(
                       spacing: 8.0,
-                      children: ['Cualquier fecha', 'Últimos 7 días', 'Últimos 30 días'].map((range) {
+                      children: [
+                        'Cualquier fecha',
+                        'Últimos 7 días',
+                        'Últimos 30 días'
+                      ].map((range) {
                         return ChoiceChip(
                           label: Text(range),
                           selected: _filtrosSeleccionados.rangoFechas == range,
                           onSelected: (selected) {
-                            setState(() => _filtrosSeleccionados.rangoFechas = selected ? range : null);
+                            setState(() => _filtrosSeleccionados.rangoFechas =
+                                selected ? range : null);
                           },
                         );
                       }).toList(),
@@ -130,15 +136,19 @@ class _PanelFiltrosAvanzadosState extends State<PanelFiltrosAvanzados> {
                     FutureBuilder<List<Categoria>>(
                       future: _categoriasFuture,
                       builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                        if (!snapshot.hasData)
+                          return const Center(
+                              child: CircularProgressIndicator());
                         return Wrap(
                           spacing: 8.0,
                           children: snapshot.data!.map((cat) {
                             return FilterChip(
                               label: Text(cat.nombre),
-                              selected: _filtrosSeleccionados.categoriaId == cat.id,
+                              selected:
+                                  _filtrosSeleccionados.categoriaId == cat.id,
                               onSelected: (selected) {
-                                setState(() => _filtrosSeleccionados.categoriaId = selected ? cat.id : null);
+                                setState(() => _filtrosSeleccionados
+                                    .categoriaId = selected ? cat.id : null);
                               },
                             );
                           }).toList(),

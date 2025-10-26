@@ -42,14 +42,19 @@ class FiltrosPendientes extends StatelessWidget {
                     hintText: 'Buscar por título o código...',
                     prefixIcon: const Icon(Icons.search, size: 20),
                     isDense: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30)),
                     contentPadding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                 ),
               ),
               IconButton(
-                icon: Icon(sortBy == 'fecha_asc' ? Icons.arrow_upward : Icons.arrow_downward),
-                tooltip: sortBy == 'fecha_asc' ? 'Ordenar por más reciente' : 'Ordenar por más antiguo',
+                icon: Icon(sortBy == 'fecha_asc'
+                    ? Icons.arrow_upward
+                    : Icons.arrow_downward),
+                tooltip: sortBy == 'fecha_asc'
+                    ? 'Ordenar por más reciente'
+                    : 'Ordenar por más antiguo',
                 onPressed: onSortToggle,
               ),
             ],
@@ -64,37 +69,67 @@ class FiltrosPendientes extends StatelessWidget {
                   Wrap(
                     spacing: 8.0,
                     children: FiltroPendiente.values.map((filtro) {
-                      String label; Icon? icon; Color? color;
-                      switch(filtro) {
-                        case FiltroPendiente.prioritarios: label = 'Premium'; icon = const Icon(Icons.star, size: 14); color = Colors.amber.shade700; break;
-                        case FiltroPendiente.conApoyos: label = 'Con Apoyos'; icon = const Icon(Icons.local_fire_department, size: 14); color = Colors.red.shade700; break;
-                        default: label = 'Todos'; icon = null; color = Theme.of(context).colorScheme.primary; break;
+                      String label;
+                      Icon? icon;
+                      Color? color;
+                      switch (filtro) {
+                        case FiltroPendiente.prioritarios:
+                          label = 'Premium';
+                          icon = const Icon(Icons.star, size: 14);
+                          color = Colors.amber.shade700;
+                          break;
+                        case FiltroPendiente.conApoyos:
+                          label = 'Con Apoyos';
+                          icon =
+                              const Icon(Icons.local_fire_department, size: 14);
+                          color = Colors.red.shade700;
+                          break;
+                        default:
+                          label = 'Todos';
+                          icon = null;
+                          color = Theme.of(context).colorScheme.primary;
+                          break;
                       }
                       return ChoiceChip(
                         avatar: icon,
-                        label: Text(label, style: const TextStyle(fontSize: 12)),
+                        label:
+                            Text(label, style: const TextStyle(fontSize: 12)),
                         selected: filtroPendiente == filtro,
                         onSelected: (selected) {
                           if (selected) onFiltroPendienteChanged(filtro);
                         },
                         visualDensity: VisualDensity.compact,
                         selectedColor: color.withOpacity(0.1),
-                        labelStyle: TextStyle(color: filtroPendiente == filtro ? color : null),
+                        labelStyle: TextStyle(
+                            color: filtroPendiente == filtro ? color : null),
                       );
                     }).toList(),
                   ),
                   const SizedBox(width: 16),
                   if (isLoadingCategories)
-                    const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                    const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2))
                   else if (categoriasDisponibles.isNotEmpty)
                     DropdownButtonHideUnderline(
                       child: DropdownButton<int?>(
                         value: filtroCategoriaId,
-                        hint: const Text('Categoría', style: TextStyle(fontSize: 12)),
+                        hint: const Text('Categoría',
+                            style: TextStyle(fontSize: 12)),
                         isDense: true,
                         items: [
-                           const DropdownMenuItem<int?>(value: null, child: Text('Todas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-                          ...categoriasDisponibles.map((cat) => DropdownMenuItem<int?>(value: cat.id, child: Text(cat.nombre, style: const TextStyle(fontSize: 12)))),
+                          const DropdownMenuItem<int?>(
+                              value: null,
+                              child: Text('Todas',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold))),
+                          ...categoriasDisponibles.map((cat) =>
+                              DropdownMenuItem<int?>(
+                                  value: cat.id,
+                                  child: Text(cat.nombre,
+                                      style: const TextStyle(fontSize: 12)))),
                         ],
                         onChanged: onCategoriaChanged,
                       ),

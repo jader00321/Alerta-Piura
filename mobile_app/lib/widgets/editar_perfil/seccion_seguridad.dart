@@ -28,7 +28,7 @@ class _SeccionSeguridadState extends State<SeccionSeguridad> {
   Future<void> _updatePassword() async {
     if (_formKey.currentState!.validate() && !_isSaving) {
       setState(() => _isSaving = true);
-      
+
       final response = await _perfilService.updateMyPassword(
         _currentPasswordController.text,
         _newPasswordController.text,
@@ -37,7 +37,8 @@ class _SeccionSeguridadState extends State<SeccionSeguridad> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(response['data']['message']),
-          backgroundColor: response['statusCode'] == 200 ? Colors.green : Colors.red,
+          backgroundColor:
+              response['statusCode'] == 200 ? Colors.green : Colors.red,
         ));
         if (response['statusCode'] == 200) {
           _currentPasswordController.clear();
@@ -66,8 +67,11 @@ class _SeccionSeguridadState extends State<SeccionSeguridad> {
               TextFormField(
                 controller: _currentPasswordController,
                 obscureText: _obscureText,
-                decoration: const InputDecoration(labelText: 'Contraseña Actual', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'La contraseña actual es requerida' : null,
+                decoration: const InputDecoration(
+                    labelText: 'Contraseña Actual',
+                    border: OutlineInputBorder()),
+                validator: (value) =>
+                    value!.isEmpty ? 'La contraseña actual es requerida' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -77,24 +81,35 @@ class _SeccionSeguridadState extends State<SeccionSeguridad> {
                   labelText: 'Nueva Contraseña',
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () => setState(() => _obscureText = !_obscureText),
+                    icon: Icon(
+                        _obscureText ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () =>
+                        setState(() => _obscureText = !_obscureText),
                   ),
                 ),
-                validator: (value) => (value?.length ?? 0) < 6 ? 'Debe tener al menos 6 caracteres' : null,
+                validator: (value) => (value?.length ?? 0) < 6
+                    ? 'Debe tener al menos 6 caracteres'
+                    : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: _obscureText,
-                decoration: const InputDecoration(labelText: 'Confirmar Nueva Contraseña', border: OutlineInputBorder()),
-                validator: (value) => value != _newPasswordController.text ? 'Las contraseñas no coinciden' : null,
+                decoration: const InputDecoration(
+                    labelText: 'Confirmar Nueva Contraseña',
+                    border: OutlineInputBorder()),
+                validator: (value) => value != _newPasswordController.text
+                    ? 'Las contraseñas no coinciden'
+                    : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isSaving ? null : _updatePassword,
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                child: _isSaving ? const CircularProgressIndicator() : const Text('Cambiar Contraseña'),
+                style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16)),
+                child: _isSaving
+                    ? const CircularProgressIndicator()
+                    : const Text('Cambiar Contraseña'),
               ),
             ],
           ),

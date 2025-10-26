@@ -18,10 +18,13 @@ class ServicioSuscripcion {
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/subscriptions/plans');
     try {
-      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      final response =
+          await http.get(url, headers: {'Authorization': 'Bearer $token'});
       if (response.statusCode == 200) {
         final List<dynamic> planesJson = json.decode(response.body);
-        return planesJson.map((json) => PlanSuscripcion.fromJson(json)).toList();
+        return planesJson
+            .map((json) => PlanSuscripcion.fromJson(json))
+            .toList();
       } else {
         throw Exception('Error al cargar los planes desde el servidor');
       }
@@ -32,13 +35,18 @@ class ServicioSuscripcion {
 
   // --- FUNCIÓN CORREGIDA ---
   /// Envía la solicitud de suscripción con un ID de plan y un payload de pago dinámico.
-  Future<Map<String, dynamic>> suscribirseAlPlan(int planId, Map<String, dynamic> paymentPayload) async {
+  Future<Map<String, dynamic>> suscribirseAlPlan(
+      int planId, Map<String, dynamic> paymentPayload) async {
     final token = await _getToken();
     if (token == null) {
-      return {'statusCode': 401, 'data': {'message': 'Usuario no autenticado'}};
+      return {
+        'statusCode': 401,
+        'data': {'message': 'Usuario no autenticado'}
+      };
     }
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/subscriptions/subscribe');
+    final url =
+        Uri.parse('${ApiConstants.baseUrl}/api/subscriptions/subscribe');
     try {
       // The body now correctly includes the planId along with the payment payload
       final body = {
@@ -48,21 +56,33 @@ class ServicioSuscripcion {
 
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
+        },
         body: json.encode(body),
       );
-      
-      return {'statusCode': response.statusCode, 'data': json.decode(response.body)};
+
+      return {
+        'statusCode': response.statusCode,
+        'data': json.decode(response.body)
+      };
     } catch (e) {
-      return {'statusCode': 500, 'data': {'message': 'Error de conexión durante la suscripción'}};
+      return {
+        'statusCode': 500,
+        'data': {'message': 'Error de conexión durante la suscripción'}
+      };
     }
   }
-  
+
   /// Envía la solicitud para cancelar la suscripción activa del usuario.
   Future<Map<String, dynamic>> cancelarSuscripcion() async {
     final token = await _getToken();
     if (token == null) {
-      return {'statusCode': 401, 'data': {'message': 'Usuario no autenticado'}};
+      return {
+        'statusCode': 401,
+        'data': {'message': 'Usuario no autenticado'}
+      };
     }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/subscriptions/cancel');
@@ -71,9 +91,15 @@ class ServicioSuscripcion {
         url,
         headers: {'Authorization': 'Bearer $token'},
       );
-      return {'statusCode': response.statusCode, 'data': json.decode(response.body)};
+      return {
+        'statusCode': response.statusCode,
+        'data': json.decode(response.body)
+      };
     } catch (e) {
-      return {'statusCode': 500, 'data': {'message': 'Error de conexión'}};
+      return {
+        'statusCode': 500,
+        'data': {'message': 'Error de conexión'}
+      };
     }
   }
 }

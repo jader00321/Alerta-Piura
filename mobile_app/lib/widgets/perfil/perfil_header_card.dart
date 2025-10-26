@@ -20,7 +20,8 @@ class PerfilHeaderCard extends StatelessWidget {
               radius: 50,
               backgroundColor: theme.colorScheme.primaryContainer,
               child: Text(
-                perfil.alias?[0].toUpperCase() ?? perfil.nombre[0].toUpperCase(),
+                perfil.alias?[0].toUpperCase() ??
+                    perfil.nombre[0].toUpperCase(),
                 style: TextStyle(
                   fontSize: 40,
                   fontWeight: FontWeight.bold,
@@ -31,10 +32,13 @@ class PerfilHeaderCard extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               perfil.alias ?? perfil.nombre,
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            Text(perfil.email, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600])),
+            Text(perfil.email,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: Colors.grey[600])),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -43,7 +47,8 @@ class PerfilHeaderCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   '${perfil.puntos} Puntos',
-                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             )

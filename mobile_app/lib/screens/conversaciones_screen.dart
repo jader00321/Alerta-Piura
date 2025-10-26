@@ -40,7 +40,9 @@ class _ConversacionesScreenState extends State<ConversacionesScreen> {
               return const EsqueletoListaReportes();
             }
             if (snapshot.hasError) {
-              return Center(child: Text('Error al cargar las conversaciones: ${snapshot.error}'));
+              return Center(
+                  child: Text(
+                      'Error al cargar las conversaciones: ${snapshot.error}'));
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return const Center(
@@ -54,19 +56,21 @@ class _ConversacionesScreenState extends State<ConversacionesScreen> {
                 ),
               );
             }
-            
+
             final conversaciones = snapshot.data!;
-            
+
             return ListView.builder(
               padding: const EdgeInsets.all(8.0),
               itemCount: conversaciones.length,
               itemBuilder: (context, index) {
                 final conv = conversaciones[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 6.0, horizontal: 8.0),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
                       child: Icon(
                         Icons.chat_bubble_outline,
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -78,7 +82,8 @@ class _ConversacionesScreenState extends State<ConversacionesScreen> {
                     ),
                     subtitle: Text(
                       conv.tituloReporte,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

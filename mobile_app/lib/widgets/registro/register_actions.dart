@@ -22,7 +22,8 @@ class RegisterActions extends StatelessWidget {
           ? const SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white),
+              child: CircularProgressIndicator(
+                  strokeWidth: 3, color: Colors.white),
             )
           : const Text('Registrarse'),
     );

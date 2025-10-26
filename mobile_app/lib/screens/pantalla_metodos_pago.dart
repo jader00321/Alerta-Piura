@@ -31,7 +31,9 @@ class _PantallaMetodosPagoState extends State<PantallaMetodosPago> {
     final success = await _service.establecerPredeterminado(id);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? 'Método predeterminado actualizado.' : 'Error al actualizar.'),
+        content: Text(success
+            ? 'Método predeterminado actualizado.'
+            : 'Error al actualizar.'),
         backgroundColor: success ? Colors.green : Colors.red,
       ));
       if (success) _loadMetodos();
@@ -43,10 +45,16 @@ class _PantallaMetodosPagoState extends State<PantallaMetodosPago> {
         context: context,
         builder: (ctx) => AlertDialog(
               title: const Text('Eliminar Tarjeta'),
-              content: const Text('¿Estás seguro de que quieres eliminar este método de pago?'),
+              content: const Text(
+                  '¿Estás seguro de que quieres eliminar este método de pago?'),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-                TextButton(style: TextButton.styleFrom(foregroundColor: Colors.red), onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar')),
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancelar')),
+                TextButton(
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Eliminar')),
               ],
             ));
 
@@ -62,7 +70,7 @@ class _PantallaMetodosPagoState extends State<PantallaMetodosPago> {
           content: Text(message),
           backgroundColor: success ? Colors.green : Colors.red,
         ));
-        
+
         if (success) _loadMetodos();
       }
     }
@@ -82,7 +90,8 @@ class _PantallaMetodosPagoState extends State<PantallaMetodosPago> {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No tienes métodos de pago guardados.'));
+            return const Center(
+                child: Text('No tienes métodos de pago guardados.'));
           }
           final metodos = snapshot.data!;
           return ListView.builder(
@@ -93,19 +102,26 @@ class _PantallaMetodosPagoState extends State<PantallaMetodosPago> {
               return Card(
                 child: ListTile(
                   leading: const Icon(Icons.credit_card),
-                  title: Text('${metodo.tipoTarjeta} terminada en ${metodo.ultimosCuatroDigitos}'),
+                  title: Text(
+                      '${metodo.tipoTarjeta} terminada en ${metodo.ultimosCuatroDigitos}'),
                   subtitle: Text('Expira: ${metodo.fechaExpiracion}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (metodo.esPredeterminado) 
-                        Chip(label: const Text('Predet.'), backgroundColor: Colors.teal.shade100, labelStyle: TextStyle(color: Colors.teal.shade900), padding: EdgeInsets.zero,),
+                      if (metodo.esPredeterminado)
+                        Chip(
+                          label: const Text('Predet.'),
+                          backgroundColor: Colors.teal.shade100,
+                          labelStyle: TextStyle(color: Colors.teal.shade900),
+                          padding: EdgeInsets.zero,
+                        ),
                       PopupMenuButton<String>(
                         onSelected: (value) {
                           if (value == 'default') _handleSetDefault(metodo.id);
                           if (value == 'delete') _handleDelete(metodo.id);
                         },
-                        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                        itemBuilder: (BuildContext context) =>
+                            <PopupMenuEntry<String>>[
                           if (!metodo.esPredeterminado)
                             const PopupMenuItem<String>(
                               value: 'default',
@@ -127,7 +143,8 @@ class _PantallaMetodosPagoState extends State<PantallaMetodosPago> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final result = await Navigator.pushNamed(context, '/agregar_metodo_pago');
+          final result =
+              await Navigator.pushNamed(context, '/agregar_metodo_pago');
           if (result == true) _loadMetodos();
         },
         label: const Text('Añadir Tarjeta'),

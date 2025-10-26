@@ -21,9 +21,12 @@ class PerfilActionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // --- CORRECCIÓN: Quitar Card y usar ListTile directamente ---
     return ListTile(
-      leading: Icon(icon, color: color ?? Theme.of(context).colorScheme.primary),
-      title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
-      subtitle: subtitle != null ? Text(subtitle!) : null, // <-- Mostrar subtítulo
+      leading:
+          Icon(icon, color: color ?? Theme.of(context).colorScheme.primary),
+      title: Text(title,
+          style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+      subtitle:
+          subtitle != null ? Text(subtitle!) : null, // <-- Mostrar subtítulo
       trailing: Icon(Icons.chevron_right, color: color ?? Colors.grey.shade400),
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

@@ -1,5 +1,6 @@
 // lib/api/lider_service.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart'; // Importar para debugPrint
 import 'package:http/http.dart' as http;
 import 'package:mobile_app/models/reporte_pendiente_model.dart';
 import 'package:mobile_app/utils/api_constants.dart';
@@ -8,7 +9,6 @@ import 'package:mobile_app/models/reporte_moderacion_model.dart';
 import 'package:mobile_app/models/solicitud_revision_model.dart';
 import 'package:mobile_app/models/reporte_historial_moderado_model.dart';
 
-// --- MODIFICADO: Añadir totalFiltrado ---
 class PagedResult<T> {
   final List<T> items;
   final bool hasMore;
@@ -20,7 +20,7 @@ class PagedResult<T> {
     required this.totalFiltrado, // <-- Añadido
   });
 }
-// --- FIN MODIFICADO ---
+
 
 
 class LiderService {
@@ -32,7 +32,9 @@ class LiderService {
   // Obtener Estadísticas (sin cambios)
   Future<Map<String, int>> getModeracionStats() async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/stats/moderacion');
     try {
       final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
@@ -44,12 +46,11 @@ class LiderService {
         throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar estadísticas'}');
       }
     } catch (e) {
-      print("Error fetching moderation stats: $e");
+      debugPrint("Error fetching moderation stats: $e");
       throw Exception('Error de conexión al cargar estadísticas.');
     }
   }
 
-  // --- MODIFICADO: getReportesPendientes (añadir sortBy) ---
   Future<PagedResult<ReportePendiente>> getReportesPendientes({
       int page = 1,
       int? categoriaId,
@@ -59,7 +60,9 @@ class LiderService {
       String? sortBy, // <-- Añadido
   }) async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
 
     final queryParameters = <String, String>{
       'page': page.toString(),
@@ -79,21 +82,18 @@ class LiderService {
           final Map<String, dynamic> decodedBody = json.decode(response.body);
           final List<dynamic> reportesJson = decodedBody['reportes'] ?? [];
           final bool hasMore = decodedBody['hasMore'] ?? false;
-          // --- MODIFICADO: Parsear totalFiltrado ---
           final int totalFiltrado = (decodedBody['totalFiltrado'] as num?)?.toInt() ?? 0;
-          // --- FIN MODIFICADO ---
           final List<ReportePendiente> reportes = reportesJson.map((item) => ReportePendiente.fromJson(item)).toList();
           return PagedResult(items: reportes, hasMore: hasMore, totalFiltrado: totalFiltrado); // <-- Pasar totalFiltrado
         } else {
           throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar pendientes'}');
         }
     } catch(e) {
-        print("Error fetching pending reports: $e");
+        debugPrint("Error fetching pending reports: $e");
         throw Exception('Error de conexión al cargar pendientes.');
     }
   }
 
-  // --- MODIFICADO: getReportesModerados (con fechas precisas y totalFiltrado) ---
   Future<PagedResult<ReporteHistorialModerado>> getReportesModerados({
       int page = 1,
       String? estado, // 'verificado', 'rechazado', 'fusionado'
@@ -102,14 +102,14 @@ class LiderService {
       DateTime? endDate, // <-- Añadido
   }) async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
 
     final queryParameters = <String, String>{
       'page': page.toString(),
       if (estado != null) 'estado': estado,
-      // Solo añadir 'fecha' si no hay rango preciso
       if (fecha != null && startDate == null && endDate == null) 'fecha': fecha,
-      // Añadir fechas precisas si existen
       if (startDate != null) 'startDate': startDate.toIso8601String().substring(0, 10), // Formato YYYY-MM-DD
       if (endDate != null) 'endDate': endDate.toIso8601String().substring(0, 10), // Formato YYYY-MM-DD
     };
@@ -123,29 +123,28 @@ class LiderService {
           final Map<String, dynamic> decodedBody = json.decode(response.body);
           final List<dynamic> reportesJson = decodedBody['reportes'] ?? [];
           final bool hasMore = decodedBody['hasMore'] ?? false;
-          // --- MODIFICADO: Parsear totalFiltrado ---
           final int totalFiltrado = (decodedBody['totalFiltrado'] as num?)?.toInt() ?? 0;
-          // --- FIN MODIFICADO ---
           final List<ReporteHistorialModerado> reportes = reportesJson.map((item) => ReporteHistorialModerado.fromJson(item)).toList();
           return PagedResult(items: reportes, hasMore: hasMore, totalFiltrado: totalFiltrado); // <-- Pasar totalFiltrado
         } else {
           throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar historial'}');
         }
     } catch(e) {
-        print("Error fetching moderation history: $e");
+        debugPrint("Error fetching moderation history: $e");
         throw Exception('Error de conexión al cargar historial.');
     }
   }
 
-  // --- MODIFICADO: getMisComentariosReportados (con fechas precisas y totalFiltrado) ---
   Future<PagedResult<ReporteModeracion>> getMisComentariosReportados({
       int page = 1,
-      String? fecha, // Fallback
-      DateTime? startDate, // <-- Añadido
-      DateTime? endDate, // <-- Añadido
+      String? fecha,
+      DateTime? startDate,
+      DateTime? endDate,
   }) async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
 
     final queryParameters = <String, String>{
       'page': page.toString(),
@@ -163,29 +162,28 @@ class LiderService {
           final Map<String, dynamic> decodedBody = json.decode(response.body);
           final List<dynamic> reportesJson = decodedBody['reportes'] ?? [];
           final bool hasMore = decodedBody['hasMore'] ?? false;
-          // --- MODIFICADO: Parsear totalFiltrado ---
           final int totalFiltrado = (decodedBody['totalFiltrado'] as num?)?.toInt() ?? 0;
-          // --- FIN MODIFICADO ---
           final List<ReporteModeracion> reportes = reportesJson.map((item) => ReporteModeracion.fromJson(item, TipoReporteModeracion.comentario)).toList();
           return PagedResult(items: reportes, hasMore: hasMore, totalFiltrado: totalFiltrado); // <-- Pasar totalFiltrado
         } else {
           throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar comentarios reportados'}');
         }
     } catch(e) {
-         print("Error fetching reported comments: $e");
+         debugPrint("Error fetching reported comments: $e");
          throw Exception('Error de conexión al cargar reportes.');
     }
   }
 
-  // --- MODIFICADO: getMisUsuariosReportados (con fechas precisas y totalFiltrado) ---
   Future<PagedResult<ReporteModeracion>> getMisUsuariosReportados({
       int page = 1,
-      String? fecha, // Fallback
-      DateTime? startDate, // <-- Añadido
-      DateTime? endDate, // <-- Añadido
+      String? fecha,
+      DateTime? startDate,
+      DateTime? endDate,
   }) async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
 
     final queryParameters = <String, String>{
       'page': page.toString(),
@@ -203,44 +201,48 @@ class LiderService {
           final Map<String, dynamic> decodedBody = json.decode(response.body);
           final List<dynamic> reportesJson = decodedBody['reportes'] ?? [];
           final bool hasMore = decodedBody['hasMore'] ?? false;
-           // --- MODIFICADO: Parsear totalFiltrado ---
           final int totalFiltrado = (decodedBody['totalFiltrado'] as num?)?.toInt() ?? 0;
-          // --- FIN MODIFICADO ---
           final List<ReporteModeracion> reportes = reportesJson.map((item) => ReporteModeracion.fromJson(item, TipoReporteModeracion.usuario)).toList();
           return PagedResult(items: reportes, hasMore: hasMore, totalFiltrado: totalFiltrado); // <-- Pasar totalFiltrado
         } else {
           throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar usuarios reportados'}');
         }
     } catch(e) {
-        print("Error fetching reported users: $e");
+        debugPrint("Error fetching reported users: $e");
         throw Exception('Error de conexión al cargar reportes.');
     }
   }
 
-  // aprobarReporte y rechazarReporte (sin cambios)
   Future<Map<String, dynamic>> aprobarReporte(int reporteId) async {
      final token = await _getToken();
-     if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+     if (token == null) {
+       return {'statusCode': 401, 'message': 'No autenticado'};
+     }
      final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes/$reporteId/aprobar');
      try {
        final response = await http.put(url, headers: {'Authorization': 'Bearer $token'});
        final body = json.decode(response.body);
        return {'statusCode': response.statusCode, 'message': body['message'] ?? 'Respuesta inesperada'};
-     } catch (e) { return {'statusCode': 500, 'message': 'Error de conexión.'}; }
+     } catch (e) {
+       return {'statusCode': 500, 'message': 'Error de conexión.'};
+     }
   }
 
   Future<Map<String, dynamic>> rechazarReporte(int reporteId) async {
       final token = await _getToken();
-     if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+     if (token == null) {
+       return {'statusCode': 401, 'message': 'No autenticado'};
+     }
      final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes/$reporteId/rechazar');
      try {
        final response = await http.put(url, headers: {'Authorization': 'Bearer $token'});
        final body = json.decode(response.body);
        return {'statusCode': response.statusCode, 'message': body['message'] ?? 'Respuesta inesperada'};
-     } catch (e) { return {'statusCode': 500, 'message': 'Error de conexión.'}; }
+     } catch (e) {
+       return {'statusCode': 500, 'message': 'Error de conexión.'};
+     }
   }
 
-  // editarReporteLider (sin cambios)
   Future<Map<String, dynamic>> editarReporteLider(int reporteId, {
     required String titulo,
     String? descripcion,
@@ -249,7 +251,9 @@ class LiderService {
     List<String>? tags,
   }) async {
     final token = await _getToken();
-    if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+    if (token == null) {
+      return {'statusCode': 401, 'message': 'No autenticado'};
+    }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reporte/$reporteId');
     try {
       final response = await http.put(
@@ -266,15 +270,16 @@ class LiderService {
       final body = json.decode(response.body);
       return {'statusCode': response.statusCode, 'message': body['message'] ?? 'Respuesta inesperada'};
     } catch (e) {
-        print("Error en editarReporteLider: $e");
+        debugPrint("Error en editarReporteLider: $e");
         return {'statusCode': 500, 'message': 'Error de conexión.'};
     }
   }
 
-  // fusionarReporte (sin cambios)
   Future<Map<String, dynamic>> fusionarReporte(int reporteDuplicadoId, int reporteOriginalId) async {
     final token = await _getToken();
-    if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+    if (token == null) {
+      return {'statusCode': 401, 'message': 'No autenticado'};
+    }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reporte/$reporteDuplicadoId/fusionar');
     try {
       final response = await http.post(
@@ -285,15 +290,16 @@ class LiderService {
       final body = json.decode(response.body);
       return {'statusCode': response.statusCode, 'message': body['message'] ?? 'Respuesta inesperada'};
     } catch (e) {
-      print("Error en fusionarReporte: $e");
+      debugPrint("Error en fusionarReporte: $e");
       return {'statusCode': 500, 'message': 'Error de conexión.'};
     }
   }
 
-  // eliminarReporteModeracion (sin cambios)
   Future<Map<String, dynamic>> eliminarReporteModeracion(int moderacionReporteId, TipoReporteModeracion tipo) async {
     final token = await _getToken();
-    if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+    if (token == null) {
+      return {'statusCode': 401, 'message': 'No autenticado'};
+    }
     final tipoString = tipo == TipoReporteModeracion.comentario ? 'comentario' : 'usuario';
     final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/moderacion/$tipoString/$moderacionReporteId');
     try {
@@ -306,15 +312,16 @@ class LiderService {
       }
       return {'statusCode': response.statusCode, 'message': message};
     } catch (e) {
-      print("Error en eliminarReporteModeracion: $e");
+      debugPrint("Error en eliminarReporteModeracion: $e");
       return {'statusCode': 500, 'message': 'Error de conexión.'};
     }
   }
 
-  // getMisSolicitudesRevision (sin cambios)
   Future<List<SolicitudRevision>> getMisSolicitudesRevision() async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/me/solicitudes-revision');
     final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
@@ -327,21 +334,21 @@ class LiderService {
     }
   }
 
-  // --- solicitarRevision (ACTUALIZADO para enviar motivo) ---
-  Future<Map<String, dynamic>> solicitarRevision(int reporteId, String motivo) async { // <-- Añadir motivo
+  Future<Map<String, dynamic>> solicitarRevision(int reporteId, String motivo) async {
     final token = await _getToken();
-    if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+    if (token == null) {
+      return {'statusCode': 401, 'message': 'No autenticado'};
+    }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/reportes/$reporteId/solicitar-revision');
     try {
       final response = await http.post(
         url,
-        headers: { // <-- Añadir headers y body
+        headers: { 
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token'
         },
-        body: json.encode({'motivo': motivo}), // <-- Enviar motivo
+        body: json.encode({'motivo': motivo}), 
       );
-      // Manejar posible cuerpo vacío en éxito
       String message = 'Respuesta inesperada';
       if (response.body.isNotEmpty) {
           try {
@@ -352,30 +359,29 @@ class LiderService {
       }
       return {'statusCode': response.statusCode, 'message': message};
     } catch (e) {
-      print("Error en solicitarRevision: $e");
+      debugPrint("Error en solicitarRevision: $e");
       return {'statusCode': 500, 'message': 'Error de conexión.'};
     }
   }
 
-  // --- NUEVO MÉTODO: Obtener Zonas Asignadas ---
   Future<List<String>> getMisZonasAsignadas() async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/lider/me/zonas-asignadas');
     try {
       final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
       if (response.statusCode == 200) {
-        // La API devuelve directamente una lista de strings
         final List<dynamic> data = json.decode(response.body);
         return List<String>.from(data);
       } else {
         throw Exception('Error ${response.statusCode}: ${json.decode(response.body)['message'] ?? 'Error al cargar zonas asignadas'}');
       }
     } catch (e) {
-      print("Error fetching assigned zones: $e");
+      debugPrint("Error fetching assigned zones: $e");
       throw Exception('Error de conexión al cargar zonas.');
     }
   }
-  // --- FIN NUEVO MÉTODO ---
 
 }

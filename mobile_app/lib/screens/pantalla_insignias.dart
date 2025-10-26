@@ -24,14 +24,22 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
   // Función para obtener el icono basado en el 'icono_url'
   IconData _obtenerIcono(String? iconoUrl) {
     switch (iconoUrl) {
-      case 'premium_shield': return Icons.shield_rounded;
-      case 'reporter_badge': return Icons.assignment_ind_rounded;
-      case 'collaborator_star': return Icons.star_purple500_rounded;
-      case 'city_defender_crest': return Icons.verified_user_rounded;
-      case 'school': return Icons.school_rounded; // Ciudadano Iniciado
-      case 'record_voice_over': return Icons.record_voice_over_rounded; // Voz Activa
-      case 'security': return Icons.security_rounded; // Guardián del Barrio
-      default: return Icons.emoji_events_outlined; // Icono por defecto
+      case 'premium_shield':
+        return Icons.shield_rounded;
+      case 'reporter_badge':
+        return Icons.assignment_ind_rounded;
+      case 'collaborator_star':
+        return Icons.star_purple500_rounded;
+      case 'city_defender_crest':
+        return Icons.verified_user_rounded;
+      case 'school':
+        return Icons.school_rounded; // Ciudadano Iniciado
+      case 'record_voice_over':
+        return Icons.record_voice_over_rounded; // Voz Activa
+      case 'security':
+        return Icons.security_rounded; // Guardián del Barrio
+      default:
+        return Icons.emoji_events_outlined; // Icono por defecto
     }
   }
 
@@ -50,10 +58,12 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
             return const EsqueletoListaActividad(); // Muestra esqueleto mientras carga
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error al cargar insignias: ${snapshot.error}'));
+            return Center(
+                child: Text('Error al cargar insignias: ${snapshot.error}'));
           }
           if (!snapshot.hasData) {
-            return const Center(child: Text('No se encontró información de insignias.'));
+            return const Center(
+                child: Text('No se encontró información de insignias.'));
           }
 
           final progreso = snapshot.data!;
@@ -70,11 +80,13 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
           // Encontrar la próxima insignia por puntos
           InsigniaDetalle? proximaInsignia;
           // Ordenar bloqueadas por puntos necesarios ascendente para encontrar la próxima
-          insigniasBloqueadas.sort((a, b) => (a.puntosNecesarios ?? 0).compareTo(b.puntosNecesarios ?? 0));
-          if(insigniasBloqueadas.isNotEmpty) {
-            proximaInsignia = insigniasBloqueadas.firstWhere((i) => (i.puntosNecesarios ?? 0) > puntosUsuario, orElse: () => insigniasBloqueadas.last);
+          insigniasBloqueadas.sort((a, b) =>
+              (a.puntosNecesarios ?? 0).compareTo(b.puntosNecesarios ?? 0));
+          if (insigniasBloqueadas.isNotEmpty) {
+            proximaInsignia = insigniasBloqueadas.firstWhere(
+                (i) => (i.puntosNecesarios ?? 0) > puntosUsuario,
+                orElse: () => insigniasBloqueadas.last);
           }
-
 
           return ListView(
             padding: const EdgeInsets.all(16.0),
@@ -87,7 +99,9 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      Text('Tus Puntos de Comunidad', style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
+                      Text('Tus Puntos de Comunidad',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onPrimaryContainer)),
                       Text(
                         puntosUsuario.toString(),
                         style: theme.textTheme.displayMedium?.copyWith(
@@ -97,35 +111,49 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        proximaInsignia != null ? 'Siguiente Desafío:' : '¡Has desbloqueado todo!',
-                        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.onPrimaryContainer), // Ajustar color
+                        proximaInsignia != null
+                            ? 'Siguiente Desafío:'
+                            : '¡Has desbloqueado todo!',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme
+                                .onPrimaryContainer), // Ajustar color
                       ),
                       Text(
                         proximaInsignia != null
-                          ? '${proximaInsignia.nombre} (${proximaInsignia.puntosNecesarios} Puntos)'
-                          : 'Sigue participando',
+                            ? '${proximaInsignia.nombre} (${proximaInsignia.puntosNecesarios} Puntos)'
+                            : 'Sigue participando',
                         style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                           color: theme.colorScheme.onPrimaryContainer, // Ajustar color
-                           fontSize: 20 // Ajustar tamaño si es muy grande
-                        ),
-                         textAlign: TextAlign.center, // Centrar texto
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme
+                                .onPrimaryContainer, // Ajustar color
+                            fontSize: 20 // Ajustar tamaño si es muy grande
+                            ),
+                        textAlign: TextAlign.center, // Centrar texto
                       ),
-                      if (proximaInsignia != null && proximaInsignia.puntosNecesarios != null && proximaInsignia.puntosNecesarios! > 0) ...[ // Chequeo adicional
+                      if (proximaInsignia != null &&
+                          proximaInsignia.puntosNecesarios != null &&
+                          proximaInsignia.puntosNecesarios! > 0) ...[
+                        // Chequeo adicional
                         const SizedBox(height: 12),
                         LinearProgressIndicator(
                           // Asegurar que el valor esté entre 0 y 1
-                          value: (puntosUsuario / proximaInsignia.puntosNecesarios!).clamp(0.0, 1.0),
+                          value: (puntosUsuario /
+                                  proximaInsignia.puntosNecesarios!)
+                              .clamp(0.0, 1.0),
                           minHeight: 10,
                           borderRadius: BorderRadius.circular(5),
-                          backgroundColor: theme.colorScheme.primary.withOpacity(0.2), // Fondo más claro
-                          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary), // Color primario
+                          backgroundColor: theme.colorScheme.primary
+                              .withOpacity(0.2), // Fondo más claro
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              theme.colorScheme.primary), // Color primario
                         ),
                         const SizedBox(height: 4),
                         Text(
                           // Calcular puntos restantes asegurando que no sea negativo
                           '${(proximaInsignia.puntosNecesarios! - puntosUsuario).clamp(0, proximaInsignia.puntosNecesarios!)} puntos restantes',
-                           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onPrimaryContainer), // Ajustar color
+                          style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme
+                                  .onPrimaryContainer), // Ajustar color
                         ),
                       ]
                     ],
@@ -136,12 +164,15 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
               // --- Insignias Obtenidas ---
               Padding(
                 padding: const EdgeInsets.only(top: 32.0, bottom: 16.0),
-                child: Text('Insignias Obtenidas (${insigniasGanadas.length})', style: theme.textTheme.headlineSmall),
+                child: Text('Insignias Obtenidas (${insigniasGanadas.length})',
+                    style: theme.textTheme.headlineSmall),
               ),
               if (insigniasGanadas.isEmpty)
-                const Padding( // Añadir padding
+                const Padding(
+                  // Añadir padding
                   padding: EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text('¡Sigue participando para ganar tu primera insignia!'),
+                  child: Text(
+                      '¡Sigue participando para ganar tu primera insignia!'),
                 )
               else
                 GridView.builder(
@@ -151,7 +182,8 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                     crossAxisCount: 3, // Número de columnas
                     crossAxisSpacing: 12, // Espacio horizontal
                     mainAxisSpacing: 12, // Espacio vertical
-                    childAspectRatio: 0.85, // Relación ancho/alto (ajustar si es necesario)
+                    childAspectRatio:
+                        0.85, // Relación ancho/alto (ajustar si es necesario)
                   ),
                   itemCount: insigniasGanadas.length,
                   itemBuilder: (context, index) {
@@ -159,7 +191,8 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                     return _InsigniaCard(
                       insignia: insignia,
                       icono: _obtenerIcono(insignia.iconoUrl),
-                      color: theme.colorScheme.primary, // Color para insignias ganadas
+                      color: theme
+                          .colorScheme.primary, // Color para insignias ganadas
                       isLocked: false,
                     );
                   },
@@ -168,13 +201,16 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
               // --- Insignias por Desbloquear ---
               Padding(
                 padding: const EdgeInsets.only(top: 32.0, bottom: 12.0),
-                child: Text('Por Desbloquear (${insigniasBloqueadas.length})', style: theme.textTheme.headlineSmall),
+                child: Text('Por Desbloquear (${insigniasBloqueadas.length})',
+                    style: theme.textTheme.headlineSmall),
               ),
               if (insigniasBloqueadas.isEmpty)
-                 const Padding( // Añadir padding
+                const Padding(
+                  // Añadir padding
                   padding: EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text('¡Felicidades! Has conseguido todas las insignias de progreso.'),
-                 )
+                  child: Text(
+                      '¡Felicidades! Has conseguido todas las insignias de progreso.'),
+                )
               else
                 GridView.builder(
                   shrinkWrap: true,
@@ -191,12 +227,13 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                     return _InsigniaCard(
                       insignia: insignia,
                       icono: _obtenerIcono(insignia.iconoUrl),
-                      color: Colors.grey.shade600, // Color para insignias bloqueadas
+                      color: Colors
+                          .grey.shade600, // Color para insignias bloqueadas
                       isLocked: true,
                     );
                   },
                 ),
-                 const SizedBox(height: 18), // Espacio extra al final
+              const SizedBox(height: 18), // Espacio extra al final
             ],
           );
         },
@@ -224,13 +261,15 @@ class _InsigniaCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Tooltip(
       message: isLocked
-        ? "${insignia.descripcion}\nRequiere: ${insignia.puntosNecesarios ?? '?'} puntos" // Mensaje para bloqueadas
-        : insignia.descripcion, // Mensaje para desbloqueadas
+          ? "${insignia.descripcion}\nRequiere: ${insignia.puntosNecesarios ?? '?'} puntos" // Mensaje para bloqueadas
+          : insignia.descripcion, // Mensaje para desbloqueadas
       preferBelow: false, // Mostrar tooltip arriba si es posible
       child: Card(
         elevation: isLocked ? 0 : 2, // Sin elevación si está bloqueada
         // Color de fondo diferente si está bloqueada
-        color: isLocked ? theme.colorScheme.onSurface.withOpacity(0.05) : theme.cardColor,
+        color: isLocked
+            ? theme.colorScheme.onSurface.withOpacity(0.05)
+            : theme.cardColor,
         clipBehavior: Clip.antiAlias, // Para asegurar bordes redondeados
         child: Padding(
           padding: const EdgeInsets.all(5.0), // Reducir padding si es necesario
@@ -238,29 +277,38 @@ class _InsigniaCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                isLocked ? Icons.lock_outline : icono, // Icono de candado o el de la insignia
+                isLocked
+                    ? Icons.lock_outline
+                    : icono, // Icono de candado o el de la insignia
                 size: 36, // Tamaño del icono
-                color: isLocked ? Colors.grey.shade500 : color, // Color diferente si está bloqueada
+                color: isLocked
+                    ? Colors.grey.shade500
+                    : color, // Color diferente si está bloqueada
               ),
               const SizedBox(height: 8), // Espacio
               Text(
                 insignia.nombre,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isLocked ? Colors.grey.shade600 : null, // Color de texto diferente
+                  color: isLocked
+                      ? Colors.grey.shade600
+                      : null, // Color de texto diferente
                 ),
                 textAlign: TextAlign.center,
                 // --- CORRECCIONES ---
                 maxLines: 2, // Permitir hasta 2 líneas
-                overflow: TextOverflow.ellipsis, // Usar ellipsis si excede 2 líneas
+                overflow:
+                    TextOverflow.ellipsis, // Usar ellipsis si excede 2 líneas
                 softWrap: true, // Permitir el salto de línea
                 // --- FIN CORRECCIONES ---
               ),
-              if (isLocked && insignia.puntosNecesarios != null) ...[ // Mostrar puntos solo si está bloqueada y tiene puntos definidos
+              if (isLocked && insignia.puntosNecesarios != null) ...[
+                // Mostrar puntos solo si está bloqueada y tiene puntos definidos
                 const SizedBox(height: 4),
                 Text(
                   '${insignia.puntosNecesarios} Pts',
-                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: Colors.grey.shade600),
                 )
               ]
             ],

@@ -9,10 +9,12 @@ class PantallaBuscarReporteOriginal extends StatefulWidget {
   const PantallaBuscarReporteOriginal({super.key});
 
   @override
-  State<PantallaBuscarReporteOriginal> createState() => _PantallaBuscarReporteOriginalState();
+  State<PantallaBuscarReporteOriginal> createState() =>
+      _PantallaBuscarReporteOriginalState();
 }
 
-class _PantallaBuscarReporteOriginalState extends State<PantallaBuscarReporteOriginal> {
+class _PantallaBuscarReporteOriginalState
+    extends State<PantallaBuscarReporteOriginal> {
   final ReporteService _reporteService = ReporteService();
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
@@ -68,8 +70,8 @@ class _PantallaBuscarReporteOriginalState extends State<PantallaBuscarReporteOri
       print("Error buscando reporte original: $e");
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al buscar: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error al buscar: $e'), backgroundColor: Colors.red));
       }
     }
   }
@@ -82,7 +84,8 @@ class _PantallaBuscarReporteOriginalState extends State<PantallaBuscarReporteOri
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight + 16),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
               controller: _searchController,
               autofocus: true,
@@ -90,7 +93,10 @@ class _PantallaBuscarReporteOriginalState extends State<PantallaBuscarReporteOri
                 hintText: 'Buscar por código o título...',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+                fillColor: Theme.of(context)
+                    .colorScheme
+                    .surfaceVariant
+                    .withOpacity(0.5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide.none,
@@ -103,22 +109,28 @@ class _PantallaBuscarReporteOriginalState extends State<PantallaBuscarReporteOri
       body: _isLoading
           ? const EsqueletoListaReportes() // Mostrar esqueleto mientras busca
           : _searchResults.isEmpty
-              ? const Center(child: Padding(
+              ? const Center(
+                  child: Padding(
                   padding: EdgeInsets.all(24.0),
-                  child: Text('No se encontraron reportes verificados con ese término.', textAlign: TextAlign.center),
+                  child: Text(
+                      'No se encontraron reportes verificados con ese término.',
+                      textAlign: TextAlign.center),
                 ))
               : ListView.builder(
                   itemCount: _searchResults.length,
                   itemBuilder: (context, index) {
                     final reporte = _searchResults[index];
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 4.0),
                       child: ListTile(
-                        title: Text(reporte.titulo, maxLines: 2, overflow: TextOverflow.ellipsis),
+                        title: Text(reporte.titulo,
+                            maxLines: 2, overflow: TextOverflow.ellipsis),
                         subtitle: Text(reporte.categoria),
                         leading: CircleAvatar(
-                            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                            child: const Icon(Icons.article),
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primaryContainer,
+                          child: const Icon(Icons.article),
                         ),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () {

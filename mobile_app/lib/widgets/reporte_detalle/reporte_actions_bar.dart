@@ -38,7 +38,9 @@ class ReporteActionsBar extends StatelessWidget {
             children: [
               const Icon(Icons.comment_outlined, size: 20, color: Colors.grey),
               const SizedBox(width: 8),
-              Text('$comentariosCount Comentarios', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)),
+              Text('$comentariosCount Comentarios',
+                  style: TextStyle(
+                      color: Theme.of(context).textTheme.bodySmall?.color)),
             ],
           ),
         ],

@@ -6,20 +6,26 @@ class TarjetaDetalleBoleta extends StatelessWidget {
 
   const TarjetaDetalleBoleta({super.key, required this.boleta});
 
-  Widget _buildDetailRow(BuildContext context, String title, String value, {bool isBold = false}) {
+  Widget _buildDetailRow(BuildContext context, String title, String value,
+      {bool isBold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600])),
+          Text(title,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.grey[600])),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: isBold ? FontWeight.bold : FontWeight.normal),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal),
             ),
           ),
         ],
@@ -44,13 +50,24 @@ class TarjetaDetalleBoleta extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Boleta de Venta', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold), softWrap: true,),
+                Text(
+                  'Boleta de Venta',
+                  style: theme.textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                  softWrap: true,
+                ),
                 const SizedBox(width: 4),
                 Chip(
                   label: Text(boleta.estadoTransaccion),
-                  backgroundColor: isApproved ? Colors.green.shade100 : Colors.red.shade100,
-                  labelStyle: TextStyle(color: isApproved ? Colors.green.shade800 : Colors.red.shade800, fontWeight: FontWeight.bold),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), // Ajustar padding
+                  backgroundColor:
+                      isApproved ? Colors.green.shade100 : Colors.red.shade100,
+                  labelStyle: TextStyle(
+                      color: isApproved
+                          ? Colors.green.shade800
+                          : Colors.red.shade800,
+                      fontWeight: FontWeight.bold),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 2), // Ajustar padding
                   visualDensity: VisualDensity.compact,
                 ),
               ],
@@ -66,22 +83,25 @@ class TarjetaDetalleBoleta extends StatelessWidget {
             const SizedBox(height: 8),
             _buildDetailRow(context, 'Cliente', boleta.nombreUsuario),
             _buildDetailRow(context, 'Email', boleta.emailUsuario),
-            
+
             const Divider(height: 30),
 
             // --- Detalles del Producto ---
-            Text('Descripción del Servicio:', style: theme.textTheme.titleMedium),
+            Text('Descripción del Servicio:',
+                style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             _buildDetailRow(context, 'Plan Contratado', boleta.nombrePlan),
-            _buildDetailRow(context, 'Fecha de Transacción', boleta.fechaCompleta),
-            
+            _buildDetailRow(
+                context, 'Fecha de Transacción', boleta.fechaCompleta),
+
             const Divider(height: 30),
 
             // --- Detalles del Pago ---
             Text('Método de Pago:', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            _buildDetailRow(context, 'Tarjeta', '${boleta.tipoTarjeta} terminada en **** ${boleta.ultimosCuatroDigitos}'),
-            
+            _buildDetailRow(context, 'Tarjeta',
+                '${boleta.tipoTarjeta} terminada en **** ${boleta.ultimosCuatroDigitos}'),
+
             const Divider(height: 30),
 
             // --- Total ---
@@ -91,7 +111,9 @@ class TarjetaDetalleBoleta extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Total Pagado', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Total Pagado',
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.bold)),
                 Text(
                   'S/ ${boleta.montoPagado}',
                   style: theme.textTheme.titleLarge?.copyWith(

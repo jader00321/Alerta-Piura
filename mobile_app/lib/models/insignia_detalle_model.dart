@@ -40,7 +40,7 @@ class ProgresoInsignias {
     var list = (json['insignias'] as List? ?? [])
         .map((i) => InsigniaDetalle.fromJson(i))
         .toList();
-    
+
     return ProgresoInsignias(
       puntosUsuario: (json['puntosUsuario'] as num?)?.toInt() ?? 0,
       insignias: list,

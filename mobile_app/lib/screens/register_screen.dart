@@ -15,7 +15,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Los controladores se mantienen en la pantalla principal para gestionar el estado
   final _nombreController = TextEditingController();
   final _aliasController = TextEditingController();
@@ -23,7 +23,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _telefonoController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _isLoading = false;
   final AuthService _authService = AuthService();
 
@@ -42,21 +42,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate() && !_isLoading) {
       setState(() => _isLoading = true);
-      
+
       try {
         final response = await _authService.register(
           nombre: _nombreController.text.trim(),
-          alias: _aliasController.text.trim().isNotEmpty ? _aliasController.text.trim() : null,
+          alias: _aliasController.text.trim().isNotEmpty
+              ? _aliasController.text.trim()
+              : null,
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
-          telefono: _telefonoController.text.trim().isNotEmpty ? _telefonoController.text.trim() : null,
+          telefono: _telefonoController.text.trim().isNotEmpty
+              ? _telefonoController.text.trim()
+              : null,
         );
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(response['data']['message']),
-              backgroundColor: response['statusCode'] == 201 ? Colors.green : Colors.red,
+              backgroundColor:
+                  response['statusCode'] == 201 ? Colors.green : Colors.red,
             ),
           );
           if (response['statusCode'] == 201) {
@@ -65,7 +70,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       } catch (e) {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Error de conexión. Inténtalo de nuevo.'),
               backgroundColor: Colors.red,

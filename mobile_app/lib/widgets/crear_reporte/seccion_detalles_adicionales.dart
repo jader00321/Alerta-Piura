@@ -39,33 +39,42 @@ class SeccionDetallesAdicionales extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Detalles Adicionales', style: Theme.of(context).textTheme.titleLarge),
+            Text('Detalles Adicionales',
+                style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
             TextFormField(
               controller: descripcionController,
-              decoration: const InputDecoration(labelText: 'Descripción (Opcional)', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'Descripción (Opcional)',
+                  border: OutlineInputBorder()),
               maxLines: 3,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: distritoSeleccionado,
-              decoration: const InputDecoration(labelText: 'Distrito', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'Distrito', border: OutlineInputBorder()),
               items: distritos.map((String value) {
-                return DropdownMenuItem<String>(value: value, child: Text(value));
+                return DropdownMenuItem<String>(
+                    value: value, child: Text(value));
               }).toList(),
               onChanged: onDistritoChanged,
-              validator: (value) => value == null ? 'Selecciona un distrito' : null,
+              validator: (value) =>
+                  value == null ? 'Selecciona un distrito' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: referenciaController,
-              decoration: const InputDecoration(labelText: 'Referencia de Ubicación (Opcional)', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'Referencia de Ubicación (Opcional)',
+                  border: OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Hora del Incidente (Opcional)'),
-              subtitle: Text(horaIncidente?.format(context) ?? 'No seleccionada'),
+              subtitle:
+                  Text(horaIncidente?.format(context) ?? 'No seleccionada'),
               trailing: const Icon(Icons.access_time),
               onTap: onSelectTime,
               shape: RoundedRectangleBorder(
@@ -76,9 +85,12 @@ class SeccionDetallesAdicionales extends StatelessWidget {
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: impactoSeleccionado,
-              decoration: const InputDecoration(labelText: 'Impacto del Problema', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'Impacto del Problema',
+                  border: OutlineInputBorder()),
               items: ['Solo a mí', 'A mi calle', 'A todo el barrio']
-                  .map((label) => DropdownMenuItem(value: label, child: Text(label)))
+                  .map((label) =>
+                      DropdownMenuItem(value: label, child: Text(label)))
                   .toList(),
               onChanged: onImpactoChanged,
             ),
@@ -95,10 +107,12 @@ class SeccionDetallesAdicionales extends StatelessWidget {
               padding: const EdgeInsets.only(top: 8.0),
               child: Wrap(
                 spacing: 8.0,
-                children: recommendedTags.map((tag) => ActionChip(
-                  label: Text(tag),
-                  onPressed: () => onAddTag(tag),
-                )).toList(),
+                children: recommendedTags
+                    .map((tag) => ActionChip(
+                          label: Text(tag),
+                          onPressed: () => onAddTag(tag),
+                        ))
+                    .toList(),
               ),
             ),
           ],

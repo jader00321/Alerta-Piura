@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/models/perfil_model.dart';
@@ -6,11 +7,11 @@ import 'package:mobile_app/utils/api_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_app/models/reporte_resumen_model.dart';
 import 'package:mobile_app/models/conversacion_model.dart';
-import 'package:mobile_app/models/notificacion_model.dart'; 
+import 'package:mobile_app/models/notificacion_model.dart';
 import 'package:mobile_app/models/historial_pago_model.dart';
 import 'package:mobile_app/models/boleta_detalle_model.dart';
 import 'package:mobile_app/models/estadisticas_model.dart';
-import 'package:mobile_app/models/zona_segura_model.dart'; 
+import 'package:mobile_app/models/zona_segura_model.dart';
 
 class PerfilService {
   Future<String?> _getToken() async {
@@ -18,10 +19,11 @@ class PerfilService {
     return prefs.getString('authToken');
   }
 
-  /// Obtiene los datos completos del perfil del usuario, incluyendo insignias.
   Future<Perfil> getMiPerfil() async {
     final token = await _getToken();
-    if (token == null) throw Exception('Usuario no autenticado');
+    if (token == null) {
+      throw Exception('Usuario no autenticado');
+    }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me');
     try {
@@ -40,10 +42,11 @@ class PerfilService {
     }
   }
 
-  /// Función genérica para obtener listas de actividad del usuario.
   Future<List<ReporteResumen>> _fetchReportList(String endpoint) async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
 
     final url = Uri.parse(ApiConstants.baseUrl + endpoint);
     try {
@@ -59,26 +62,23 @@ class PerfilService {
     }
   }
 
-  /// Obtiene los reportes creados por el usuario.
   Future<List<ReporteResumen>> getMisReportes() {
     return _fetchReportList('/api/perfil/me/reportes');
   }
 
-  /// Obtiene los reportes que el usuario ha apoyado.
   Future<List<ReporteResumen>> getMisApoyos() {
     return _fetchReportList('/api/perfil/me/apoyos');
   }
 
-  /// Obtiene los reportes en los que el usuario ha comentado.
   Future<List<ReporteResumen>> getMisComentarios() {
     return _fetchReportList('/api/perfil/me/comentarios');
   }
-  
-  /// --- FUNCIÓN AÑADIDA ---
-  /// Obtiene las conversaciones activas (chats) del usuario (para líderes).
+
   Future<List<Conversacion>> getMisConversaciones() async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/conversaciones');
     final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
@@ -91,10 +91,11 @@ class PerfilService {
     }
   }
 
-  /// Obtiene el historial de notificaciones del usuario.
   Future<List<Notificacion>> getMisNotificaciones() async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones');
     try {
@@ -110,10 +111,11 @@ class PerfilService {
     }
   }
 
-  /// Actualiza los datos básicos del perfil del usuario.
   Future<bool> updateMyProfile(String nombre, String? alias, String? telefono) async {
     final token = await _getToken();
-    if (token == null) return false;
+    if (token == null) {
+      return false;
+    }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me');
     final response = await http.put(
       url,
@@ -130,11 +132,12 @@ class PerfilService {
     return response.statusCode == 200;
   }
 
-  /// Actualiza la contraseña del usuario, verificando la actual.
   Future<Map<String, dynamic>> updateMyPassword(String currentPassword, String newPassword) async {
     final token = await _getToken();
-    if (token == null) return {'statusCode': 401, 'data': {'message': 'No autenticado'}};
-    
+    if (token == null) {
+      return {'statusCode': 401, 'data': {'message': 'No autenticado'}};
+    }
+
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/password');
     final response = await http.put(
       url,
@@ -152,7 +155,7 @@ class PerfilService {
 
   Future<Map<String, dynamic>> updateMyEmail(String newEmail, String password) async {
     final token = await _getToken();
-    final url = Uri.parse(ApiConstants.baseUrl + '/api/perfil/me/email');
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/email');
     final response = await http.put(url, headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token'
@@ -162,8 +165,10 @@ class PerfilService {
 
   Future<bool> verifyPassword(String password) async {
     final token = await _getToken();
-    if (token == null) return false;
-    final url = Uri.parse(ApiConstants.baseUrl + '/api/auth/verify-password');
+    if (token == null) {
+      return false;
+    }
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/auth/verify-password');
     final response = await http.post(url, headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token'
@@ -173,7 +178,9 @@ class PerfilService {
 
   Future<bool> marcarTodasComoLeidas() async {
     final token = await _getToken();
-    if (token == null) return false;
+    if (token == null) {
+      return false;
+    }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones/mark-all-read');
     try {
@@ -186,11 +193,12 @@ class PerfilService {
       return false;
     }
   }
-  
-  /// Obtiene el historial de transacciones de pago del usuario.
+
   Future<List<HistorialPago>> getHistorialPagos() async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/payment-history');
     try {
@@ -206,10 +214,11 @@ class PerfilService {
     }
   }
 
-  /// Obtiene los detalles completos de una boleta de pago específica.
   Future<BoletaDetalle> getDetalleBoleta(String transactionId) async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/invoices/$transactionId');
     try {
@@ -224,35 +233,40 @@ class PerfilService {
     }
   }
 
-Future<EstadisticasResumen> getMisEstadisticasResumen() async {
-  final token = await _getToken();
-  if (token == null) throw Exception('No autenticado');
-  final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/estadisticas/resumen');
-  final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
-  if (response.statusCode == 200) {
-    return EstadisticasResumen.fromJson(json.decode(response.body));
-  } else {
-    throw Exception('Error al cargar resumen de estadísticas');
+  Future<EstadisticasResumen> getMisEstadisticasResumen() async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/estadisticas/resumen');
+    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode == 200) {
+      return EstadisticasResumen.fromJson(json.decode(response.body));
+    } else {
+      throw Exception('Error al cargar resumen de estadísticas');
+    }
   }
-}
 
-Future<List<DatoGrafico>> getMisReportesPorCategoria() async {
-  final token = await _getToken();
-  if (token == null) throw Exception('No autenticado');
-  final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/estadisticas/por-categoria');
-  final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
-  if (response.statusCode == 200) {
-    List jsonResponse = json.decode(response.body);
-    return jsonResponse.map((item) => DatoGrafico.fromJson(item)).toList();
-  } else {
-    throw Exception('Error al cargar datos por categoría');
+  Future<List<DatoGrafico>> getMisReportesPorCategoria() async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/estadisticas/por-categoria');
+    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    if (response.statusCode == 200) {
+      List jsonResponse = json.decode(response.body);
+      return jsonResponse.map((item) => DatoGrafico.fromJson(item)).toList();
+    } else {
+      throw Exception('Error al cargar datos por categoría');
+    }
   }
-}
 
-/// Obtiene la lista de zonas seguras del usuario.
   Future<List<ZonaSegura>> getMisZonasSeguras() async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/zonas-seguras');
     final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
 
@@ -264,14 +278,15 @@ Future<List<DatoGrafico>> getMisReportesPorCategoria() async {
     }
   }
 
-  /// Crea una nueva zona segura para el usuario.
   Future<bool> crearZonaSegura({
     required String nombre,
     required LatLng centro,
     required int radio,
   }) async {
     final token = await _getToken();
-    if (token == null) return false;
+    if (token == null) {
+      return false;
+    }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/zonas-seguras');
     final response = await http.post(
       url,
@@ -286,10 +301,11 @@ Future<List<DatoGrafico>> getMisReportesPorCategoria() async {
     return response.statusCode == 201;
   }
 
-  /// Elimina una zona segura específica.
   Future<bool> eliminarZonaSegura(int idZona) async {
     final token = await _getToken();
-    if (token == null) return false;
+    if (token == null) {
+      return false;
+    }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/zonas-seguras/$idZona');
     final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
     return response.statusCode == 200;
@@ -300,8 +316,10 @@ Future<List<DatoGrafico>> getMisReportesPorCategoria() async {
     required String zonaPropuesta,
   }) async {
     final token = await _getToken();
-    if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
-    
+    if (token == null) {
+      return {'statusCode': 401, 'message': 'No autenticado'};
+    }
+
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/postular-lider');
     try {
       final response = await http.post(
@@ -312,19 +330,18 @@ Future<List<DatoGrafico>> getMisReportesPorCategoria() async {
           'zona_propuesta': zonaPropuesta,
         }),
       );
-      // Devolver status code y mensaje del body
       return {'statusCode': response.statusCode, 'message': json.decode(response.body)['message'] ?? 'Respuesta inesperada'};
     } catch (e) {
-      print("Error en postularComoLider: $e");
+      debugPrint("Error en postularComoLider: $e");
       return {'statusCode': 500, 'message': 'Error de conexión.'};
     }
   }
-  // --- FIN MODIFICADO ---
 
-  // --- NUEVO: getStatsActividad ---
   Future<Map<String, int>> getStatsActividad() async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
     final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/stats/actividad');
     try {
       final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
@@ -335,31 +352,31 @@ Future<List<DatoGrafico>> getMisReportesPorCategoria() async {
         throw Exception('Error al cargar estadísticas de actividad');
       }
     } catch (e) {
-      print("Error fetching activity stats: $e");
+      debugPrint("Error fetching activity stats: $e");
       throw Exception('Error de conexión al cargar estadísticas.');
     }
   }
 
   Future<Map<String, dynamic>> reportarUsuario(int userIdToReport, String motivo) async {
-  final token = await _getToken();
-  if (token == null) return {'statusCode': 401, 'message': 'No autenticado'};
+    final token = await _getToken();
+    if (token == null) {
+      return {'statusCode': 401, 'message': 'No autenticado'};
+    }
 
-  // Usa la ruta definida en usuarios.routes.js
-  final url = Uri.parse('${ApiConstants.baseUrl}/api/usuarios/$userIdToReport/reportar');
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: json.encode({'motivo': motivo}),
-    );
-    // Devolver status code y mensaje del body
-    return {
-      'statusCode': response.statusCode,
-      'message': json.decode(response.body)['message'] ?? 'Respuesta inesperada'
-    };
-  } catch (e) {
-    print("Error en reportarUsuario Service: $e");
-    return {'statusCode': 500, 'message': 'Error de conexión.'};
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/usuarios/$userIdToReport/reportar');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: json.encode({'motivo': motivo}),
+      );
+      return {
+        'statusCode': response.statusCode,
+        'message': json.decode(response.body)['message'] ?? 'Respuesta inesperada'
+      };
+    } catch (e) {
+      debugPrint("Error en reportarUsuario Service: $e");
+      return {'statusCode': 500, 'message': 'Error de conexión.'};
+    }
   }
-}
 }

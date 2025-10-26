@@ -6,7 +6,7 @@ import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_notificaciones.dar
 
 class PantallaAlertas extends StatefulWidget {
   const PantallaAlertas({super.key});
-  
+
   @override
   State<PantallaAlertas> createState() => _PantallaAlertasState();
 }
@@ -24,7 +24,8 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
 
   Future<void> _loadNotifications() async {
     setState(() {
-      _notificationsFuture = _perfilService.getMisNotificaciones().then((notifications) {
+      _notificationsFuture =
+          _perfilService.getMisNotificaciones().then((notifications) {
         if (mounted) {
           setState(() {
             _hasUnread = notifications.any((n) => !n.leido);
@@ -34,17 +35,20 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
       });
     });
   }
-  
+
   Future<void> _markAllAsRead() async {
     final success = await _perfilService.marcarTodasComoLeidas();
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Todas las notificaciones marcadas como leídas.')),
+        const SnackBar(
+            content: Text('Todas las notificaciones marcadas como leídas.')),
       );
       _loadNotifications();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al realizar la acción.'), backgroundColor: Colors.red),
+        const SnackBar(
+            content: Text('Error al realizar la acción.'),
+            backgroundColor: Colors.red),
       );
     }
   }
@@ -74,7 +78,9 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
               return const EsqueletoListaNotificaciones();
             }
             if (snapshot.hasError) {
-              return Center(child: Text('Error al cargar notificaciones: ${snapshot.error}'));
+              return Center(
+                  child: Text(
+                      'Error al cargar notificaciones: ${snapshot.error}'));
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return const Center(
@@ -96,19 +102,34 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
               itemBuilder: (context, index) {
                 final notif = notifications[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
-                  color: notif.leido ? null : Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 6.0, horizontal: 8.0),
+                  color: notif.leido
+                      ? null
+                      : Theme.of(context)
+                          .colorScheme
+                          .primaryContainer
+                          .withOpacity(0.3),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: notif.leido ? Colors.grey.shade300 : Theme.of(context).colorScheme.primary,
+                      backgroundColor: notif.leido
+                          ? Colors.grey.shade300
+                          : Theme.of(context).colorScheme.primary,
                       child: Icon(
-                        notif.leido ? Icons.notifications_off_outlined : Icons.notifications_active,
-                        color: notif.leido ? Colors.grey.shade700 : Theme.of(context).colorScheme.onPrimary,
+                        notif.leido
+                            ? Icons.notifications_off_outlined
+                            : Icons.notifications_active,
+                        color: notif.leido
+                            ? Colors.grey.shade700
+                            : Theme.of(context).colorScheme.onPrimary,
                       ),
                     ),
                     title: Text(
                       notif.titulo,
-                      style: TextStyle(fontWeight: notif.leido ? FontWeight.normal : FontWeight.bold),
+                      style: TextStyle(
+                          fontWeight: notif.leido
+                              ? FontWeight.normal
+                              : FontWeight.bold),
                     ),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4.0),

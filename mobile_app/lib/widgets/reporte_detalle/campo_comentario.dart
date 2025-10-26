@@ -31,17 +31,25 @@ class CampoComentarioInput extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 decoration: const InputDecoration(
-                  hintText: 'Escribe un comentario...', 
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 8)
-                ),
+                    hintText: 'Escribe un comentario...',
+                    border: InputBorder.none,
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 10, horizontal: 8)),
                 enabled: !isPosting,
                 maxLines: null, // Permitir múltiples líneas
               ),
             ),
             isPosting
-                ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator()))
-                : IconButton(icon: Icon(Icons.send, color: Theme.of(context).colorScheme.primary), onPressed: onSend),
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator()))
+                : IconButton(
+                    icon: Icon(Icons.send,
+                        color: Theme.of(context).colorScheme.primary),
+                    onPressed: onSend),
           ],
         ),
       ),
@@ -59,15 +67,18 @@ class PromptLoginComentario extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 24.0),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        boxShadow: [BoxShadow(blurRadius: 4, color: Colors.black.withOpacity(0.1), offset: const Offset(0, -2))]
-      ),
+          color: Theme.of(context).scaffoldBackgroundColor,
+          boxShadow: [
+            BoxShadow(
+                blurRadius: 4,
+                color: Colors.black.withOpacity(0.1),
+                offset: const Offset(0, -2))
+          ]),
       child: ElevatedButton.icon(
         icon: const Icon(Icons.login),
         label: const Text('Inicia sesión para comentar'),
         style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12)
-        ),
+            padding: const EdgeInsets.symmetric(vertical: 12)),
         onPressed: () => Navigator.pushNamed(context, '/login'),
       ),
     );

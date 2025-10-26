@@ -3,7 +3,7 @@ import 'dart:async'; // <-- IMPORTAR ASYNC
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:mobile_app/utils/api_constants.dart';
 import 'package:flutter/foundation.dart';
-import 'package:mobile_app/services/notification_service.dart'; 
+import 'package:mobile_app/services/notification_service.dart';
 
 class SocketService {
   static final SocketService _instance = SocketService._internal();
@@ -13,14 +13,14 @@ class SocketService {
   IO.Socket? _socket;
 
   // --- NUEVO: StreamController para el evento de detención de SOS ---
-  final StreamController<Map<String, dynamic>> _stopSosController = 
+  final StreamController<Map<String, dynamic>> _stopSosController =
       StreamController.broadcast();
-  
+
   // --- NUEVO: Stream público para que otros escuchen ---
   Stream<Map<String, dynamic>> get onStopSos => _stopSosController.stream;
 
-
-  void connect(String token) { // <-- MODIFICADO: Aceptar token
+  void connect(String token) {
+    // <-- MODIFICADO: Aceptar token
     if (_socket?.connected ?? false) {
       debugPrint('Socket ya conectado.');
       return;
@@ -35,18 +35,18 @@ class SocketService {
 
     _setupListeners();
     // No necesitamos 'authenticate' manual, pero la conexión sí
-    _socket!.connect(); 
+    _socket!.connect();
   }
 
   void _setupListeners() {
     _socket?.onConnect((_) {
       debugPrint('Socket conectado: ${_socket!.id}');
     });
-    
+
     _socket?.on('authenticated', (_) {
       debugPrint('Socket autenticado exitosamente!');
     });
-    
+
     _socket?.on('unauthorized', (data) {
       debugPrint('Fallo en la autenticación del socket: ${data['message']}');
     });

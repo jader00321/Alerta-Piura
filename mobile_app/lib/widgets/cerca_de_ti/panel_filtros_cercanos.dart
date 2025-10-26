@@ -13,7 +13,8 @@ class OpcionFecha {
 class PanelFiltrosCercanos extends StatefulWidget {
   final FiltrosCercanos filtrosActuales;
   final Function(FiltrosCercanos) onAplicarFiltros;
-  final List<Categoria> categoriasDisponibles; // Pasamos las categorías cargadas
+  final List<Categoria>
+      categoriasDisponibles; // Pasamos las categorías cargadas
 
   const PanelFiltrosCercanos({
     super.key,
@@ -68,7 +69,8 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
     required Function(T?) onSelected,
     required String Function(T) getLabel,
     required bool Function(T, T?) isSelected,
-    bool useFilterChip = false, // Flag para usar FilterChip en lugar de ChoiceChip
+    bool useFilterChip =
+        false, // Flag para usar FilterChip en lugar de ChoiceChip
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,18 +84,18 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
           runSpacing: 4.0,
           children: items.map((item) {
             if (useFilterChip) {
-               return FilterChip(
-                 label: Text(getLabel(item)),
-                 selected: isSelected(item, currentSelection),
-                 onSelected: (selected) {
-                   setState(() {
-                     // FilterChip permite deselección, onSelected pasa true/false
-                     onSelected(selected ? item : null);
-                   });
-                 },
-               );
+              return FilterChip(
+                label: Text(getLabel(item)),
+                selected: isSelected(item, currentSelection),
+                onSelected: (selected) {
+                  setState(() {
+                    // FilterChip permite deselección, onSelected pasa true/false
+                    onSelected(selected ? item : null);
+                  });
+                },
+              );
             } else {
-               return ChoiceChip(
+              return ChoiceChip(
                 label: Text(getLabel(item)),
                 selected: isSelected(item, currentSelection),
                 onSelected: (selected) {
@@ -102,7 +104,7 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                   // Simplemente seleccionamos el nuevo item.
                   if (selected) {
                     setState(() {
-                       onSelected(item);
+                      onSelected(item);
                     });
                   }
                 },
@@ -117,36 +119,45 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
   @override
   Widget build(BuildContext context) {
     // Lista para categorías, incluyendo 'Todas' (representado por null)
-    final List<Categoria?> categoriasConTodos = [null, ...widget.categoriasDisponibles];
+    final List<Categoria?> categoriasConTodos = [
+      null,
+      ...widget.categoriasDisponibles
+    ];
 
     return DraggableScrollableSheet(
       initialChildSize: 0.6, // Inicia al 60%
-      minChildSize: 0.3,   // Mínimo 30%
-      maxChildSize: 0.9,   // Máximo 90%
+      minChildSize: 0.3, // Mínimo 30%
+      maxChildSize: 0.9, // Máximo 90%
       expand: false,
       builder: (_, scrollController) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            boxShadow: [ BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)]
-          ),
+              color: Theme.of(context).cardColor,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(20)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)
+              ]),
           child: Column(
             children: [
               // Handle
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                 child: Container(
-                  width: 40, height: 5,
-                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(12)),
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
               // Header y Botón Aplicar
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Filtrar Reportes Cercanos', style: Theme.of(context).textTheme.titleLarge),
+                  Text('Filtrar Reportes Cercanos',
+                      style: Theme.of(context).textTheme.titleLarge),
                   ElevatedButton(
                     onPressed: () {
                       widget.onAplicarFiltros(_filtrosSeleccionados);
@@ -164,86 +175,97 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
                   children: [
                     // Filtro de Estado
                     _buildChipSection<String>(
-                      title: 'Estado',
-                      items: _estadosMap.keys.toList(),
-                      currentSelection: _estadosMap.entries.firstWhere((e) => e.value == _filtrosSeleccionados.estado, orElse: () => _estadosMap.entries.first).key,
-                      getLabel: (s) => s,
-                      isSelected: (item, current) => item == current,
-                      onSelected: (selectedKey) {
-                        // ChoiceChip siempre selecciona, no deselecciona
-                        if (selectedKey != null) {
-                          setState(() {
-                            _filtrosSeleccionados = FiltrosCercanos(
-                              categoriaId: _filtrosSeleccionados.categoriaId,
-                              urgencia: _filtrosSeleccionados.urgencia,
-                              dias: _filtrosSeleccionados.dias,
-                              estado: _estadosMap[selectedKey],
-                            );
-                          });
-                        }
-                      }
-                    ),
+                        title: 'Estado',
+                        items: _estadosMap.keys.toList(),
+                        currentSelection: _estadosMap.entries
+                            .firstWhere(
+                                (e) => e.value == _filtrosSeleccionados.estado,
+                                orElse: () => _estadosMap.entries.first)
+                            .key,
+                        getLabel: (s) => s,
+                        isSelected: (item, current) => item == current,
+                        onSelected: (selectedKey) {
+                          // ChoiceChip siempre selecciona, no deselecciona
+                          if (selectedKey != null) {
+                            setState(() {
+                              _filtrosSeleccionados = FiltrosCercanos(
+                                categoriaId: _filtrosSeleccionados.categoriaId,
+                                urgencia: _filtrosSeleccionados.urgencia,
+                                dias: _filtrosSeleccionados.dias,
+                                estado: _estadosMap[selectedKey],
+                              );
+                            });
+                          }
+                        }),
                     // Filtro de Categoría (Usando FilterChip)
                     _buildChipSection<Categoria?>(
-                      title: 'Categoría',
-                      items: categoriasConTodos,
-                      currentSelection: categoriasConTodos.firstWhere((c) => c?.id == _filtrosSeleccionados.categoriaId, orElse: () => null),
-                      getLabel: (c) => c?.nombre ?? 'Todas',
-                      isSelected: (item, current) => item?.id == current?.id,
-                      useFilterChip: true, // Usar FilterChip aquí
-                      onSelected: (selectedCategoria) {
-                         // onSelected para FilterChip puede dar null si se deselecciona
-                         setState(() {
+                        title: 'Categoría',
+                        items: categoriasConTodos,
+                        currentSelection: categoriasConTodos.firstWhere(
+                            (c) => c?.id == _filtrosSeleccionados.categoriaId,
+                            orElse: () => null),
+                        getLabel: (c) => c?.nombre ?? 'Todas',
+                        isSelected: (item, current) => item?.id == current?.id,
+                        useFilterChip: true, // Usar FilterChip aquí
+                        onSelected: (selectedCategoria) {
+                          // onSelected para FilterChip puede dar null si se deselecciona
+                          setState(() {
                             _filtrosSeleccionados = FiltrosCercanos(
                               categoriaId: selectedCategoria?.id,
                               estado: _filtrosSeleccionados.estado,
                               urgencia: _filtrosSeleccionados.urgencia,
                               dias: _filtrosSeleccionados.dias,
                             );
-                         });
-                      }
-                    ),
+                          });
+                        }),
                     // Filtro de Urgencia
                     _buildChipSection<String>(
-                      title: 'Urgencia',
-                      items: _urgenciasMap.keys.toList(),
-                      currentSelection: _urgenciasMap.entries.firstWhere((e) => e.value == _filtrosSeleccionados.urgencia, orElse: () => _urgenciasMap.entries.first).key,
-                      getLabel: (s) => s,
-                      isSelected: (item, current) => item == current,
-                      onSelected: (selectedKey) {
-                        if (selectedKey != null) {
-                          setState(() {
+                        title: 'Urgencia',
+                        items: _urgenciasMap.keys.toList(),
+                        currentSelection: _urgenciasMap.entries
+                            .firstWhere(
+                                (e) =>
+                                    e.value == _filtrosSeleccionados.urgencia,
+                                orElse: () => _urgenciasMap.entries.first)
+                            .key,
+                        getLabel: (s) => s,
+                        isSelected: (item, current) => item == current,
+                        onSelected: (selectedKey) {
+                          if (selectedKey != null) {
+                            setState(() {
                               _filtrosSeleccionados = FiltrosCercanos(
                                 categoriaId: _filtrosSeleccionados.categoriaId,
                                 estado: _filtrosSeleccionados.estado,
                                 urgencia: _urgenciasMap[selectedKey],
                                 dias: _filtrosSeleccionados.dias,
                               );
-                          });
-                        }
-                      }
-                    ),
+                            });
+                          }
+                        }),
                     // Filtro de Fecha
-                     _buildChipSection<OpcionFecha>(
-                      title: 'Fecha de Creación',
-                      items: _fechas,
-                      currentSelection: _fechas.firstWhere((f) => f.dias == _filtrosSeleccionados.dias, orElse: () => _fechas.first),
-                      getLabel: (f) => f.etiqueta,
-                      isSelected: (item, current) => item.dias == current?.dias,
-                      onSelected: (selectedFecha) {
-                         if (selectedFecha != null) {
-                           setState(() {
-                               _filtrosSeleccionados = FiltrosCercanos(
-                                 categoriaId: _filtrosSeleccionados.categoriaId,
-                                 estado: _filtrosSeleccionados.estado,
-                                 urgencia: _filtrosSeleccionados.urgencia,
-                                 dias: selectedFecha.dias,
-                               );
-                           });
-                         }
-                      }
-                    ),
-                     const SizedBox(height: 30), // Espacio extra al final del scroll
+                    _buildChipSection<OpcionFecha>(
+                        title: 'Fecha de Creación',
+                        items: _fechas,
+                        currentSelection: _fechas.firstWhere(
+                            (f) => f.dias == _filtrosSeleccionados.dias,
+                            orElse: () => _fechas.first),
+                        getLabel: (f) => f.etiqueta,
+                        isSelected: (item, current) =>
+                            item.dias == current?.dias,
+                        onSelected: (selectedFecha) {
+                          if (selectedFecha != null) {
+                            setState(() {
+                              _filtrosSeleccionados = FiltrosCercanos(
+                                categoriaId: _filtrosSeleccionados.categoriaId,
+                                estado: _filtrosSeleccionados.estado,
+                                urgencia: _filtrosSeleccionados.urgencia,
+                                dias: selectedFecha.dias,
+                              );
+                            });
+                          }
+                        }),
+                    const SizedBox(
+                        height: 30), // Espacio extra al final del scroll
                   ],
                 ),
               ),

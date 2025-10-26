@@ -25,7 +25,8 @@ class Reporte {
       descripcion: json['descripcion'],
       categoria: json['categoria'],
       location: LatLng(coords[1], coords[0]),
-      esPrioritario: json['es_prioritario'] ?? false, // <-- PARSEAR EL NUEVO CAMPO
+      esPrioritario:
+          json['es_prioritario'] ?? false, // <-- PARSEAR EL NUEVO CAMPO
     );
   }
 }

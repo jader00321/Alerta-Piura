@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/models/solicitud_revision_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
 
-/// Un widget SIN ESTADO que muestra la lista de solicitudes de revisión del líder.
 class SolicitudesRevisionView extends StatelessWidget {
   final List<SolicitudRevision> solicitudes;
   final bool isLoading;
@@ -21,7 +20,7 @@ class SolicitudesRevisionView extends StatelessWidget {
     if (isLoading && solicitudes.isEmpty) {
       return const EsqueletoListaActividad();
     }
-    
+
     if (solicitudes.isEmpty) {
       return const Center(
         child: Padding(
@@ -47,19 +46,24 @@ class SolicitudesRevisionView extends StatelessWidget {
               title: Text(solicitud.titulo),
               subtitle: Text('Solicitado el: ${solicitud.fecha}'),
               trailing: Chip(
-                label: Text(solicitud.estado, style: const TextStyle(fontSize: 12)),
+                label: Text(solicitud.estado,
+                    style: const TextStyle(fontSize: 12)),
                 backgroundColor: solicitud.estado == 'pendiente'
                     ? Colors.orange.shade100
-                    : (solicitud.estado == 'aprobada' ? Colors.green.shade100 : Colors.grey.shade300),
+                    : (solicitud.estado == 'aprobada'
+                        ? Colors.green.shade100
+                        : Colors.grey.shade300),
                 labelStyle: TextStyle(
                   color: solicitud.estado == 'pendiente'
-                    ? Colors.orange.shade900
-                    : (solicitud.estado == 'aprobada' ? Colors.green.shade900 : Colors.grey.shade800),
+                      ? Colors.orange.shade900
+                      : (solicitud.estado == 'aprobada'
+                          ? Colors.green.shade900
+                          : Colors.grey.shade800),
                 ),
               ),
               onTap: () {
-                // Navega al detalle del reporte (no necesita refrescar al volver)
-                Navigator.pushNamed(context, '/reporte_detalle', arguments: solicitud.id_reporte);
+                Navigator.pushNamed(context, '/reporte_detalle',
+                    arguments: solicitud.id_reporte);
               },
             ),
           );

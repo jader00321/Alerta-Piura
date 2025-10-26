@@ -16,7 +16,8 @@ class EsqueletoListaPlanes extends StatelessWidget {
           return Card(
             elevation: 4.0,
             margin: const EdgeInsets.only(bottom: 24.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.0)),
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -26,16 +27,22 @@ class EsqueletoListaPlanes extends StatelessWidget {
                   const SizedBox(height: 8),
                   Container(width: 100, height: 24, color: Colors.white),
                   const Divider(height: 32),
-                  ...List.generate(4, (i) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: Row(
-                      children: [
-                        Container(width: 20, height: 20, color: Colors.white),
-                        const SizedBox(width: 12),
-                        Container(width: 220, height: 16, color: Colors.white),
-                      ],
-                    ),
-                  )),
+                  ...List.generate(
+                      4,
+                      (i) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: Row(
+                              children: [
+                                Container(
+                                    width: 20, height: 20, color: Colors.white),
+                                const SizedBox(width: 12),
+                                Container(
+                                    width: 220,
+                                    height: 16,
+                                    color: Colors.white),
+                              ],
+                            ),
+                          )),
                   const SizedBox(height: 16),
                   Container(
                     width: double.infinity,

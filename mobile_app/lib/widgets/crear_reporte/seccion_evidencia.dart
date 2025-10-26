@@ -23,7 +23,8 @@ class SeccionEvidencia extends StatelessWidget {
           height: 200,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+            color:
+                Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
           ),
           child: imageFile != null
               ? Image.file(
@@ -33,7 +34,8 @@ class SeccionEvidencia extends StatelessWidget {
               : const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.camera_alt_outlined, size: 40, color: Colors.grey),
+                    Icon(Icons.camera_alt_outlined,
+                        size: 40, color: Colors.grey),
                     SizedBox(height: 8),
                     Text('Añadir Foto de Evidencia'),
                   ],

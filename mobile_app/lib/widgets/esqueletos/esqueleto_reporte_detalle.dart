@@ -13,7 +13,6 @@ class EsqueletoReporteDetalle extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Placeholder for image
             Container(
               height: 250,
               width: double.infinity,
@@ -24,22 +23,29 @@ class EsqueletoReporteDetalle extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Placeholder for chips
                   Row(
                     children: [
-                      Container(width: 80, height: 30, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
+                      Container(
+                          width: 80,
+                          height: 30,
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20))),
                       const SizedBox(width: 8),
-                      Container(width: 120, height: 30, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
+                      Container(
+                          width: 120,
+                          height: 30,
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20))),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Placeholder for title
-                  Container(width: double.infinity, height: 28, color: Colors.white),
+                  Container(
+                      width: double.infinity, height: 28, color: Colors.white),
                   const SizedBox(height: 8),
-                  // Placeholder for subtitle
                   Container(width: 200, height: 14, color: Colors.white),
                   const Divider(height: 32),
-                  // Placeholder for action bar
                   Row(
                     children: [
                       Container(width: 100, height: 20, color: Colors.white),
@@ -48,7 +54,6 @@ class EsqueletoReporteDetalle extends StatelessWidget {
                     ],
                   ),
                   const Divider(height: 32),
-                  // Placeholder for comments section
                   Container(width: 150, height: 24, color: Colors.white),
                   const SizedBox(height: 16),
                   _buildCommentPlaceholder(),

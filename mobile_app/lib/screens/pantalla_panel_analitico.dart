@@ -12,7 +12,10 @@ class AnaliticasData {
   final List<DatoGrafico> porCategoria;
   final List<DatoGrafico> porDistrito;
   final List<DatoGrafico> tendencia;
-  AnaliticasData({required this.porCategoria, required this.porDistrito, required this.tendencia});
+  AnaliticasData(
+      {required this.porCategoria,
+      required this.porDistrito,
+      required this.tendencia});
 }
 
 class PantallaPanelAnalitico extends StatefulWidget {
@@ -49,7 +52,7 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
   // --- FUNCIÓN _handleExportPDF COMPLETAMENTE REEMPLAZADA ---
   Future<void> _handleExportPDF(AnaliticasData data) async {
     setState(() => _isExporting = true);
-    
+
     try {
       final file = await _pdfService.generarInformeAnalitico(data);
       if (mounted) {
@@ -66,7 +69,9 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al generar PDF: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Error al generar PDF: $e'),
+              backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -85,7 +90,9 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              setState(() { _analyticsFuture = _loadAllAnalytics(); });
+              setState(() {
+                _analyticsFuture = _loadAllAnalytics();
+              });
             },
             tooltip: 'Refrescar datos',
           ),
@@ -99,10 +106,12 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
           }
           if (snapshot.hasError) {
             // Este es el error que estabas viendo
-            return Center(child: Text('Error al cargar analíticas: ${snapshot.error}'));
+            return Center(
+                child: Text('Error al cargar analíticas: ${snapshot.error}'));
           }
           if (!snapshot.hasData) {
-            return const Center(child: Text('No hay datos analíticos disponibles.'));
+            return const Center(
+                child: Text('No hay datos analíticos disponibles.'));
           }
 
           final data = snapshot.data!;
@@ -120,25 +129,24 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
       ),
       // --- FAB ACTUALIZADO ---
       floatingActionButton: FutureBuilder<AnaliticasData>(
-        future: _analyticsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.hasData && !_isExporting) {
-            return FloatingActionButton.extended(
-              onPressed: () => _handleExportPDF(snapshot.data!),
-              label: const Text('Exportar PDF'),
-              icon: const Icon(Icons.picture_as_pdf_outlined),
-              tooltip: 'Generar y guardar informe en PDF',
-            );
-          }
-          if (_isExporting) {
-            return FloatingActionButton(
-              onPressed: null,
-              child: const CircularProgressIndicator(color: Colors.white),
-            );
-          }
-          return const SizedBox.shrink(); // No muestra nada si no hay datos
-        }
-      ),
+          future: _analyticsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData && !_isExporting) {
+              return FloatingActionButton.extended(
+                onPressed: () => _handleExportPDF(snapshot.data!),
+                label: const Text('Exportar PDF'),
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                tooltip: 'Generar y guardar informe en PDF',
+              );
+            }
+            if (_isExporting) {
+              return FloatingActionButton(
+                onPressed: null,
+                child: const CircularProgressIndicator(color: Colors.white),
+              );
+            }
+            return const SizedBox.shrink(); // No muestra nada si no hay datos
+          }),
     );
   }
 
@@ -152,7 +160,8 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Tendencia de Reportes (Últimos 30 días)', style: Theme.of(context).textTheme.titleLarge),
+            Text('Tendencia de Reportes (Últimos 30 días)',
+                style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 24),
             SizedBox(
               height: 200,
@@ -160,21 +169,37 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
                 LineChartData(
                   gridData: const FlGridData(show: false),
                   titlesData: const FlTitlesData(
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: AxisTitles(
+                        sideTitles:
+                            SideTitles(showTitles: true, reservedSize: 28)),
+                    rightTitles:
+                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles:
+                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles:
+                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
-                  borderData: FlBorderData(show: true, border: Border.all(color: Colors.grey.shade300)),
+                  borderData: FlBorderData(
+                      show: true,
+                      border: Border.all(color: Colors.grey.shade300)),
                   lineBarsData: [
                     LineChartBarData(
-                      spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.value)).toList(),
+                      spots: data
+                          .asMap()
+                          .entries
+                          .map((e) => FlSpot(e.key.toDouble(), e.value.value))
+                          .toList(),
                       isCurved: true,
                       color: Theme.of(context).colorScheme.primary,
                       barWidth: 4,
                       isStrokeCapRound: true,
                       dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(show: true, color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
+                      belowBarData: BarAreaData(
+                          show: true,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.2)),
                     ),
                   ],
                 ),
@@ -193,24 +218,32 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Reportes por Categoría', style: Theme.of(context).textTheme.titleLarge),
+            Text('Reportes por Categoría',
+                style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 24),
             SizedBox(
               height: 250,
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
-                  gridData: const FlGridData(show: true, drawVerticalLine: false),
+                  gridData:
+                      const FlGridData(show: true, drawVerticalLine: false),
                   titlesData: FlTitlesData(
-                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: AxisTitles(sideTitles: SideTitles(
+                    leftTitles: const AxisTitles(
+                        sideTitles:
+                            SideTitles(showTitles: true, reservedSize: 28)),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
                       showTitles: true,
                       // --- SINTAXIS CORREGIDA ---
                       getTitlesWidget: (value, meta) => SideTitleWidget(
                         meta: meta, // Pasamos el objeto meta completo
-                        child: Text(data[value.toInt()].name, style: const TextStyle(fontSize: 10)),
+                        child: Text(data[value.toInt()].name,
+                            style: const TextStyle(fontSize: 10)),
                       ),
                       // --- FIN DE LA CORRECCIÓN ---
                     )),
@@ -221,9 +254,11 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
                       barRods: [
                         BarChartRodData(
                           toY: entry.value.value,
-                          color: Colors.primaries[entry.key % Colors.primaries.length],
+                          color: Colors
+                              .primaries[entry.key % Colors.primaries.length],
                           width: 16,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4)),
                         )
                       ],
                     );
@@ -245,22 +280,29 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Top 5 Reportes por Distrito', style: Theme.of(context).textTheme.titleLarge),
+            Text('Top 5 Reportes por Distrito',
+                style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 24),
             SizedBox(
               height: 250,
               child: BarChart(
                 BarChartData(
                   titlesData: FlTitlesData(
-                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: AxisTitles(sideTitles: SideTitles(
+                    leftTitles: const AxisTitles(
+                        sideTitles:
+                            SideTitles(showTitles: true, reservedSize: 28)),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
                       showTitles: true,
                       // --- SINTAXIS CORREGIDA ---
                       getTitlesWidget: (value, meta) => SideTitleWidget(
                         meta: meta, // Pasamos el objeto meta completo
-                        child: Text(topData[value.toInt()].name, style: const TextStyle(fontSize: 10)),
+                        child: Text(topData[value.toInt()].name,
+                            style: const TextStyle(fontSize: 10)),
                       ),
                       // --- FIN DE LA CORRECCIÓN ---
                     )),
@@ -271,9 +313,11 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
                       barRods: [
                         BarChartRodData(
                           toY: entry.value.value,
-                          color: Colors.accents[entry.key % Colors.accents.length],
+                          color:
+                              Colors.accents[entry.key % Colors.accents.length],
                           width: 16,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4)),
                         )
                       ],
                     );

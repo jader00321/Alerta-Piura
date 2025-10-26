@@ -16,7 +16,8 @@ class EsqueletoPerfil extends StatelessWidget {
           // Esqueleto para el PerfilHeaderCard
           Card(
             elevation: 6,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -33,13 +34,13 @@ class EsqueletoPerfil extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Esqueleto para los PerfilActionTile
           _buildPlaceholderTile(),
           _buildPlaceholderTile(),
           _buildPlaceholderTile(),
           _buildPlaceholderTile(),
-          
+
           const Divider(height: 48),
 
           // Esqueleto para la InsigniasSection
@@ -48,10 +49,15 @@ class EsqueletoPerfil extends StatelessWidget {
           Wrap(
             spacing: 16.0,
             runSpacing: 16.0,
-            children: List.generate(3, (index) => Chip(
-              label: SizedBox(width: 80, height: 16, child: Container(color: Colors.white)),
-              backgroundColor: Colors.white,
-            )),
+            children: List.generate(
+                3,
+                (index) => Chip(
+                      label: SizedBox(
+                          width: 80,
+                          height: 16,
+                          child: Container(color: Colors.white)),
+                      backgroundColor: Colors.white,
+                    )),
           )
         ],
       ),

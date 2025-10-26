@@ -20,7 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // PageController para controlar el PageView
   late PageController _pageController;
 
-
   @override
   void initState() {
     super.initState();
@@ -54,23 +53,22 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Llamado cuando el PageView cambia de página (por swipe)
   void _onPageChanged(int index) {
     final authNotifier = context.read<AuthNotifier>();
-     if (!authNotifier.isAuthenticated && index > 0) {
-       // Prevenir swipe a pestañas protegidas si no está logueado
-       WidgetsBinding.instance.addPostFrameCallback((_) {
-         _pageController.animateToPage(
-           0, // Forzar regreso al mapa
-           duration: const Duration(milliseconds: 300),
-           curve: Curves.easeInOut,
-         );
-       });
-       return; 
-     }
+    if (!authNotifier.isAuthenticated && index > 0) {
+      // Prevenir swipe a pestañas protegidas si no está logueado
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _pageController.animateToPage(
+          0, // Forzar regreso al mapa
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+      return;
+    }
 
     setState(() {
       _selectedIndex = index;
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -82,10 +80,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Widget> pages = [
       const MapaView(),
       const PantallaCercaDeTi(),
-      
-      isLider 
-        ? VerificacionScreen(mainPageController: _pageController) 
-        : MiActividadScreen(mainPageController: _pageController),
+      isLider
+          ? VerificacionScreen(mainPageController: _pageController)
+          : MiActividadScreen(mainPageController: _pageController),
       const PerfilScreen(),
     ];
     // --- Fin Lista de páginas ---

@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 // Importamos los nuevos widgets que hemos creado
 import 'package:mobile_app/widgets/editar_perfil/seccion_datos_personales.dart';
 import 'package:mobile_app/widgets/editar_perfil/seccion_seguridad.dart';
-import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart'; // Reutilizamos un esqueleto
+import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
 
 class EditarPerfilScreen extends StatefulWidget {
   const EditarPerfilScreen({super.key});
@@ -50,7 +50,8 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             );
           }
           if (snapshot.hasError || !snapshot.hasData) {
-            return const Center(child: Text('Error al cargar la información del perfil.'));
+            return const Center(
+                child: Text('Error al cargar la información del perfil.'));
           }
 
           final perfil = snapshot.data!;

@@ -7,7 +7,8 @@ import 'package:mobile_app/widgets/pago/formulario_pago.dart';
 class PantallaAgregarMetodoPago extends StatefulWidget {
   const PantallaAgregarMetodoPago({super.key});
   @override
-  State<PantallaAgregarMetodoPago> createState() => _PantallaAgregarMetodoPagoState();
+  State<PantallaAgregarMetodoPago> createState() =>
+      _PantallaAgregarMetodoPagoState();
 }
 
 class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
@@ -44,10 +45,13 @@ class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? 'Tarjeta guardada con éxito.' : 'Error al guardar la tarjeta.'),
+        content: Text(success
+            ? 'Tarjeta guardada con éxito.'
+            : 'Error al guardar la tarjeta.'),
         backgroundColor: success ? Colors.green : Colors.red,
       ));
-      if (success) Navigator.pop(context, true); // Devuelve true para refrescar la lista
+      if (success)
+        Navigator.pop(context, true); // Devuelve true para refrescar la lista
     }
 
     if (mounted) setState(() => _isLoading = false);
@@ -82,10 +86,15 @@ class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
                 onPressed: _isLoading ? null : _guardarMetodo,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isLoading
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 3))
                     : const Text('Guardar Tarjeta'),
               ),
             ],

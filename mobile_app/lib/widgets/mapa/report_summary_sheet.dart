@@ -12,7 +12,7 @@ class ReportSummarySheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -31,11 +31,12 @@ class ReportSummarySheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Información del Reporte
           Text(
             reporte.titulo,
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.bold),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -43,10 +44,11 @@ class ReportSummarySheet extends StatelessWidget {
           Chip(
             label: Text(reporte.categoria),
             backgroundColor: theme.colorScheme.secondaryContainer,
-            labelStyle: TextStyle(color: theme.colorScheme.onSecondaryContainer),
+            labelStyle:
+                TextStyle(color: theme.colorScheme.onSecondaryContainer),
           ),
           const SizedBox(height: 16),
-          
+
           if (reporte.descripcion != null && reporte.descripcion!.isNotEmpty)
             Text(
               reporte.descripcion!,
@@ -54,16 +56,17 @@ class ReportSummarySheet extends StatelessWidget {
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
-          
+
           const Divider(height: 32),
-          
+
           // Botón de Acción Principal
           ElevatedButton(
             onPressed: () {
               // Cierra el BottomSheet primero
               Navigator.pop(context);
               // Luego navega a la pantalla de detalles completos
-              Navigator.pushNamed(context, '/reporte_detalle', arguments: reporte.id);
+              Navigator.pushNamed(context, '/reporte_detalle',
+                  arguments: reporte.id);
             },
             style: ElevatedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),

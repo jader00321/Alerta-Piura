@@ -11,7 +11,8 @@ class RegisterHeader extends StatelessWidget {
         Text(
           'Únete a la comunidad',
           textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
         Text(
           'Crea tu cuenta para empezar a reportar',

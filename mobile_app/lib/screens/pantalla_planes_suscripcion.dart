@@ -9,7 +9,8 @@ class PantallaPlanesSuscripcion extends StatefulWidget {
   const PantallaPlanesSuscripcion({super.key});
 
   @override
-  State<PantallaPlanesSuscripcion> createState() => _PantallaPlanesSuscripcionState();
+  State<PantallaPlanesSuscripcion> createState() =>
+      _PantallaPlanesSuscripcionState();
 }
 
 class _PantallaPlanesSuscripcionState extends State<PantallaPlanesSuscripcion> {
@@ -27,7 +28,8 @@ class _PantallaPlanesSuscripcionState extends State<PantallaPlanesSuscripcion> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PantallaPago(plan: plan), // Navigate to the functional payment screen
+        builder: (context) => PantallaPago(
+            plan: plan), // Navigate to the functional payment screen
       ),
     );
   }

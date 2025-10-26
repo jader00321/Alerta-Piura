@@ -14,8 +14,10 @@ class AnaliticasService {
 
   Future<List<DatoGrafico>> _fetchDatosGrafico(String endpoint) async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
-    
+    if (token == null) {
+      throw Exception('No autenticado');
+    }
+
     final url = Uri.parse('${ApiConstants.baseUrl}/api/analiticas/$endpoint');
     final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
 
@@ -39,15 +41,17 @@ class AnaliticasService {
     return _fetchDatosGrafico('tendencia');
   }
 
-  // Esta función ya no se usará para generar el PDF,
-  // pero la mantenemos por si quieres registrar la descarga en el backend.
   Future<Map<String, dynamic>> solicitarExportacionPDF() async {
     final token = await _getToken();
-    if (token == null) return {'statusCode': 401, 'data': {'message': 'No autenticado'}};
-    
+    // --- CORRECCIÓN: Añadidas llaves {} ---
+    if (token == null) {
+      return {'statusCode': 401, 'data': {'message': 'No autenticado'}};
+    }
+    // --- FIN CORRECCIÓN ---
+
     final url = Uri.parse('${ApiConstants.baseUrl}/api/analiticas/exportar-pdf');
     final response = await http.post(url, headers: {'Authorization': 'Bearer $token'});
-    
+
     return {'statusCode': response.statusCode, 'data': json.decode(response.body)};
   }
 }

@@ -11,10 +11,12 @@ class PantallaEditarReporteLider extends StatefulWidget {
   const PantallaEditarReporteLider({super.key, required this.reporteInicial});
 
   @override
-  State<PantallaEditarReporteLider> createState() => _PantallaEditarReporteLiderState();
+  State<PantallaEditarReporteLider> createState() =>
+      _PantallaEditarReporteLiderState();
 }
 
-class _PantallaEditarReporteLiderState extends State<PantallaEditarReporteLider> {
+class _PantallaEditarReporteLiderState
+    extends State<PantallaEditarReporteLider> {
   final _formKey = GlobalKey<FormState>();
   final LiderService _liderService = LiderService();
   final ReporteService _reporteService = ReporteService();
@@ -31,10 +33,14 @@ class _PantallaEditarReporteLiderState extends State<PantallaEditarReporteLider>
   @override
   void initState() {
     super.initState();
-    _tituloController = TextEditingController(text: widget.reporteInicial.titulo);
-    _descripcionController = TextEditingController(text: widget.reporteInicial.descripcion);
-    _referenciaController = TextEditingController(text: widget.reporteInicial.referenciaUbicacion);
-    _tagsController = TextEditingController(text: widget.reporteInicial.tags.join(', '));
+    _tituloController =
+        TextEditingController(text: widget.reporteInicial.titulo);
+    _descripcionController =
+        TextEditingController(text: widget.reporteInicial.descripcion);
+    _referenciaController =
+        TextEditingController(text: widget.reporteInicial.referenciaUbicacion);
+    _tagsController =
+        TextEditingController(text: widget.reporteInicial.tags.join(', '));
     _loadCategoriesAndSetInitial();
   }
 
@@ -45,11 +51,13 @@ class _PantallaEditarReporteLiderState extends State<PantallaEditarReporteLider>
       if (mounted) {
         int? initialCatId;
         try {
-           initialCatId = cats.firstWhere((c) => c.nombre == widget.reporteInicial.categoria).id;
+          initialCatId = cats
+              .firstWhere((c) => c.nombre == widget.reporteInicial.categoria)
+              .id;
         } catch (e) {
-           initialCatId = null;
+          initialCatId = null;
         }
-        
+
         setState(() {
           _categoriasDisponibles = cats;
           _selectedCategoriaId = initialCatId;
@@ -72,11 +80,14 @@ class _PantallaEditarReporteLiderState extends State<PantallaEditarReporteLider>
   }
 
   Future<void> _guardarCambios() async {
-    if (!_formKey.currentState!.validate() || _isLoading || _isLoadingCategories) return;
+    if (!_formKey.currentState!.validate() ||
+        _isLoading ||
+        _isLoadingCategories) return;
 
     setState(() => _isLoading = true);
 
-    List<String> tagsList = _tagsController.text.split(',')
+    List<String> tagsList = _tagsController.text
+        .split(',')
         .map((tag) => tag.trim())
         .where((tag) => tag.isNotEmpty)
         .toList();
@@ -124,7 +135,12 @@ class _PantallaEditarReporteLiderState extends State<PantallaEditarReporteLider>
         title: const Text('Editar Reporte'),
         actions: [
           IconButton(
-            icon: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white)) : const Icon(Icons.save_outlined),
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(color: Colors.white))
+                : const Icon(Icons.save_outlined),
             onPressed: _guardarCambios,
             tooltip: 'Guardar Cambios',
           )
@@ -141,43 +157,63 @@ class _PantallaEditarReporteLiderState extends State<PantallaEditarReporteLider>
                   children: [
                     TextFormField(
                       controller: _tituloController,
-                      decoration: const InputDecoration(labelText: 'Título del Reporte', border: OutlineInputBorder()),
-                      validator: (value) => (value?.trim().isEmpty ?? true) ? 'El título es requerido' : null,
+                      decoration: const InputDecoration(
+                          labelText: 'Título del Reporte',
+                          border: OutlineInputBorder()),
+                      validator: (value) => (value?.trim().isEmpty ?? true)
+                          ? 'El título es requerido'
+                          : null,
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<int>(
                       value: _selectedCategoriaId,
-                      decoration: const InputDecoration(labelText: 'Categoría', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Categoría', border: OutlineInputBorder()),
                       items: _categoriasDisponibles.map((Categoria cat) {
-                        return DropdownMenuItem<int>(value: cat.id, child: Text(cat.nombre));
+                        return DropdownMenuItem<int>(
+                            value: cat.id, child: Text(cat.nombre));
                       }).toList(),
-                      onChanged: (value) => setState(() => _selectedCategoriaId = value),
-                      validator: (value) => value == null ? 'Selecciona una categoría' : null,
+                      onChanged: (value) =>
+                          setState(() => _selectedCategoriaId = value),
+                      validator: (value) =>
+                          value == null ? 'Selecciona una categoría' : null,
                     ),
-                     const SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _descripcionController,
-                      decoration: const InputDecoration(labelText: 'Descripción', border: OutlineInputBorder(), alignLabelWithHint: true),
+                      decoration: const InputDecoration(
+                          labelText: 'Descripción',
+                          border: OutlineInputBorder(),
+                          alignLabelWithHint: true),
                       maxLines: 5,
                       minLines: 3,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _referenciaController,
-                      decoration: const InputDecoration(labelText: 'Referencia de Ubicación', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Referencia de Ubicación',
+                          border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _tagsController,
-                      decoration: const InputDecoration(labelText: 'Etiquetas (separadas por coma)', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Etiquetas (separadas por coma)',
+                          border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: _isLoading ? null : _guardarCambios,
-                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-                      child: _isLoading 
-                           ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white)) 
-                           : const Text('Guardar Cambios'),
+                      style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16)),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white))
+                          : const Text('Guardar Cambios'),
                     )
                   ],
                 ),

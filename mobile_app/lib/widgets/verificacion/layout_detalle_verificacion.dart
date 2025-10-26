@@ -35,7 +35,8 @@ class LayoutDetalleVerificacion extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Ubicación del Reporte', style: Theme.of(context).textTheme.titleLarge),
+                    Text('Ubicación del Reporte',
+                        style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 8),
                     // Eliminamos el Hero que envolvía al mapa
                     MapaVerificacion(initialCenter: reporte.location),

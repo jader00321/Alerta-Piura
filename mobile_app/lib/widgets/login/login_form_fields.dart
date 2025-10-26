@@ -29,7 +29,9 @@ class _LoginFormFieldsState extends State<LoginFormFields> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           keyboardType: TextInputType.emailAddress,
-          validator: (value) => value!.isEmpty || !value.contains('@') ? 'Ingresa un correo válido' : null,
+          validator: (value) => value!.isEmpty || !value.contains('@')
+              ? 'Ingresa un correo válido'
+              : null,
         ),
         const SizedBox(height: 16),
         TextFormField(
@@ -40,11 +42,15 @@ class _LoginFormFieldsState extends State<LoginFormFields> {
             prefixIcon: const Icon(Icons.lock_outline),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             suffixIcon: IconButton(
-              icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              icon: Icon(_obscurePassword
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
-          validator: (value) => value!.isEmpty ? 'La contraseña es requerida' : null,
+          validator: (value) =>
+              value!.isEmpty ? 'La contraseña es requerida' : null,
         ),
       ],
     );

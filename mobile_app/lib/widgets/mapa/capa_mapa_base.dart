@@ -11,7 +11,8 @@ class CapaMapaBase extends StatelessWidget {
   final Future<List<LatLng>>? heatmapFuture;
   final MapController mapController;
   final LatLng initialCenter;
-  final Function(MapEvent) onPositionChanged; // CORREGIDO: MapPosition -> MapEvent
+  final Function(MapEvent)
+      onPositionChanged; // CORREGIDO: MapPosition -> MapEvent
   final VoidCallback onMapReady;
   final Function(BuildContext, Reporte) onShowReportSummary;
   final bool isHeatmapVisible;
@@ -30,11 +31,16 @@ class CapaMapaBase extends StatelessWidget {
 
   Color _getCategoryColor(String category) {
     switch (category.toLowerCase()) {
-      case 'delito': return Colors.red.shade700;
-      case 'falla de alumbrado': return Colors.orange.shade700;
-      case 'bache': return Colors.brown.shade700;
-      case 'basura': return Colors.grey.shade700;
-      default: return Colors.purple.shade700;
+      case 'delito':
+        return Colors.red.shade700;
+      case 'falla de alumbrado':
+        return Colors.orange.shade700;
+      case 'bache':
+        return Colors.brown.shade700;
+      case 'basura':
+        return Colors.grey.shade700;
+      default:
+        return Colors.purple.shade700;
     }
   }
 
@@ -43,32 +49,47 @@ class CapaMapaBase extends StatelessWidget {
     return FutureBuilder<List<Reporte>>(
       future: reportesFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && (snapshot.data == null || snapshot.data!.isEmpty)) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            (snapshot.data == null || snapshot.data!.isEmpty)) {
           return const EsqueletoMapa();
         }
         if (snapshot.hasError) {
-          return Center(child: Padding(padding: const EdgeInsets.all(16.0), child: Text('Error al cargar reportes: ${snapshot.error}')));
+          return Center(
+              child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text('Error al cargar reportes: ${snapshot.error}')));
         }
 
-        final markers = (snapshot.data ?? []).map((reporte) => Marker(
-          point: reporte.location,
-          width: 50,
-          height: 50,
-          child: GestureDetector(
-            onTap: () => onShowReportSummary(context, reporte),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(Icons.location_pin, color: _getCategoryColor(reporte.categoria), size: 45),
-                if (reporte.esPrioritario)
-                  Positioned(
-                    top: 5,
-                    child: Icon(Icons.star, color: Colors.amber, size: 18, shadows: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 3)]),
+        final markers = (snapshot.data ?? [])
+            .map((reporte) => Marker(
+                  point: reporte.location,
+                  width: 50,
+                  height: 50,
+                  child: GestureDetector(
+                    onTap: () => onShowReportSummary(context, reporte),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Icon(Icons.location_pin,
+                            color: _getCategoryColor(reporte.categoria),
+                            size: 45),
+                        if (reporte.esPrioritario)
+                          Positioned(
+                            top: 5,
+                            child: Icon(Icons.star,
+                                color: Colors.amber,
+                                size: 18,
+                                shadows: [
+                                  BoxShadow(
+                                      color: Colors.black.withOpacity(0.5),
+                                      blurRadius: 3)
+                                ]),
+                          ),
+                      ],
+                    ),
                   ),
-              ],
-            ),
-          ),
-        )).toList();
+                ))
+            .toList();
 
         return FlutterMap(
           mapController: mapController,
@@ -76,14 +97,15 @@ class CapaMapaBase extends StatelessWidget {
             initialCenter: initialCenter,
             initialZoom: 14.0,
             onMapReady: onMapReady,
-            onMapEvent: onPositionChanged, // CORREGIDO: onPositionChanged -> onMapEvent
+            onMapEvent:
+                onPositionChanged, // CORREGIDO: onPositionChanged -> onMapEvent
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.example.mobile_app',
             ),
-            
+
             /*if (isHeatmapVisible)
               FutureBuilder<List<LatLng>>(
                 future: heatmapFuture,
@@ -116,8 +138,14 @@ class CapaMapaBase extends StatelessWidget {
                   padding: const EdgeInsets.all(50),
                   markers: markers,
                   builder: (context, markers) => Container(
-                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), color: Theme.of(context).colorScheme.primary),
-                    child: Center(child: Text(markers.length.toString(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Theme.of(context).colorScheme.primary),
+                    child: Center(
+                        child: Text(markers.length.toString(),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold))),
                   ),
                 ),
               ),

@@ -9,7 +9,8 @@ import 'package:provider/provider.dart';
 class ChatScreen extends StatefulWidget {
   final int reporteId;
   final String reporteTitulo;
-  const ChatScreen({super.key, required this.reporteId, required this.reporteTitulo});
+  const ChatScreen(
+      {super.key, required this.reporteId, required this.reporteTitulo});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -20,7 +21,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final SocketService _socketService = SocketService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
   int? _currentUserId;
@@ -46,9 +47,8 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al cargar el historial del chat.'))
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Error al cargar el historial del chat.')));
       }
     }
   }
@@ -69,7 +69,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty || _currentUserId == null) return;
-    
+
     final authNotifier = Provider.of<AuthNotifier>(context, listen: false);
     final senderAlias = authNotifier.userAlias ?? 'Usuario';
 
@@ -93,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     });
   }
-  
+
   @override
   void dispose() {
     // Al salir, dejamos la sala, pero no desconectamos el socket principal
@@ -108,7 +108,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Chat: ${widget.reporteTitulo}', maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text('Chat: ${widget.reporteTitulo}',
+            maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
       body: Column(
         children: [
@@ -147,9 +148,11 @@ class _ChatMessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final alignment = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final color = isMe ? theme.colorScheme.primary : theme.colorScheme.surfaceVariant;
-    final textColor = isMe ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant;
-    
+    final color =
+        isMe ? theme.colorScheme.primary : theme.colorScheme.surfaceVariant;
+    final textColor =
+        isMe ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       child: Column(
@@ -171,12 +174,18 @@ class _ChatMessageBubble extends StatelessWidget {
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
-                      bottomLeft: isMe ? const Radius.circular(18) : const Radius.circular(4),
-                      bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(18),
+                      bottomLeft: isMe
+                          ? const Radius.circular(18)
+                          : const Radius.circular(4),
+                      bottomRight: isMe
+                          ? const Radius.circular(4)
+                          : const Radius.circular(18),
                     ),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  child: Text(message.messageText, style: TextStyle(color: textColor)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Text(message.messageText,
+                      style: TextStyle(color: textColor)),
                 ),
               ),
             ],
@@ -200,7 +209,7 @@ class _ChatInput extends StatelessWidget {
   final VoidCallback onSend;
 
   const _ChatInput({required this.controller, required this.onSend});
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(

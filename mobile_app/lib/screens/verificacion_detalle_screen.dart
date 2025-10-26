@@ -17,7 +17,8 @@ class VerificacionDetalleScreen extends StatefulWidget {
   const VerificacionDetalleScreen({super.key, required this.reporteId});
 
   @override
-  State<VerificacionDetalleScreen> createState() => _VerificacionDetalleScreenState();
+  State<VerificacionDetalleScreen> createState() =>
+      _VerificacionDetalleScreenState();
 }
 
 class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
@@ -48,7 +49,8 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
       _errorReporte = null;
     });
     try {
-      final reporteData = await _reporteService.getReporteById(widget.reporteId);
+      final reporteData =
+          await _reporteService.getReporteById(widget.reporteId);
       if (mounted) {
         setStateIfMounted(() {
           _reporte = reporteData;
@@ -87,7 +89,11 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
       ));
       if (success) Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar( content: Text('Error al $actionName: $e'), backgroundColor: Colors.red, ));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Error al $actionName: $e'),
+          backgroundColor: Colors.red,
+        ));
     } finally {
       if (mounted) setStateIfMounted(() => _isLoadingAction = false);
     }
@@ -95,38 +101,76 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
 
   Future<void> _iniciarEdicion() async {
     if (_reporte == null || _isLoadingAction) return;
-    final result = await Navigator.push<bool>( context, MaterialPageRoute(builder: (context) => PantallaEditarReporteLider(reporteInicial: _reporte!)), );
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+          builder: (context) =>
+              PantallaEditarReporteLider(reporteInicial: _reporte!)),
+    );
     if (result == true && mounted) _loadReporteData();
   }
 
   Future<void> _iniciarFusion() async {
     if (_reporte == null || _isLoadingAction) return;
-    final reporteOriginalId = await Navigator.push<int>( context, MaterialPageRoute(builder: (context) => const PantallaBuscarReporteOriginal()), );
+    final reporteOriginalId = await Navigator.push<int>(
+      context,
+      MaterialPageRoute(
+          builder: (context) => const PantallaBuscarReporteOriginal()),
+    );
     if (reporteOriginalId == null || !mounted) return;
 
     ReporteDetallado? reporteOriginal;
     String originalIdentifier = '#$reporteOriginalId';
     setStateIfMounted(() => _isLoadingAction = true);
     try {
-        reporteOriginal = await _reporteService.getReporteById(reporteOriginalId);
-        originalIdentifier = '"${reporteOriginal.titulo}" (${reporteOriginal.codigoReporte ?? '#$reporteOriginalId'})';
-    } catch(e) { print("Error obteniendo detalles del original: $e"); }
-    finally { if (mounted) setStateIfMounted(() => _isLoadingAction = false); }
+      reporteOriginal = await _reporteService.getReporteById(reporteOriginalId);
+      originalIdentifier =
+          '"${reporteOriginal.titulo}" (${reporteOriginal.codigoReporte ?? '#$reporteOriginalId'})';
+    } catch (e) {
+      print("Error obteniendo detalles del original: $e");
+    } finally {
+      if (mounted) setStateIfMounted(() => _isLoadingAction = false);
+    }
     if (!mounted) return;
 
-    final confirm = await showDialog<bool>( context: context, builder: (ctx) => AlertDialog( title: const Text('Confirmar Fusión'), content: Text('¿Fusionar "${_reporte!.titulo}" (${_reporte!.codigoReporte ?? '#' + widget.reporteId.toString()}) con el reporte original $originalIdentifier?'), actions: [ TextButton(child: const Text('Cancelar'), onPressed: () => Navigator.pop(ctx, false)), ElevatedButton( style: ElevatedButton.styleFrom(backgroundColor: Colors.purple), child: const Text('Sí, Fusionar'), onPressed: () => Navigator.pop(ctx, true) ), ], ), );
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirmar Fusión'),
+        content: Text(
+            '¿Fusionar "${_reporte!.titulo}" (${_reporte!.codigoReporte ?? '#' + widget.reporteId.toString()}) con el reporte original $originalIdentifier?'),
+        actions: [
+          TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () => Navigator.pop(ctx, false)),
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+              child: const Text('Sí, Fusionar'),
+              onPressed: () => Navigator.pop(ctx, true)),
+        ],
+      ),
+    );
     if (confirm != true) return;
 
     setStateIfMounted(() => _isLoadingAction = true);
     Map<String, dynamic> response = {};
     try {
-       response = await _liderService.fusionarReporte(widget.reporteId, reporteOriginalId);
-    } catch(e) { response = {'statusCode': 500, 'message': 'Error de conexión al fusionar.'}; }
+      response = await _liderService.fusionarReporte(
+          widget.reporteId, reporteOriginalId);
+    } catch (e) {
+      response = {
+        'statusCode': 500,
+        'message': 'Error de conexión al fusionar.'
+      };
+    }
     if (!mounted) return;
     setStateIfMounted(() => _isLoadingAction = false);
     final message = response['message'] ?? 'Error desconocido';
     final success = response['statusCode'] == 200;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar( content: Text(message), backgroundColor: success ? Colors.green : Colors.red, ));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: success ? Colors.green : Colors.red,
+    ));
     if (success) Navigator.pop(context, true);
   }
 
@@ -145,10 +189,14 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
     return FutureBuilder<ReporteDetallado>(
       // Usamos _reporteFuture directamente si _loadReporteData lo inicializa bien
       // O volvemos a llamar al servicio si _reporte es null tras la carga inicial
-      future: _reporte == null ? _reporteService.getReporteById(widget.reporteId) : Future.value(_reporte!),
+      future: _reporte == null
+          ? _reporteService.getReporteById(widget.reporteId)
+          : Future.value(_reporte!),
       builder: (context, snapshot) {
         // Estado de carga inicial o si _reporte es null
-        if ((snapshot.connectionState == ConnectionState.waiting && _reporte == null) || _isLoadingReporte) {
+        if ((snapshot.connectionState == ConnectionState.waiting &&
+                _reporte == null) ||
+            _isLoadingReporte) {
           return Scaffold(
             appBar: AppBar(title: const Text('Cargando...')),
             body: const EsqueletoReporteDetalle(),
@@ -159,15 +207,18 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
         if (snapshot.hasError || _errorReporte != null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Error')),
-            body: Center(child: Padding(
+            body: Center(
+                child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text('Error al cargar el reporte: ${_errorReporte ?? snapshot.error}'),
+              child: Text(
+                  'Error al cargar el reporte: ${_errorReporte ?? snapshot.error}'),
             )),
-             floatingActionButton: FloatingActionButton( // Botón para reintentar
-               onPressed: _loadReporteData,
-               child: const Icon(Icons.refresh),
-               tooltip: 'Reintentar',
-             ),
+            floatingActionButton: FloatingActionButton(
+              // Botón para reintentar
+              onPressed: _loadReporteData,
+              child: const Icon(Icons.refresh),
+              tooltip: 'Reintentar',
+            ),
           );
         }
 
@@ -178,15 +229,15 @@ class _VerificacionDetalleScreenState extends State<VerificacionDetalleScreen> {
 
         // Si _reporte sigue siendo null (caso improbable pero seguro)
         if (_reporte == null) {
-           return Scaffold(
-             appBar: AppBar(title: const Text('Error')),
-             body: const Center(child: Text('No se pudo cargar el reporte.')),
-             floatingActionButton: FloatingActionButton(
-               onPressed: _loadReporteData,
-               child: const Icon(Icons.refresh),
-               tooltip: 'Reintentar',
-             ),
-           );
+          return Scaffold(
+            appBar: AppBar(title: const Text('Error')),
+            body: const Center(child: Text('No se pudo cargar el reporte.')),
+            floatingActionButton: FloatingActionButton(
+              onPressed: _loadReporteData,
+              child: const Icon(Icons.refresh),
+              tooltip: 'Reintentar',
+            ),
+          );
         }
 
         // --- Scaffold Principal con Datos ---

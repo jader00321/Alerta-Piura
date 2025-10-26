@@ -15,7 +15,8 @@ class EsqueletoDetalleBoleta extends StatelessWidget {
           children: [
             Card(
               elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
@@ -26,7 +27,12 @@ class EsqueletoDetalleBoleta extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(width: 150, height: 24, color: Colors.white),
-                        Container(width: 80, height: 30, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
+                        Container(
+                            width: 80,
+                            height: 30,
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20))),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -43,7 +49,7 @@ class EsqueletoDetalleBoleta extends StatelessWidget {
                     _buildPlaceholderRow(),
                     _buildPlaceholderRow(),
                     const Divider(height: 32),
-                    
+
                     // Total
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

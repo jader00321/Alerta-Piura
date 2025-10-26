@@ -18,11 +18,13 @@ class PantallaCercaDeTi extends StatefulWidget {
   State<PantallaCercaDeTi> createState() => _PantallaCercaDeTiState();
 }
 
-class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindingObserver {
+class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
+    with WidgetsBindingObserver {
   List<ReporteCercano>? _reportes;
   final ReporteService _reporteService = ReporteService();
   LatLng? _lastKnownLocation;
-  FiltrosCercanos _filtrosAplicados = FiltrosCercanos(); // Mantiene los filtros actuales
+  FiltrosCercanos _filtrosAplicados =
+      FiltrosCercanos(); // Mantiene los filtros actuales
   List<Categoria> _categoriasDisponibles = [];
   bool _isLoadingCategories = true;
   bool _isLoadingReports = false;
@@ -61,7 +63,7 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
 
   Future<void> _loadCategories() async {
     if (_categoriasDisponibles.isEmpty) {
-       setState(() => _isLoadingCategories = true);
+      setState(() => _isLoadingCategories = true);
     }
     try {
       final cats = await _reporteService.getCategorias();
@@ -73,11 +75,12 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
       }
     } catch (e) {
       print("Error cargando categorías para filtros: $e");
-      if(mounted) setState(() => _isLoadingCategories = false);
+      if (mounted) setState(() => _isLoadingCategories = false);
     }
   }
 
-  Future<void> _fetchNearbyReports({bool forceLocation = false, bool resetFilters = false}) async {
+  Future<void> _fetchNearbyReports(
+      {bool forceLocation = false, bool resetFilters = false}) async {
     if (_isLoadingReports) return;
 
     setState(() {
@@ -91,55 +94,56 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
     LatLng? locationToUse = _lastKnownLocation;
 
     if (locationToUse == null || forceLocation) {
-       final status = await Permission.location.request();
-       if (!status.isGranted) {
-          if (mounted) {
-             setState(() {
-                _isLoadingReports = false;
-                _errorMessage = 'Se requiere permiso de ubicación.';
-                _reportes = [];
-             });
-          }
-         return;
-       }
-       try {
-         Position position = await Geolocator.getCurrentPosition(
-           desiredAccuracy: LocationAccuracy.high,
-           timeLimit: const Duration(seconds: 15),
-         );
-         locationToUse = LatLng(position.latitude, position.longitude);
-         // Actualiza lastKnownLocation si se forzó o no existía
-         if (forceLocation || _lastKnownLocation == null) {
-            _lastKnownLocation = locationToUse;
-         }
-       } catch (e) {
-         print("Error obteniendo ubicación: $e");
-          if (mounted) {
-             setState(() {
-                _isLoadingReports = false;
-                _errorMessage = 'No se pudo obtener la ubicación GPS.';
-                _reportes = [];
-             });
-          }
-         return;
-       }
-     }
+      final status = await Permission.location.request();
+      if (!status.isGranted) {
+        if (mounted) {
+          setState(() {
+            _isLoadingReports = false;
+            _errorMessage = 'Se requiere permiso de ubicación.';
+            _reportes = [];
+          });
+        }
+        return;
+      }
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 15),
+        );
+        locationToUse = LatLng(position.latitude, position.longitude);
+        // Actualiza lastKnownLocation si se forzó o no existía
+        if (forceLocation || _lastKnownLocation == null) {
+          _lastKnownLocation = locationToUse;
+        }
+      } catch (e) {
+        print("Error obteniendo ubicación: $e");
+        if (mounted) {
+          setState(() {
+            _isLoadingReports = false;
+            _errorMessage = 'No se pudo obtener la ubicación GPS.';
+            _reportes = [];
+          });
+        }
+        return;
+      }
+    }
 
     // ignore: unnecessary_null_comparison
     if (locationToUse == null) {
-       if (mounted) {
-          setState(() {
-             _isLoadingReports = false;
-             _errorMessage = 'Ubicación no determinada.';
-             _reportes = [];
-          });
-       }
-       return;
-     }
+      if (mounted) {
+        setState(() {
+          _isLoadingReports = false;
+          _errorMessage = 'Ubicación no determinada.';
+          _reportes = [];
+        });
+      }
+      return;
+    }
 
     try {
       // Pasa los filtros actuales (_filtrosAplicados) al servicio
-      final reports = await _reporteService.getReportesCercanos(locationToUse, filtros: _filtrosAplicados);
+      final reports = await _reporteService.getReportesCercanos(locationToUse,
+          filtros: _filtrosAplicados);
       if (!mounted) return;
       setState(() {
         _reportes = reports;
@@ -156,24 +160,33 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
     }
   }
 
-
   Future<void> _handleJoinReport(int reporteId) async {
-    if (_joiningStatus[reporteId] == true || _unjoiningStatus[reporteId] == true) return; // Evitar si ya hay acción en curso
+    if (_joiningStatus[reporteId] == true ||
+        _unjoiningStatus[reporteId] == true)
+      return; // Evitar si ya hay acción en curso
 
     setState(() => _joiningStatus[reporteId] = true);
 
     Map<String, dynamic> response = {};
-    try { response = await _reporteService.unirseReportePendiente(reporteId); }
-    catch (e) { response = {'statusCode': 500, 'message': 'Error inesperado.'}; print("Error: $e"); }
+    try {
+      response = await _reporteService.unirseReportePendiente(reporteId);
+    } catch (e) {
+      response = {'statusCode': 500, 'message': 'Error inesperado.'};
+      print("Error: $e");
+    }
 
     if (!mounted) return;
 
     final message = response['message'] ?? 'Ocurrió un error.';
-    final success = response['statusCode'] == 201 || (response['statusCode'] == 200 && message == 'Ya te habías unido a este reporte.');
+    final success = response['statusCode'] == 201 ||
+        (response['statusCode'] == 200 &&
+            message == 'Ya te habías unido a este reporte.');
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),
-      backgroundColor: success ? Colors.green : (response['statusCode'] == 403 ? Colors.orange : Colors.red),
+      backgroundColor: success
+          ? Colors.green
+          : (response['statusCode'] == 403 ? Colors.orange : Colors.red),
     ));
 
     if (success) {
@@ -181,21 +194,25 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
       _fetchNearbyReports(forceLocation: false, resetFilters: false);
       // El estado de _joiningStatus se limpiará automáticamente con el refresh
     } else {
-       // Quitar estado de carga SIEMPRE si no hubo éxito o si no se refresca
-       setState(() {
-          _joiningStatus.remove(reporteId);
-       });
+      // Quitar estado de carga SIEMPRE si no hubo éxito o si no se refresca
+      setState(() {
+        _joiningStatus.remove(reporteId);
+      });
     }
   }
 
   Future<void> _handleUnjoinReport(int reporteId) async {
-    if (_joiningStatus[reporteId] == true || _unjoiningStatus[reporteId] == true) return; // Evitar si ya hay acción en curso
+    if (_joiningStatus[reporteId] == true ||
+        _unjoiningStatus[reporteId] == true)
+      return; // Evitar si ya hay acción en curso
 
-    setState(() => _unjoiningStatus[reporteId] = true); // Marcar como quitando apoyo
+    setState(
+        () => _unjoiningStatus[reporteId] = true); // Marcar como quitando apoyo
 
     Map<String, dynamic> response = {};
     try {
-      response = await _reporteService.quitarApoyoPendiente(reporteId); // Llamar al nuevo servicio
+      response = await _reporteService
+          .quitarApoyoPendiente(reporteId); // Llamar al nuevo servicio
     } catch (e) {
       response = {'statusCode': 500, 'message': 'Error inesperado.'};
       print("Error en _handleUnjoinReport: $e");
@@ -204,17 +221,23 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
     if (!mounted) return;
 
     final message = response['message'] ?? 'Ocurrió un error.';
-    final success = response['statusCode'] == 200; // 200 OK para éxito al quitar
+    final success =
+        response['statusCode'] == 200; // 200 OK para éxito al quitar
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),
-      backgroundColor: success ? Colors.orangeAccent : Colors.red, // Naranja para éxito al quitar
+      backgroundColor: success
+          ? Colors.orangeAccent
+          : Colors.red, // Naranja para éxito al quitar
     ));
 
     if (success) {
-      _fetchNearbyReports(forceLocation: false, resetFilters: false); // Refresca y limpia estado
+      _fetchNearbyReports(
+          forceLocation: false,
+          resetFilters: false); // Refresca y limpia estado
     } else {
-      setState(() => _unjoiningStatus.remove(reporteId)); // Limpia estado si falla
+      setState(
+          () => _unjoiningStatus.remove(reporteId)); // Limpia estado si falla
     }
   }
 
@@ -222,10 +245,12 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
   void _onReportTap(ReporteCercano reporte) async {
     if (reporte.estado == 'pendiente_verificacion') {
       // Navega a la pantalla de vista detallada pendiente
-      final result = await Navigator.pushNamed(context, '/detalle_pendiente_vista', arguments: reporte.id);
+      final result = await Navigator.pushNamed(
+          context, '/detalle_pendiente_vista',
+          arguments: reporte.id);
       // Si esa pantalla devuelve true (porque se unió), refrescar aquí
       if (result == true && mounted) {
-          _fetchNearbyReports(forceLocation: false, resetFilters: false);
+        _fetchNearbyReports(forceLocation: false, resetFilters: false);
       }
     } else {
       // Para reportes verificados, navegar a la pantalla de detalle normal
@@ -233,17 +258,18 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
     }
   }
 
-
   void _showFilterPanel() {
     if (_isLoadingCategories) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cargando categorías...')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cargando categorías...')));
       return;
     }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // Importante para DraggableScrollableSheet
       backgroundColor: Colors.transparent,
-      builder: (context) => PanelFiltrosCercanos( // Usar el widget corregido
+      builder: (context) => PanelFiltrosCercanos(
+        // Usar el widget corregido
         filtrosActuales: _filtrosAplicados,
         categoriasDisponibles: _categoriasDisponibles,
         onAplicarFiltros: (nuevosFiltros) {
@@ -263,9 +289,10 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
     if (_isLoadingReports && _reportes == null) {
       appBarSubtitle = 'Buscando reportes...';
     } else if (_errorMessage == null && _reportes != null) {
-      appBarSubtitle = '${_reportes!.length} reporte${_reportes!.length == 1 ? '' : 's'} encontrado${_reportes!.length == 1 ? '' : 's'}';
+      appBarSubtitle =
+          '${_reportes!.length} reporte${_reportes!.length == 1 ? '' : 's'} encontrado${_reportes!.length == 1 ? '' : 's'}';
     } else if (_errorMessage != null) {
-        appBarSubtitle = 'Error al buscar';
+      appBarSubtitle = 'Error al buscar';
     }
 
     Widget bodyContent;
@@ -281,31 +308,34 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-               Icon(Icons.error_outline, color: Colors.red.shade300, size: 50),
-               const SizedBox(height: 16),
-               Text('Error: $_errorMessage', textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
-               const SizedBox(height: 16),
-               ElevatedButton.icon(
-                 icon: const Icon(Icons.refresh),
-                 label: const Text('Intentar de Nuevo'),
-                 onPressed: () => _fetchNearbyReports(forceLocation: true), // Force location on manual retry
-               )
+              Icon(Icons.error_outline, color: Colors.red.shade300, size: 50),
+              const SizedBox(height: 16),
+              Text('Error: $_errorMessage',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red)),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.refresh),
+                label: const Text('Intentar de Nuevo'),
+                onPressed: () => _fetchNearbyReports(
+                    forceLocation: true), // Force location on manual retry
+              )
             ],
           ),
         ),
       );
     } else if (_reportes == null || _reportes!.isEmpty) {
-       // Show empty message (handles both null _reportes initially and empty list after load)
-       bodyContent = const Center(
-         child: Padding(
-           padding: EdgeInsets.all(24.0),
-           child: Text(
-             'No se encontraron reportes en un radio de 500 metros con los filtros actuales.',
-             textAlign: TextAlign.center,
-             style: TextStyle(fontSize: 16, color: Colors.grey),
-           ),
-         ),
-       );
+      // Show empty message (handles both null _reportes initially and empty list after load)
+      bodyContent = const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Text(
+            'No se encontraron reportes en un radio de 500 metros con los filtros actuales.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ),
+      );
     } else {
       // Show the list of reports
       bodyContent = ListView.builder(
@@ -324,16 +354,17 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
         },
       );
     }
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-                const Text('Reportes Cerca de Ti'),
-                if (appBarSubtitle != null)
-                    Text(appBarSubtitle, style: Theme.of(context).textTheme.bodySmall),
-            ],
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Reportes Cerca de Ti'),
+            if (appBarSubtitle != null)
+              Text(appBarSubtitle,
+                  style: Theme.of(context).textTheme.bodySmall),
+          ],
         ),
         actions: [
           IconButton(
@@ -346,19 +377,25 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi> with WidgetsBindi
             IconButton(
               icon: const Icon(Icons.refresh),
               // Botón Refrescar: Resetea filtros y busca NUEVA ubicación
-              onPressed: () => _fetchNearbyReports(forceLocation: true, resetFilters: true),
+              onPressed: () =>
+                  _fetchNearbyReports(forceLocation: true, resetFilters: true),
               tooltip: 'Refrescar y limpiar filtros',
             )
           else // Show a loading indicator in app bar during refresh
-             const Padding(
-               padding: EdgeInsets.only(right: 16.0),
-               child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-             ),
+            const Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: Center(
+                  child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))),
+            ),
         ],
       ),
       // Pull-to-refresh: Mantiene filtros, busca NUEVA ubicación
       body: RefreshIndicator(
-        onRefresh: () => _fetchNearbyReports(forceLocation: true, resetFilters: false),
+        onRefresh: () =>
+            _fetchNearbyReports(forceLocation: true, resetFilters: false),
         child: bodyContent,
       ),
       floatingActionButton: FloatingActionButton.extended(
