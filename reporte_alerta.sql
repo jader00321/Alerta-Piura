@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3PIPrKCaZaGq44JKa849XfG36DxEa593QAge856E7VGqBFRNEZvrpdsJpwQsOl4
+\restrict 3iKSPptcXnA4i5RCwRm9abSxxKkQX4ja8FjjgjjyEnmr28CRchA4ozp8kkwAMxV
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
 
--- Started on 2025-10-24 10:48:10
+-- Started on 2025-10-25 00:29:16
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1924,12 +1924,12 @@ ALTER TABLE ONLY public.sos_location_updates
 
 
 --
--- TOC entry 5957 (class 2606 OID 31939)
+-- TOC entry 5957 (class 2606 OID 32134)
 -- Name: transacciones_pago transacciones_pago_id_metodo_pago_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.transacciones_pago
-    ADD CONSTRAINT transacciones_pago_id_metodo_pago_fkey FOREIGN KEY (id_metodo_pago) REFERENCES public.metodos_pago(id);
+    ADD CONSTRAINT transacciones_pago_id_metodo_pago_fkey FOREIGN KEY (id_metodo_pago) REFERENCES public.metodos_pago(id) ON DELETE SET NULL;
 
 
 --
@@ -1995,11 +1995,11 @@ ALTER TABLE ONLY public.zonas_seguras
     ADD CONSTRAINT zonas_seguras_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id) ON DELETE CASCADE;
 
 
--- Completed on 2025-10-24 10:48:11
+-- Completed on 2025-10-25 00:29:17
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3PIPrKCaZaGq44JKa849XfG36DxEa593QAge856E7VGqBFRNEZvrpdsJpwQsOl4
+\unrestrict 3iKSPptcXnA4i5RCwRm9abSxxKkQX4ja8FjjgjjyEnmr28CRchA4ozp8kkwAMxV
 
