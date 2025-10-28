@@ -14,58 +14,78 @@ import FiltrosHistorialSOS from '../components/SOS/FiltrosHistorialSOS';
 // Importar date-fns para fechas por defecto
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 
+/**
+ * Componente PaginaAlertasSOS: Página principal para gestionar alertas SOS.
+ * Incluye carga de datos, filtros, selección de alertas, mapa con historial de ubicación,
+ * temporizador para alertas activas, y actualizaciones en tiempo real vía sockets.
+ * 
+ * Funcionalidades principales:
+ * - Carga inicial de alertas y configuración de sockets.
+ * - Selección automática de la alerta más reciente si no hay filtros activos.
+ * - Filtros para historial (usuario, fechas, estados).
+ * - Temporizador countdown para alertas activas.
+ * - Comunicación en vivo para nuevas alertas, actualizaciones de ubicación y estado.
+ */
 function PaginaAlertasSOS() {
   // --- Estados Principales ---
-  const [allAlerts, setAllAlerts] = useState([]); // Todas las alertas recibidas
-  const [selectedAlertId, setSelectedAlertId] = useState(null); // ID de la alerta seleccionada
-  const [locationHistory, setLocationHistory] = useState({}); // Historial de ubicaciones { alertId: [[lat, lon], ...], ... }
-  const [loading, setLoading] = useState(true); // Carga inicial
-  const [error, setError] = useState(''); // Mensajes de error
-  const [activeSosTimer, setActiveSosTimer] = useState(null); // String del temporizador ej: "09:59"
-  const countdownIntervalRef = useRef(null); // Ref para el intervalo
+  const [allAlerts, setAllAlerts] = useState([]); // Todas las alertas recibidas del backend
+  const [selectedAlertId, setSelectedAlertId] = useState(null); // ID de la alerta actualmente seleccionada
+  const [locationHistory, setLocationHistory] = useState({}); // Historial de ubicaciones por alerta { alertId: [[lat, lon], ...], ... }
+  const [loading, setLoading] = useState(true); // Indicador de carga inicial
+  const [error, setError] = useState(''); // Mensajes de error para mostrar al usuario
+  const [activeSosTimer, setActiveSosTimer] = useState(null); // Temporizador activo en formato "MM:SS"
+  const countdownIntervalRef = useRef(null); // Ref para el intervalo del temporizador (para limpieza)
 
   // --- Estado para Filtros con valor inicial (últimos 7 días) ---
   const [filters, setFilters] = useState(() => {
-      const initialEndDate = endOfDay(new Date());
-      const initialStartDate = startOfDay(subDays(initialEndDate, 6)); // Últimos 7 días
+      const initialEndDate = endOfDay(new Date()); // Fin del día actual
+      const initialStartDate = startOfDay(subDays(initialEndDate, 6)); // Inicio de hace 7 días
       return {
-          userId: null,
-          startDate: initialStartDate,
-          endDate: initialEndDate,
-          estado: '',
-          estado_atencion: '',
+          userId: null, // Filtro por ID de usuario
+          startDate: initialStartDate, // Fecha de inicio por defecto
+          endDate: initialEndDate, // Fecha de fin por defecto
+          estado: '', // Estado de la alerta (e.g., 'activo', 'finalizado')
+          estado_atencion: '', // Estado de atención (e.g., 'En Espera', 'Atendiendo')
       };
   });
 
-  // --- Selección de Alerta y Carga de Historial de Ubicación ---
+  /**
+   * Función para seleccionar una alerta y cargar su historial de ubicación si no existe.
+   * Marca la alerta como revisada en segundo plano.
+   * 
+   * @param {Object} alert - Objeto de la alerta seleccionada.
+   */
   const handleSelectAlert = useCallback(async (alert) => {
-    if (!alert || alert.id === selectedAlertId) return; // No hacer nada si no hay alerta o ya está seleccionada
+    if (!alert || alert.id === selectedAlertId) return; // Evita acciones innecesarias
 
     console.log("Seleccionando alerta:", alert.id);
     setSelectedAlertId(alert.id);
 
-    // Marcar como revisada en segundo plano
+    // Marca como revisada sin bloquear la UI
     if (!alert.revisada) {
       sosService.updateStatus(alert.id, { revisada: true }).catch(err => console.warn("Error al marcar como revisada:", err));
     }
 
-    // Cargar historial si no existe
+    // Carga el historial de ubicación si no está en el estado
     if (!locationHistory[alert.id]) {
         try {
             console.log("Cargando historial de ubicación para:", alert.id);
             const history = await sosService.getLocationHistory(alert.id);
-            const path = history.map(p => [p.lat, p.lon]);
+            const path = history.map(p => [p.lat, p.lon]); // Convierte a array de coordenadas
             // Actualiza el estado con el nuevo historial
             setLocationHistory(prev => ({ ...prev, [alert.id]: path }));
         } catch(histError){
              console.error(`Error cargando historial para alerta ${alert.id}:`, histError);
-             // Guarda array vacío en error para evitar reintentos y indicar que se intentó cargar
+             // Guarda array vacío para evitar reintentos y marcar que se intentó
              setLocationHistory(prev => ({ ...prev, [alert.id]: [] }));
         }
     }
-  }, [selectedAlertId, locationHistory]); // Dependencias: selectedAlertId, locationHistory
+  }, [selectedAlertId, locationHistory]); // Dependencias para optimización
 
-  // --- Fetch Inicial de Datos ---
+  /**
+   * Función para cargar datos iniciales desde el backend.
+   * Ordena las alertas por fecha descendente y selecciona la más reciente si no hay filtros activos.
+   */
   const fetchData = useCallback(async () => {
     console.log("FetchData SOS: Iniciando...");
     setLoading(true); setError('');
@@ -77,15 +97,14 @@ function PaginaAlertasSOS() {
       console.log("FetchData SOS: Datos recibidos:", sortedData.length);
 
       // --- Lógica de Selección Inicial ---
-      // Selecciona la alerta MÁS RECIENTE solo si no hay ninguna seleccionada aún
-      // Y si NO hay filtros específicos activos (excepto las fechas por defecto)
+      // Selecciona la alerta más reciente solo si no hay selección previa y no hay filtros específicos
       const specificFiltersActive = filters.userId || filters.estado || filters.estado_atencion;
       if (sortedData.length > 0 && selectedAlertId === null && !specificFiltersActive) {
           console.log("Estableciendo alerta seleccionada por defecto (la más reciente):", sortedData[0]);
-          // Llamar a handleSelectAlert DESPUÉS de un pequeño delay
+          // Llama a handleSelectAlert con un pequeño delay para evitar conflictos
           setTimeout(() => handleSelectAlert(sortedData[0]), 0);
       } else if (sortedData.length === 0) {
-          setSelectedAlertId(null); // Limpia si no hay alertas
+          setSelectedAlertId(null); // Limpia selección si no hay alertas
       }
 
     } catch (err) {
@@ -99,37 +118,40 @@ function PaginaAlertasSOS() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleSelectAlert]); // Solo depende de handleSelectAlert (estable con useCallback)
 
-  // --- Efecto para Carga Inicial y Configuración de Sockets ---
+  /**
+   * useEffect para carga inicial y configuración de sockets.
+   * Conecta al socket, configura listeners para eventos en tiempo real y limpia al desmontar.
+   */
   useEffect(() => {
-    fetchData(); // Carga inicial
+    fetchData(); // Carga inicial de datos
 
-    const token = localStorage.getItem('admin_token'); // O usa useAuth().token
+    const token = localStorage.getItem('admin_token'); // Obtiene token para autenticación
     if(token) {
-        socketService.connect(token); // Conecta y autentica
+        socketService.connect(token); // Conecta y autentica el socket
     } else {
         console.error("PaginaAlertasSOS: No hay token para conectar socket.");
         setError("Error de autenticación, no se pudo conectar al servidor en tiempo real.");
-        return; // No configurar listeners si no hay conexión
+        return; // No configura listeners sin conexión
     }
 
-    // --- Listeners de Socket ---
+    // --- Listeners de Socket para actualizaciones en tiempo real ---
     const handleNewAlert = (newAlert) => {
         console.log("Nueva alerta SOS recibida por socket:", newAlert);
         setAllAlerts(prev => {
             const exists = prev.some(a => a.id === newAlert.id);
             if (exists) return prev; // Evita duplicados
-            // Añade la nueva al principio
+            // Añade la nueva al principio de la lista
             return [newAlert, ...prev];
         });
         // NO cambia la alerta seleccionada automáticamente
     };
     const handleLocationUpdate = (update) => {
          console.log("Actualización de ubicación SOS recibida:", update);
-         if (!update || !update.alertId || !update.location) return; // Validación
+         if (!update || !update.alertId || !update.location) return; // Validación básica
          setLocationHistory(prev => {
              const current = prev[update.alertId] || [];
              const newLoc = [update.location.lat, update.location.lon];
-             // Evita duplicados exactos
+             // Evita duplicados exactos de ubicación
              if(current.length > 0 && current[current.length - 1][0] === newLoc[0] && current[current.length - 1][1] === newLoc[1]) {
                  return prev;
              }
@@ -138,10 +160,11 @@ function PaginaAlertasSOS() {
     };
      const handleAlertUpdate = (updatedAlert) => {
          console.log("Actualización de estado SOS recibida:", updatedAlert);
-         if (!updatedAlert || !updatedAlert.id) return; // Validación
+         if (!updatedAlert || !updatedAlert.id) return; // Validación básica
          setAllAlerts(prev => prev.map(a => a.id === updatedAlert.id ? { ...a, ...updatedAlert } : a));
      };
 
+    // Registra los listeners
     socketService.on('new-sos-alert', handleNewAlert);
     socketService.on('sos-location-update', handleLocationUpdate);
     socketService.on('sos-alert-updated', handleAlertUpdate);
@@ -152,19 +175,19 @@ function PaginaAlertasSOS() {
         socketService.off('new-sos-alert', handleNewAlert);
         socketService.off('sos-location-update', handleLocationUpdate);
         socketService.off('sos-alert-updated', handleAlertUpdate);
-        // NO desconectar socket aquí, debería ser manejado por AuthContext o App
+        // NO desconectar socket aquí (debería manejarse globalmente)
         clearInterval(countdownIntervalRef.current); // Limpia el intervalo del timer
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Solo ejecutar al montar
 
-   // --- Datos Derivados (para pasar a componentes hijos) ---
+   // --- Datos Derivados (optimizados con useMemo para pasar a componentes hijos) ---
    const selectedAlertData = useMemo(() => {
-       return allAlerts.find(a => a.id === selectedAlertId) || null;
+       return allAlerts.find(a => a.id === selectedAlertId) || null; // Alerta seleccionada o null
    }, [allAlerts, selectedAlertId]);
 
-   const currentPath = useMemo(() => selectedAlertId ? locationHistory[selectedAlertId] || [] : [], [selectedAlertId, locationHistory]);
-   const latestLocation = useMemo(() => currentPath.length > 0 ? currentPath[currentPath.length - 1] : null, [currentPath]);
+   const currentPath = useMemo(() => selectedAlertId ? locationHistory[selectedAlertId] || [] : [], [selectedAlertId, locationHistory]); // Historial de la alerta seleccionada
+   const latestLocation = useMemo(() => currentPath.length > 0 ? currentPath[currentPath.length - 1] : null, [currentPath]); // Última ubicación
 
    // Lista de alertas filtrada para el historial
    const filteredAlerts = useMemo(() => {
@@ -173,28 +196,30 @@ function PaginaAlertasSOS() {
            if (filters.estado && alert.estado !== filters.estado) return false;
            if (filters.estado_atencion && (alert.estado_atencion || 'En Espera') !== filters.estado_atencion) return false;
            const alertDate = new Date(alert.fecha_inicio);
-           // Compara fechas usando startOfDay/endOfDay para asegurar inclusión correcta
+           // Compara fechas usando funciones de date-fns para inclusión correcta
            if (filters.startDate && alertDate < startOfDay(filters.startDate)) return false;
            if (filters.endDate && alertDate > endOfDay(filters.endDate)) return false;
            return true;
        });
    }, [allAlerts, filters]);
 
-
-  // --- Efecto para el Temporizador (basado en selectedAlertData) ---
+  /**
+   * useEffect para el temporizador countdown basado en la alerta seleccionada.
+   * Solo activa si la alerta está 'activa' y calcula el tiempo restante.
+   */
   useEffect(() => {
-    clearInterval(countdownIntervalRef.current);
+    clearInterval(countdownIntervalRef.current); // Limpia intervalo previo
     setActiveSosTimer(null);
 
     if (selectedAlertData?.estado === 'activo') {
       const startTime = new Date(selectedAlertData.fecha_inicio).getTime();
-      // Usar la duración que viene del backend
+      // Usa la duración en segundos del backend
       const sosDurationSeconds = selectedAlertData.duracion_segundos || 0; // Default a 0 si no existe
 
       const updateTimer = () => {
           const now = Date.now();
           const elapsed = Math.floor((now - startTime) / 1000);
-          const remaining = Math.max(0, sosDurationSeconds - elapsed); // Evitar negativos
+          const remaining = Math.max(0, sosDurationSeconds - elapsed); // Evita negativos
 
           const minutes = Math.floor(remaining / 60).toString().padStart(2, '0');
           const seconds = (remaining % 60).toString().padStart(2, '0');
@@ -202,7 +227,7 @@ function PaginaAlertasSOS() {
 
           if (remaining <= 0) {
             clearInterval(countdownIntervalRef.current);
-            // Podríamos forzar un refetch aquí si el backend no actualiza automáticamente el estado a 'finalizado'
+            // Podrías forzar un refetch aquí si el backend no actualiza automáticamente
             // fetchData();
           }
       };
@@ -211,12 +236,16 @@ function PaginaAlertasSOS() {
       countdownIntervalRef.current = setInterval(updateTimer, 1000);
     }
 
-    // Limpieza
+    // Limpieza automática
     return () => clearInterval(countdownIntervalRef.current);
   }, [selectedAlertData]); // Solo depende de la data de la alerta seleccionada
 
-
   // --- Handlers de Acciones ---
+  /**
+   * Handler para cambiar el estado de atención de una alerta.
+   * @param {number} alertId - ID de la alerta.
+   * @param {string} newStatus - Nuevo estado de atención.
+   */
   const handleAttentionChange = (alertId, newStatus) => {
       setError('');
       sosService.updateStatus(alertId, { estado_atencion: newStatus })
@@ -227,6 +256,10 @@ function PaginaAlertasSOS() {
       // La actualización visual vendrá por socket 'sos-alert-updated'
   };
 
+  /**
+   * Handler para finalizar una alerta SOS con confirmación.
+   * @param {number} alertId - ID de la alerta.
+   */
   const handleFinishAlert = (alertId) => {
     if (window.confirm('¿Está seguro de finalizar esta alerta SOS?')) {
         setError('');
@@ -244,12 +277,14 @@ function PaginaAlertasSOS() {
     }
   };
 
-  // --- Handler para cambio de filtros ---
+  /**
+   * Handler para aplicar cambios en los filtros.
+   * @param {Object} newFilters - Nuevos filtros aplicados.
+   */
    const handleFilterChange = (newFilters) => {
        console.log("Aplicando filtros:", newFilters);
        setFilters(newFilters);
    };
-
 
   // --- Render Principal ---
   return (
@@ -274,7 +309,7 @@ function PaginaAlertasSOS() {
               {/* Detalles Alerta Seleccionada */}
               <Grid item xs={12} md={6} lg={4}>
                   <DetalleAlertaSeleccionada
-                      key={selectedAlertId || 'no-alert'} // Clave para forzar re-render
+                      key={selectedAlertId || 'no-alert'} // Clave para forzar re-render al cambiar selección
                       alert={selectedAlertData}
                       timer={selectedAlertData?.estado === 'activo' ? activeSosTimer : null}
                       loading={loading && !selectedAlertData} // Muestra skeleton si carga inicial y no hay selección

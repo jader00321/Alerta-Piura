@@ -1,22 +1,51 @@
-// lib/widgets/mi_actividad/activity_list_view.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_resumen_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
-import 'package:mobile_app/widgets/mi_actividad/tarjeta_actividad.dart'; // Importamos la nueva tarjeta unificada
+import 'package:mobile_app/widgets/mi_actividad/tarjeta_actividad.dart';
 
-// El enum se mantiene igual
-enum Fetcher { misReportes, misApoyos, misComentarios, misSeguimientos }
+/// Enum para identificar el contexto (pestaña) desde el cual se utiliza [ActivityListView].
+/// Determina qué tipo de datos se esperan y cómo se renderizará [TarjetaActividad].
+enum Fetcher {
+  /// Para la pestaña "Mis Reportes".
+  misReportes,
+  /// Para la pestaña "Mis Apoyos".
+  misApoyos,
+  /// Para la pestaña "Mis Comentarios".
+  misComentarios,
+  /// Para la pestaña "Seguimientos".
+  misSeguimientos
+}
 
-/// Un widget SIN ESTADO que muestra una lista de reportes de actividad.
-/// Recibe los datos y callbacks del padre (`MiActividadScreen`).
+/// {@template activity_list_view}
+/// Widget reutilizable **sin estado** que muestra una lista de reportes
+/// resumidos ([ReporteResumen]) para las diferentes pestañas de la pantalla
+/// [MiActividadScreen].
+///
+/// Recibe la lista de reportes ya cargada, el estado de carga y los callbacks
+/// necesarios desde su widget padre ([MiActividadScreen]), que es el
+/// encargado de gestionar el estado y la lógica de carga de datos.
+/// Utiliza [TarjetaActividad] para renderizar cada elemento, pasándole el [fetcher]
+/// para adaptar la UI.
+/// Maneja los estados de carga inicial, lista vacía y permite refrescar
+/// mediante `RefreshIndicator`.
+/// {@endtemplate}
 class ActivityListView extends StatelessWidget {
+  /// Identifica la pestaña actual para la cual se muestra la lista
+  /// (ej. Mis Reportes, Mis Apoyos).
   final Fetcher fetcher;
-  final List<ReporteResumen> reportes; // Recibe la lista de reportes ya cargada
-  final bool isLoading; // Recibe el estado de carga del padre
-  final Future<void> Function() onRefresh; // Callback para el RefreshIndicator
-  final Function(int) onCancelarReporte; // Callback para el botón "Cancelar"
-  final Function(int) onNavigateToDetail; // Callback para navegar
+  /// La lista de [ReporteResumen] a mostrar.
+  final List<ReporteResumen> reportes;
+  /// Indica si el widget padre ([MiActividadScreen]) está actualmente cargando datos.
+  final bool isLoading;
+  /// Callback ejecutado cuando el usuario hace "pull-to-refresh".
+  final Future<void> Function() onRefresh;
+  /// Callback ejecutado cuando se presiona el botón "Cancelar" en un reporte
+  /// (solo aplicable si `fetcher == Fetcher.misReportes`). Recibe el ID del reporte.
+  final Function(int) onCancelarReporte;
+  /// Callback ejecutado al tocar una tarjeta de reporte. Recibe el ID del reporte.
+  final Function(int) onNavigateToDetail;
 
+  /// {@macro activity_list_view}
   const ActivityListView({
     super.key,
     required this.fetcher,
@@ -29,16 +58,18 @@ class ActivityListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Muestra el esqueleto si el padre está cargando Y la lista está vacía
+    // Muestra el esqueleto solo durante la carga inicial si la lista está vacía.
     if (isLoading && reportes.isEmpty) {
       return const EsqueletoListaActividad();
     }
 
-    // Muestra el mensaje de lista vacía
+    // Muestra un mensaje si la lista está vacía después de cargar.
     if (reportes.isEmpty) {
-      return RefreshIndicator( // Añadir RefreshIndicator aquí también
+      return RefreshIndicator(
         onRefresh: onRefresh,
-        child: LayoutBuilder( // Asegura que el Center ocupe espacio para el refresh
+        // LayoutBuilder y ConstrainedBox aseguran que el mensaje de "vacío"
+        // ocupe toda la pantalla y permita el "pull-to-refresh".
+        child: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: ConstrainedBox(
@@ -59,41 +90,43 @@ class ActivityListView extends StatelessWidget {
       );
     }
 
-    // Muestra la lista de reportes
+    // Muestra la lista de reportes si hay datos.
     return RefreshIndicator(
-      onRefresh: onRefresh, // Llama a la función de refresco del padre
+      onRefresh: onRefresh, // Habilita pull-to-refresh.
       child: ListView.builder(
-        // Añadir physics para asegurar que el RefreshIndicator funcione siempre
+        // Asegura que el RefreshIndicator funcione incluso si la lista es corta.
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(8.0),
         itemCount: reportes.length,
         itemBuilder: (context, index) {
           final reporte = reportes[index];
 
-          // --- Construcción del Botón "Cancelar" Condicional ---
-          // Solo se crea si estamos en 'misReportes' y el estado es 'pendiente'
+          // Construye el botón "Cancelar" solo si es aplicable.
           Widget? trailingAction;
-          if (fetcher == Fetcher.misReportes && reporte.estado == 'pendiente_verificacion') {
+          if (fetcher == Fetcher.misReportes &&
+              reporte.estado == 'pendiente_verificacion') {
             trailingAction = TextButton(
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact, // Más compacto
+                visualDensity: VisualDensity.compact, // Botón más compacto.
               ),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.red, fontSize: 12)),
-              onPressed: () => onCancelarReporte(reporte.id), // Llama al callback del padre
+              child: const Text('Cancelar',
+                  style: TextStyle(color: Colors.red, fontSize: 12)),
+              // Llama al callback del padre pasando el ID del reporte.
+              onPressed: () => onCancelarReporte(reporte.id),
             );
           }
-          // --- Fin del Botón "Cancelar" ---
 
-          // --- Usamos la TarjetaActividad Unificada ---
+          // Usa la tarjeta unificada, pasando el contexto y la acción trailing.
           return TarjetaActividad(
             reporte: reporte,
-            fetcher: fetcher,
-            onTap: () => onNavigateToDetail(reporte.id), // Llama al callback del padre
-            trailingAction: trailingAction, // Pasa el botón "Cancelar" (o null)
+            fetcher: fetcher, // Pasa el contexto de la pestaña.
+            // Llama al callback del padre para la navegación.
+            onTap: () => onNavigateToDetail(reporte.id),
+            // Pasa el botón "Cancelar" (o null si no aplica).
+            trailingAction: trailingAction,
           );
-          // --- Fin ---
         },
       ),
     );

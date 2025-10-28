@@ -1,5 +1,5 @@
-// lib/screens/mi_actividad_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobile_app/api/lider_service.dart';
 import 'package:mobile_app/api/perfil_service.dart';
 import 'package:mobile_app/api/reporte_service.dart';
@@ -12,40 +12,52 @@ import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
 import 'package:mobile_app/widgets/mi_actividad/activity_list_view.dart';
 import 'package:mobile_app/widgets/mi_actividad/solicitudes_revision_view.dart';
 
+/// {@template mi_actividad_screen}
+/// Pantalla que muestra la actividad del usuario en varias pestañas.
+///
+/// Muestra pestañas para:
+/// - Mis Reportes
+/// - Mis Apoyos
+/// - Seguimientos
+/// - Mis Comentarios
+/// - Solicitudes de Revisión (solo si el usuario es [AuthNotifier.isLider]).
+///
+/// También maneja la lógica de swipe para navegar entre las
+/// pantallas principales de [HomeScreen].
+/// {@endtemplate}
 class MiActividadScreen extends StatefulWidget {
-  // --- NUEVO: Aceptar el PageController principal ---
+  /// El [PageController] de la [HomeScreen] principal, usado para
+  /// controlar la navegación por swipe entre pantallas principales.
   final PageController mainPageController;
-  
-  const MiActividadScreen({
-    super.key, 
-    required this.mainPageController
-  });
+
+  /// {@macro mi_actividad_screen}
+  const MiActividadScreen({super.key, required this.mainPageController});
 
   @override
   State<MiActividadScreen> createState() => _MiActividadScreenState();
 }
 
-class _MiActividadScreenState extends State<MiActividadScreen> with TickerProviderStateMixin {
-  // Servicios
+/// Estado para [MiActividadScreen].
+///
+/// Maneja el [TabController] y la carga de datos para todas las pestañas.
+class _MiActividadScreenState extends State<MiActividadScreen>
+    with TickerProviderStateMixin {
   final PerfilService _perfilService = PerfilService();
   final ReporteService _reporteService = ReporteService();
   final SeguimientoService _seguimientoService = SeguimientoService();
   final LiderService _liderService = LiderService();
 
-  // Estado
   TabController? _tabController;
-  bool _isLoading = true; // Estado de carga principal
+  bool _isLoading = true;
   bool _isLider = false;
-  int _tabLength = 4; // Longitud por defecto para Ciudadano
+  int _tabLength = 4;
 
-  // Listas de datos
   List<ReporteResumen> _misReportes = [];
   List<ReporteResumen> _misApoyos = [];
   List<ReporteResumen> _misSeguimientos = [];
   List<ReporteResumen> _misComentarios = [];
   List<SolicitudRevision> _misRevisiones = [];
   bool _isSwipingScreens = false;
-  // Claves para llamar a _refreshData() en hijos (si fuera necesario, pero RefreshIndicator lo maneja)
 
   @override
   void initState() {
@@ -53,15 +65,14 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
     _isLider = context.read<AuthNotifier>().isLider;
     _tabLength = _isLider ? 5 : 4;
     _tabController = TabController(length: _tabLength, vsync: this);
-    
-    _tabController?.addListener(() { 
+
+    _tabController?.addListener(() {
       if (!_tabController!.indexIsChanging) {
         setState(() {
-          _isSwipingScreens = false; // Resetear al cambiar de pestaña
+          _isSwipingScreens = false;
         });
       }
     });
-    // Cargar todos los datos al iniciar
     _fetchAllData();
   }
 
@@ -71,11 +82,11 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
     super.dispose();
   }
 
-  /// Carga todos los datos para todas las pestañas simultáneamente
+  /// Carga los datos para todas las pestañas de actividad simultáneamente.
   Future<void> _fetchAllData() async {
-    // No establecer isLoading a true si ya está en medio de una recarga,
-    // pero si no es una recarga (estado inicial), mostrar esqueleto.
-    if (mounted) setState(() => _isLoading = true);
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
     try {
       final tareas = [
         _perfilService.getMisReportes(),
@@ -91,22 +102,27 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
           _misApoyos = resultados[1] as List<ReporteResumen>;
           _misSeguimientos = resultados[2] as List<ReporteResumen>;
           _misComentarios = resultados[3] as List<ReporteResumen>;
-          if (_isLider) _misRevisiones = resultados[4] as List<SolicitudRevision>;
+          if (_isLider) {
+            _misRevisiones = resultados[4] as List<SolicitudRevision>;
+          }
           _isLoading = false;
         });
       }
     } catch (e) {
-      print("Error cargando toda la actividad: $e");
+      debugPrint("Error cargando toda la actividad: $e");
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar la actividad: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Error al cargar la actividad: $e'),
+              backgroundColor: Colors.red),
         );
       }
     }
   }
 
-  /// Maneja la acción de "Cancelar" desde la pestaña "Mis Reportes"
+  /// Muestra un diálogo de confirmación y elimina un reporte pendiente
+  /// si el usuario confirma.
   Future<void> _handleCancelarReporte(int reporteId) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -114,7 +130,8 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
         title: const Text('Cancelar Reporte'),
         content: const Text('¿Estás seguro? Esta acción no se puede deshacer.'),
         actions: [
-          TextButton(child: const Text('No'), onPressed: () => Navigator.pop(ctx, false)),
+          TextButton(
+              child: const Text('No'), onPressed: () => Navigator.pop(ctx, false)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Sí, Cancelar'),
@@ -127,70 +144,74 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
     if (confirm == true) {
       try {
         final success = await _reporteService.eliminarReporte(reporteId);
-        if (success && mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('Reporte cancelado exitosamente.'), backgroundColor: Colors.green),
-           );
-           _fetchAllData(); // Recargar todos los datos para actualizar contadores y listas
-        } else if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             const SnackBar(content: Text('No se pudo cancelar el reporte.'), backgroundColor: Colors.red),
-           );
+        if (mounted) {
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('Reporte cancelado exitosamente.'),
+                  backgroundColor: Colors.green),
+            );
+            _fetchAllData();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                  content: Text('No se pudo cancelar el reporte.'),
+                  backgroundColor: Colors.red),
+            );
+          }
         }
       } catch (e) {
-         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-           );
-         }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
       }
     }
   }
 
-  /// Maneja la navegación al detalle y refresca si es necesario
+  /// Navega a la pantalla de detalle de un reporte.
+  /// Refresca los datos si la pantalla de detalle devuelve `true`.
   Future<void> _handleNavigateToDetail(int reporteId) async {
-    final result = await Navigator.pushNamed(context, '/reporte_detalle', arguments: reporteId);
-    // Si la pantalla de detalle devuelve 'true' (porque se siguió/comentó/etc.),
-    // recargamos todos los datos para mantener la consistencia.
+    final result =
+        await Navigator.pushNamed(context, '/reporte_detalle', arguments: reporteId);
     if (result == true && mounted) {
       _fetchAllData();
     }
   }
-  
-  bool _handleScrollNotification(ScrollNotification notification) {
-    // Solo nos interesa el Overscroll (cuando el usuario llega al borde)
-    if (notification is OverscrollNotification) {
-      // Evitar múltiples triggers
-      if (_isSwipingScreens) return false; 
 
-      // Si el overscroll es negativo (hacia la derecha) y estamos en la primera pestaña (index 0)
+  /// Detecta el overscroll al inicio o fin del [TabBarView] para
+  /// navegar el [PageController] de [HomeScreen].
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification is OverscrollNotification) {
+      if (_isSwipingScreens) {
+        return false;
+      }
+
       if (notification.overscroll < 0 && _tabController?.index == 0) {
         setState(() => _isSwipingScreens = true);
-        // Navegar a la pantalla principal anterior (Cerca de Ti)
         widget.mainPageController.previousPage(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
-        return true; // Notificación manejada
+        return true;
       }
 
-      // Si el overscroll es positivo (hacia la izquierda) y estamos en la última pestaña
-      if (notification.overscroll > 0 && _tabController?.index == _tabLength - 1) {
+      if (notification.overscroll > 0 &&
+          _tabController?.index == _tabLength - 1) {
         setState(() => _isSwipingScreens = true);
-        // Navegar a la pantalla principal siguiente (Perfil)
         widget.mainPageController.nextPage(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
-        return true; // Notificación manejada
+        return true;
       }
     }
-    return false; // Dejar que la notificación continúe
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    // Lista de pestañas dinámica
     final List<Tab> tabs = [
       Tab(text: 'Mis Reportes (${_isLoading ? '...' : _misReportes.length})'),
       Tab(text: 'Mis Apoyos (${_isLoading ? '...' : _misApoyos.length})'),
@@ -216,7 +237,6 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // Pestaña 1: Mis Reportes
                   ActivityListView(
                     fetcher: Fetcher.misReportes,
                     reportes: _misReportes,
@@ -225,7 +245,6 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
                     onCancelarReporte: _handleCancelarReporte,
                     onNavigateToDetail: _handleNavigateToDetail,
                   ),
-                  // Pestaña 2: Mis Apoyos
                   ActivityListView(
                     fetcher: Fetcher.misApoyos,
                     reportes: _misApoyos,
@@ -234,7 +253,6 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
                     onCancelarReporte: (id) {},
                     onNavigateToDetail: _handleNavigateToDetail,
                   ),
-                  // Pestaña 3: Mis Seguimientos
                   ActivityListView(
                     fetcher: Fetcher.misSeguimientos,
                     reportes: _misSeguimientos,
@@ -243,7 +261,6 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
                     onCancelarReporte: (id) {},
                     onNavigateToDetail: _handleNavigateToDetail,
                   ),
-                  // Pestaña 4: Mis Comentarios
                   ActivityListView(
                     fetcher: Fetcher.misComentarios,
                     reportes: _misComentarios,
@@ -252,7 +269,6 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
                     onCancelarReporte: (id) {},
                     onNavigateToDetail: _handleNavigateToDetail,
                   ),
-                  // Pestaña 5: Solicitudes (Solo Líder)
                   if (_isLider)
                     SolicitudesRevisionView(
                       solicitudes: _misRevisiones,
@@ -262,7 +278,6 @@ class _MiActividadScreenState extends State<MiActividadScreen> with TickerProvid
                 ],
               ),
             ),
-      // --- FIN MODIFICACIÓN ---
     );
   }
 }

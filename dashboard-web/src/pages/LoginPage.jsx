@@ -6,6 +6,11 @@ import { useAuth } from '../context/AuthContext'; // Importar el hook useAuth
 import logo from '../assets/logo.png';
 import loginBg from '../assets/login-bg.png';
 
+/**
+ * Copyright - Componente para mostrar el texto de copyright
+ * @param {Object} props - Propiedades del componente
+ * @returns {JSX.Element}
+ */
 function Copyright(props) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
@@ -16,6 +21,10 @@ function Copyright(props) {
   );
 }
 
+/**
+ * LoginPage - Página de inicio de sesión para administradores
+ * @returns {JSX.Element}
+ */
 function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth(); // Usar la función login del contexto
@@ -23,6 +32,10 @@ function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  /**
+   * Maneja el proceso de inicio de sesión
+   * @param {Event} e - Evento del formulario
+   */
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -41,6 +54,7 @@ function LoginPage() {
     <Box sx={{ display: 'flex', height: '100vh' }}>
       <CssBaseline />
       
+      {/* Panel lateral con imagen */}
       <Box 
         sx={{ 
           flex: 1.5,
@@ -54,7 +68,7 @@ function LoginPage() {
         <Box
           component="img"
           src={loginBg}
-          alt="Illustration"
+          alt="Ilustración de seguridad ciudadana"
           sx={{
             maxWidth: '100%',
             maxHeight: '100%',
@@ -66,6 +80,7 @@ function LoginPage() {
         />
       </Box>
       
+      {/* Panel de formulario de login */}
       <Box 
         component={Paper} 
         elevation={6} 
@@ -88,24 +103,43 @@ function LoginPage() {
             maxWidth: '600px'
           }}
         >
-          <img src={logo} alt="Alerta Piura Logo" style={{ width: '160px', height: '160px', border: `3px solid black`, borderRadius: '16px', padding: '5px'}} />
+          {/* Logo de la aplicación */}
+          <img 
+            src={logo} 
+            alt="Alerta Piura Logo" 
+            style={{ 
+              width: '160px', 
+              height: '160px', 
+              border: `3px solid black`, 
+              borderRadius: '16px', 
+              padding: '5px'
+            }} 
+          />
           
+          {/* Título de la página */}
           <Typography component="h1" variant="h5" sx={{ mt: 4, fontWeight: 'bold' }}>
             Ingreso de Administrador
           </Typography>
 
+          {/* Formulario de login */}
           <Box component="form" noValidate onSubmit={handleLogin} sx={{ mt: 1, width: '100%' }}>
             <TextField
-              margin="normal" required fullWidth
+              margin="normal" 
+              required 
+              fullWidth
               label="Correo Electrónico"
               name="email"
-              autoComplete="email" autoFocus
+              autoComplete="email" 
+              autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
             <TextField
-              margin="normal" required fullWidth
-              name="password" label="Contraseña"
+              margin="normal" 
+              required 
+              fullWidth
+              name="password" 
+              label="Contraseña"
               type="password"
               autoComplete="current-password"
               value={password}
@@ -113,7 +147,9 @@ function LoginPage() {
             />
             {error && <Alert severity="error" sx={{ mt: 2, width: '100%' }}>{error}</Alert>}
             <Button
-              type="submit" fullWidth variant="contained"
+              type="submit" 
+              fullWidth 
+              variant="contained"
               sx={{ mt: 3, mb: 2, py: 1.5, fontSize: '1rem' }}
             >
               Iniciar Sesión

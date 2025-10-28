@@ -1,24 +1,36 @@
-// lib/screens/pantalla_crear_zona.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/api/perfil_service.dart';
 
+/// {@template pantalla_crear_zona}
+/// Pantalla para crear una nueva Zona Segura (función Premium).
+///
+/// Permite al usuario seleccionar un punto central en el mapa, ajustar un radio
+/// y dar un nombre a la zona antes de guardarla.
+/// {@endtemplate}
 class PantallaCrearZona extends StatefulWidget {
+  /// {@macro pantalla_crear_zona}
   const PantallaCrearZona({super.key});
 
   @override
   State<PantallaCrearZona> createState() => _PantallaCrearZonaState();
 }
 
+/// Estado para [PantallaCrearZona].
+///
+/// Maneja el [MapController], el estado del formulario (nombre),
+/// la posición central, el radio y la lógica de guardado.
 class _PantallaCrearZonaState extends State<PantallaCrearZona> {
   final _formKey = GlobalKey<FormState>();
   final _nombreController = TextEditingController();
   final _mapController = MapController();
 
+  /// El punto central actual de la zona que se está creando.
   LatLng _centroZona = const LatLng(-5.19449, -80.63282); // Centro de Piura por defecto
+  /// El radio actual en metros de la zona que se está creando.
   double _radioMetros = 500.0; // 500m por defecto
+  /// Indica si se está guardando la zona.
   bool _isLoading = false;
 
   @override
@@ -28,8 +40,11 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
     super.dispose();
   }
 
+  /// Valida el nombre y guarda la nueva zona segura usando [PerfilService].
   Future<void> _guardarZona() async {
-    if (!_formKey.currentState!.validate() || _isLoading) return;
+    if (!_formKey.currentState!.validate() || _isLoading) {
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -42,12 +57,13 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success ? 'Zona Segura creada con éxito' : 'Error al crear la zona'),
+          content: Text(
+              success ? 'Zona Segura creada con éxito' : 'Error al crear la zona'),
           backgroundColor: success ? Colors.green : Colors.red,
         ),
       );
       if (success) {
-        Navigator.pop(context, true); // Devuelve 'true' para indicar que se debe refrescar
+        Navigator.pop(context, true); // Devuelve 'true' para indicar éxito
       }
     }
 
@@ -61,7 +77,12 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
         title: const Text('Crear Nueva Zona Segura'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save),
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(color: Colors.white))
+                : const Icon(Icons.save),
             onPressed: _guardarZona,
             tooltip: 'Guardar Zona',
           ),
@@ -71,7 +92,6 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
         key: _formKey,
         child: Column(
           children: [
-            // Mapa interactivo
             Expanded(
               child: FlutterMap(
                 mapController: _mapController,
@@ -89,27 +109,24 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
                     urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.example.mobile_app',
                   ),
-                  // Círculo que muestra el radio de la zona
                   CircleLayer(
                     circles: [
                       CircleMarker(
                         point: _centroZona,
                         radius: _radioMetros,
                         useRadiusInMeter: true,
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                        color: Theme.of(context).colorScheme.primary.withAlpha(51),
                         borderColor: Theme.of(context).colorScheme.primary,
                         borderStrokeWidth: 2,
                       ),
                     ],
                   ),
-                  // Pin central fijo
                   const Center(
                     child: Icon(Icons.location_pin, size: 50, color: Colors.red),
                   ),
                 ],
               ),
             ),
-            // Panel inferior para los controles
             Card(
               margin: EdgeInsets.zero,
               elevation: 8,
@@ -124,7 +141,8 @@ class _PantallaCrearZonaState extends State<PantallaCrearZona> {
                         labelText: 'Nombre de la Zona (ej. "Casa", "Oficina")',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) => (value?.isEmpty ?? true) ? 'El nombre es requerido' : null,
+                      validator: (value) =>
+                          (value?.isEmpty ?? true) ? 'El nombre es requerido' : null,
                     ),
                     const SizedBox(height: 16),
                     Text('Radio de la zona: ${_radioMetros.toInt()} metros'),

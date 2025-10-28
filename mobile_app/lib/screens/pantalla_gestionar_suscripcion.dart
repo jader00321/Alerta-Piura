@@ -7,17 +7,33 @@ import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_perfil.dart';
 
+/// {@template pantalla_gestionar_suscripcion}
+/// Pantalla para que un usuario suscrito (Premium o Reportero) gestione su plan.
+///
+/// Muestra el plan actual y la fecha de expiración.
+/// Permite navegar para cambiar de plan, gestionar métodos de pago o cancelar
+/// la suscripción activa.
+/// {@endtemplate}
 class PantallaGestionarSuscripcion extends StatefulWidget {
+  /// {@macro pantalla_gestionar_suscripcion}
   const PantallaGestionarSuscripcion({super.key});
 
   @override
-  State<PantallaGestionarSuscripcion> createState() => _PantallaGestionarSuscripcionState();
+  State<PantallaGestionarSuscripcion> createState() =>
+      _PantallaGestionarSuscripcionState();
 }
 
-class _PantallaGestionarSuscripcionState extends State<PantallaGestionarSuscripcion> {
+/// Estado para [PantallaGestionarSuscripcion].
+///
+/// Maneja la carga de los datos del perfil y la lógica de cancelación.
+class _PantallaGestionarSuscripcionState
+    extends State<PantallaGestionarSuscripcion> {
   final PerfilService _perfilService = PerfilService();
   final ServicioSuscripcion _suscripcionService = ServicioSuscripcion();
+  
+  /// Futuro que contiene los datos del perfil actual del usuario.
   late Future<Perfil> _perfilFuture;
+  /// Indica si se está procesando la cancelación de la suscripción.
   bool _isCancelling = false;
 
   @override
@@ -26,44 +42,53 @@ class _PantallaGestionarSuscripcionState extends State<PantallaGestionarSuscripc
     _perfilFuture = _perfilService.getMiPerfil();
   }
 
+  /// Muestra un diálogo de confirmación y llama a [ServicioSuscripcion.cancelarSuscripcion].
+  ///
+  /// Si tiene éxito, refresca el estado de autenticación global y cierra la pantalla.
   Future<void> _handleCancelarSuscripcion() async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirmar Cancelación'),
-        content: const Text('¿Estás seguro de que quieres cancelar tu suscripción? Tus beneficios premium seguirán activos hasta la fecha de expiración.'),
+        content: const Text(
+            '¿Estás seguro de que quieres cancelar tu suscripción? Tus beneficios premium seguirán activos hasta la fecha de expiración.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No, mantener')),
           TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () => Navigator.pop(ctx, true), 
-            child: const Text('Sí, Cancelar')
-          ),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('No, mantener')),
+          TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sí, Cancelar')),
         ],
       ),
     );
 
-    if (confirm == true && mounted) {
-      setState(() => _isCancelling = true);
-      final response = await _suscripcionService.cancelarSuscripcion();
-      
+    if (confirm == true) {
       if (mounted) {
-        final message = response['data']['message'] ?? 'Ocurrió un error.';
-        final success = response['statusCode'] == 200;
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: success ? Colors.orange : Colors.red,
-          ),
-        );
-        
-        await context.read<AuthNotifier>().refreshUserStatus();
-        
-        Navigator.pop(context, true);
+        setState(() => _isCancelling = true);
       }
-      
-      if(mounted){
+      final response = await _suscripcionService.cancelarSuscripcion();
+
+      if (!mounted) return;
+
+      final message = response['data']['message'] ?? 'Ocurrió un error.';
+      final success = response['statusCode'] == 200;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: success ? Colors.orange : Colors.red,
+        ),
+      );
+
+      // Refresca el estado global del usuario (rol puede cambiar)
+      await context.read<AuthNotifier>().refreshUserStatus();
+
+      // Cierra la pantalla y devuelve true para indicar que hubo un cambio
+      Navigator.pop(context, true);
+
+      if (mounted) {
         setState(() => _isCancelling = false);
       }
     }
@@ -80,11 +105,12 @@ class _PantallaGestionarSuscripcionState extends State<PantallaGestionarSuscripc
             return const EsqueletoPerfil();
           }
           if (snapshot.hasError || !snapshot.hasData) {
-            return const Center(child: Text('Error al cargar los datos de tu suscripción.'));
+            return const Center(
+                child: Text('Error al cargar los datos de tu suscripción.'));
           }
           final perfil = snapshot.data!;
           final theme = Theme.of(context);
-          
+
           return ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
@@ -97,12 +123,16 @@ class _PantallaGestionarSuscripcionState extends State<PantallaGestionarSuscripc
                       Text('Tu Plan Actual', style: theme.textTheme.titleLarge),
                       const Divider(height: 24),
                       ListTile(
-                        leading: const Icon(Icons.workspace_premium, color: Colors.amber, size: 40),
-                        title: Text(perfil.nombrePlan ?? 'Plan Gratuito', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                        leading: const Icon(Icons.workspace_premium,
+                            color: Colors.amber, size: 40),
+                        title: Text(
+                            perfil.nombrePlan ?? 'Plan Gratuito',
+                            style: theme.textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.bold)),
                         subtitle: Text(
                           perfil.fechaFinSuscripcion != null
-                            ? 'Válido hasta: ${DateFormat('dd MMMM yyyy', 'es_ES').format(perfil.fechaFinSuscripcion!)}'
-                            : 'Actualiza a Premium para obtener beneficios.',
+                              ? 'Válido hasta: ${DateFormat('dd MMMM yyyy', 'es_ES').format(perfil.fechaFinSuscripcion!)}'
+                              : 'Actualiza a Premium para obtener beneficios.',
                           style: theme.textTheme.bodyMedium,
                         ),
                       ),
@@ -111,7 +141,6 @@ class _PantallaGestionarSuscripcionState extends State<PantallaGestionarSuscripc
                 ),
               ),
               const SizedBox(height: 24),
-
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -123,7 +152,9 @@ class _PantallaGestionarSuscripcionState extends State<PantallaGestionarSuscripc
                         subtitle: const Text('Explora otros planes disponibles.'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () {
-                          Navigator.pushReplacementNamed(context, '/subscription_plans');
+                          // Reemplaza la pantalla actual para evitar volver aquí
+                          Navigator.pushReplacementNamed(
+                              context, '/subscription_plans');
                         },
                       ),
                       const Divider(indent: 16, endIndent: 16),
@@ -141,18 +172,22 @@ class _PantallaGestionarSuscripcionState extends State<PantallaGestionarSuscripc
                 ),
               ),
               const SizedBox(height: 32),
-
               ElevatedButton.icon(
                 onPressed: _isCancelling ? null : _handleCancelarSuscripcion,
-                icon: _isCancelling 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
-                      : const Icon(Icons.cancel_outlined),
+                icon: _isCancelling
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.cancel_outlined),
                 label: const Text('Cancelar Suscripción'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.error,
                   foregroundColor: theme.colorScheme.onError,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textStyle: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               )
             ],

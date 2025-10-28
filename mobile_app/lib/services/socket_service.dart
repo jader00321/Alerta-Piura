@@ -1,54 +1,74 @@
-// lib/services/socket_service.dart
-import 'dart:async'; // <-- IMPORTAR ASYNC
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'dart:async';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:mobile_app/utils/api_constants.dart';
 import 'package:flutter/foundation.dart';
-import 'package:mobile_app/services/notification_service.dart'; 
+import 'package:mobile_app/services/notification_service.dart';
 
+/// {@template socket_service}
+/// Servicio Singleton para gestionar la conexión WebSocket (Socket.IO).
+///
+/// Maneja la conexión, autenticación, y la escucha de eventos en tiempo real
+/// desde el servidor. Proporciona métodos `emit` para enviar eventos
+/// y `Streams` públicos para que la UI reaccione a eventos específicos
+/// (como [onStopSos]).
+/// {@endtemplate}
 class SocketService {
+  /// Instancia Singleton del servicio.
   static final SocketService _instance = SocketService._internal();
   factory SocketService() => _instance;
   SocketService._internal();
 
-  IO.Socket? _socket;
+  /// La instancia del socket de Socket.IO.
+  io.Socket? _socket;
 
-  // --- NUEVO: StreamController para el evento de detención de SOS ---
-  final StreamController<Map<String, dynamic>> _stopSosController = 
+  /// StreamController para el evento 'stopSos' (cuando un admin detiene el SOS).
+  /// Es broadcast para permitir múltiples listeners (ej. en `main.dart`).
+  final StreamController<Map<String, dynamic>> _stopSosController =
       StreamController.broadcast();
   
-  // --- NUEVO: Stream público para que otros escuchen ---
+  /// Stream público para que la UI (u otros servicios) escuche el evento 'stopSos'.
   Stream<Map<String, dynamic>> get onStopSos => _stopSosController.stream;
 
-
-  void connect(String token) { // <-- MODIFICADO: Aceptar token
+  /// {@template socket_service.connect}
+  /// Inicia la conexión con el servidor Socket.IO.
+  ///
+  /// Envía automáticamente el [token] de autenticación en la query
+  /// de la conexión para una autenticación inmediata.
+  /// Si ya existe una conexión, no hace nada.
+  ///
+  /// [token]: El token JWT del usuario autenticado.
+  /// {@endtemplate}
+  void connect(String token) {
     if (_socket?.connected ?? false) {
       debugPrint('Socket ya conectado.');
       return;
     }
 
-    // --- MODIFICADO: Enviar token en la query para autenticación inmediata ---
-    _socket = IO.io(ApiConstants.baseUrl, <String, dynamic>{
+    /// Configura el socket para conectarse a la [ApiConstants.baseUrl]
+    /// enviando el token en la query de autenticación.
+    _socket = io.io(ApiConstants.baseUrl, <String, dynamic>{
       'transports': ['websocket'],
-      'autoConnect': true, // Conectar automáticamente
-      'query': {'token': token} // Enviar token aquí
+      'autoConnect': true,
+      'query': {'token': token} // Autenticación inmediata
     });
 
     _setupListeners();
-    // No necesitamos 'authenticate' manual, pero la conexión sí
-    _socket!.connect(); 
+    _socket!.connect();
   }
 
+  /// Configura todos los listeners para los eventos entrantes del servidor.
   void _setupListeners() {
     _socket?.onConnect((_) {
       debugPrint('Socket conectado: ${_socket!.id}');
     });
-    
+
     _socket?.on('authenticated', (_) {
       debugPrint('Socket autenticado exitosamente!');
     });
-    
+
     _socket?.on('unauthorized', (data) {
       debugPrint('Fallo en la autenticación del socket: ${data['message']}');
+      // Podría implementarse un reintento de logout/login aquí si es necesario.
     });
 
     _socket?.onDisconnect((_) {
@@ -59,7 +79,8 @@ class SocketService {
       debugPrint('Error de Socket: $error');
     });
 
-    // --- LISTENER DE NOTIFICACIONES (EXISTENTE) ---
+    /// Listener para notificaciones push en tiempo real.
+    /// Recibe la data y la pasa a [NotificationService] para mostrarla.
     _socket?.on('notification', (data) {
       debugPrint('Notificación recibida vía socket: $data');
       if (data is Map<String, dynamic>) {
@@ -73,28 +94,29 @@ class SocketService {
       }
     });
 
-    // --- NUEVO: LISTENER PARA DETENCIÓN FORZADA DE SOS ---
+    /// Listener para el evento de detención forzada de SOS (enviado por un admin).
     _socket?.on('stopSos', (data) {
       debugPrint('Evento stopSos recibido del servidor: $data');
       if (data is Map<String, dynamic>) {
-        // Añadir el evento al stream para que los listeners (main.dart) reaccionen
+        /// Añade el evento al stream [onStopSos] para que `main.dart`
+        /// pueda reaccionar e invocar al [BackgroundService].
         _stopSosController.add(data);
       }
     });
   }
 
+  /// Desconecta manualmente el socket del servidor.
   void disconnect() {
     _socket?.disconnect();
     _socket = null;
   }
 
-  // --- CERRAR STREAM ---
+  /// Libera los recursos (cierra los [StreamController]s).
   void dispose() {
     _stopSosController.close();
   }
 
-  // --- MÉTODOS EMIT, ON, OFF (EXISTENTES, PERO AHORA OBSOLETOS SI USAS EL TOKEN EN LA CONEXIÓN) ---
-  // El 'emit' de 'authenticate' ya no es necesario si se usa la query
+  /// Emite un evento [event] con [data] al servidor.
   void emit(String event, dynamic data) {
     if (_socket?.connected ?? false) {
       _socket!.emit(event, data);
@@ -103,10 +125,13 @@ class SocketService {
     }
   }
 
+  /// Registra un [handler] para escuchar un [event] del servidor.
+  /// (Usado por [ChatScreen] para `receive-message`).
   void on(String event, Function(dynamic) handler) {
     _socket?.on(event, handler);
   }
 
+  /// Deja de escuchar un [event] específico del servidor.
   void off(String event) {
     _socket?.off(event);
   }

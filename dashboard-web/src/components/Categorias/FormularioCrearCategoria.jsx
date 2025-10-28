@@ -2,7 +2,17 @@
 import React, { useState } from 'react';
 import { Paper, Typography, Box, TextField, Button, CircularProgress } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-
+/**
+ * Formulario para crear una nueva categoría.
+ * 
+ * @param {*} param0 
+ * @returns 
+/**
+ *
+ *
+ * @param {*} { onCreate, loading }
+ * @return {*} 
+ */
 function FormularioCrearCategoria({ onCreate, loading }) {
   const [newCategoryName, setNewCategoryName] = useState('');
 

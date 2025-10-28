@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// {@template editar_contacto_screen}
+/// Pantalla de formulario para editar los detalles del contacto de emergencia
+/// que se utilizará en la función SOS.
+///
+/// Los datos se guardan localmente usando [SharedPreferences].
+/// {@endtemplate}
 class EditarContactoScreen extends StatefulWidget {
+  /// {@macro editar_contacto_screen}
   const EditarContactoScreen({super.key});
   @override
   State<EditarContactoScreen> createState() => _EditarContactoScreenState();
 }
 
+/// Estado para [EditarContactoScreen].
+///
+/// Maneja la carga y guardado de los datos del contacto.
 class _EditarContactoScreenState extends State<EditarContactoScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nombreController = TextEditingController();
@@ -28,13 +38,16 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
     super.dispose();
   }
 
+  /// Carga los detalles del contacto desde [SharedPreferences].
   Future<void> _loadContact() async {
     final prefs = await SharedPreferences.getInstance();
     _nombreController.text = prefs.getString('contactNombre') ?? '';
     _telefonoController.text = prefs.getString('contactTelefono') ?? '';
-    _mensajeController.text = prefs.getString('contactMensaje') ?? '¡Necesito ayuda urgente! Mi ubicación es:';
+    _mensajeController.text =
+        prefs.getString('contactMensaje') ?? '¡Necesito ayuda urgente! Mi ubicación es:';
   }
 
+  /// Valida y guarda los detalles del contacto en [SharedPreferences].
   Future<void> _saveContact() async {
     if (_formKey.currentState!.validate() && !_isLoading) {
       setState(() => _isLoading = true);
@@ -43,7 +56,7 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
       await prefs.setString('contactNombre', _nombreController.text.trim());
       await prefs.setString('contactTelefono', _telefonoController.text.trim());
       await prefs.setString('contactMensaje', _mensajeController.text.trim());
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -82,7 +95,10 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Esta es la persona que recibirá una alerta por SMS cuando actives la función SOS.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
@@ -92,7 +108,9 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.person_outline),
                         ),
-                        validator: (value) => value!.trim().isEmpty ? 'El nombre es requerido' : null,
+                        validator: (value) => (value?.trim().isEmpty ?? true)
+                            ? 'El nombre es requerido'
+                            : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -103,7 +121,9 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
                           prefixIcon: Icon(Icons.phone_outlined),
                         ),
                         keyboardType: TextInputType.phone,
-                        validator: (value) => value!.trim().isEmpty ? 'El número es requerido' : null,
+                        validator: (value) => (value?.trim().isEmpty ?? true)
+                            ? 'El número es requerido'
+                            : null,
                       ),
                     ],
                   ),
@@ -124,7 +144,10 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Este será el mensaje enviado. Tu ubicación se añadirá automáticamente al final.',
-                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -134,7 +157,9 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
                           border: OutlineInputBorder(),
                         ),
                         maxLines: 4,
-                        validator: (value) => value!.trim().isEmpty ? 'El mensaje no puede estar vacío' : null,
+                        validator: (value) => (value?.trim().isEmpty ?? true)
+                            ? 'El mensaje no puede estar vacío'
+                            : null,
                       ),
                     ],
                   ),
@@ -145,13 +170,15 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
                 onPressed: _isLoading ? null : _saveContact,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isLoading
                     ? const SizedBox(
                         width: 24,
                         height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 3, color: Colors.white),
                       )
                     : const Text('Guardar Contacto'),
               ),

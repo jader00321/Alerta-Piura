@@ -1,29 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/auth_service.dart';
-
-// Importamos los nuevos widgets que hemos creado
 import 'package:mobile_app/widgets/registro/register_header.dart';
 import 'package:mobile_app/widgets/registro/register_form_fields.dart';
 import 'package:mobile_app/widgets/registro/register_actions.dart';
 
+/// {@template register_screen}
+/// Pantalla de registro para nuevos usuarios.
+///
+/// Permite al usuario ingresar sus datos (nombre, alias, email, teléfono, contraseña)
+/// y enviarlos a la API para crear una nueva cuenta.
+/// Utiliza widgets reutilizables como [RegisterHeader], [RegisterFormFields] y [RegisterActions].
+/// {@endtemplate}
 class RegisterScreen extends StatefulWidget {
+  /// {@macro register_screen}
   const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
+/// Estado para [RegisterScreen]. Maneja los controladores y el estado de carga.
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Los controladores se mantienen en la pantalla principal para gestionar el estado
   final _nombreController = TextEditingController();
   final _aliasController = TextEditingController();
   final _emailController = TextEditingController();
   final _telefonoController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
+  /// Indica si se está procesando la solicitud de registro.
   bool _isLoading = false;
   final AuthService _authService = AuthService();
 
@@ -38,34 +44,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  // La lógica de envío del formulario permanece en la pantalla principal
+  /// Valida el formulario y envía la solicitud de registro a la API.
+  ///
+  /// Si tiene éxito, muestra un [SnackBar] y cierra la pantalla.
+  /// Si falla, muestra un [SnackBar] con el error.
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate() && !_isLoading) {
       setState(() => _isLoading = true);
-      
+
       try {
         final response = await _authService.register(
           nombre: _nombreController.text.trim(),
-          alias: _aliasController.text.trim().isNotEmpty ? _aliasController.text.trim() : null,
+          alias: _aliasController.text.trim().isEmpty
+              ? null
+              : _aliasController.text.trim(), // Enviar null si está vacío
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
-          telefono: _telefonoController.text.trim().isNotEmpty ? _telefonoController.text.trim() : null,
+          telefono: _telefonoController.text.trim().isEmpty
+              ? null
+              : _telefonoController.text.trim(), // Enviar null si está vacío
         );
 
-        if (mounted) {
+        if (!mounted) return;
+
+        if (response['statusCode'] == 201) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response['data']['message']),
-              backgroundColor: response['statusCode'] == 201 ? Colors.green : Colors.red,
+            const SnackBar(
+              content: Text('¡Registro exitoso! Ya puedes iniciar sesión.'),
+              backgroundColor: Colors.green,
             ),
           );
-          if (response['statusCode'] == 201) {
-            Navigator.pop(context);
-          }
+          Navigator.pop(context); // Cierra la pantalla de registro
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['data']['message'] ?? 'Ocurrió un error'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       } catch (e) {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Error de conexión. Inténtalo de nuevo.'),
               backgroundColor: Colors.red,
@@ -96,11 +116,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 1. Usamos el widget de cabecera
                 const RegisterHeader(),
                 const SizedBox(height: 32),
-
-                // 2. Usamos el widget de campos del formulario, pasándole los controladores
                 RegisterFormFields(
                   nombreController: _nombreController,
                   aliasController: _aliasController,
@@ -110,8 +127,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   confirmPasswordController: _confirmPasswordController,
                 ),
                 const SizedBox(height: 32),
-
-                // 3. Usamos el widget de acciones
                 RegisterActions(
                   isLoading: _isLoading,
                   onSubmit: _submitForm,

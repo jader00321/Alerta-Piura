@@ -4,13 +4,24 @@ import 'package:mobile_app/models/conversacion_model.dart';
 import 'package:mobile_app/screens/chat_screen.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_reportes.dart';
 
+/// {@template conversaciones_screen}
+/// Pantalla que muestra una lista de las conversaciones de chat activas
+/// del usuario (generalmente un líder vecinal).
+///
+/// Cada conversación está vinculada a un reporte específico.
+/// {@endtemplate}
 class ConversacionesScreen extends StatefulWidget {
+  /// {@macro conversaciones_screen}
   const ConversacionesScreen({super.key});
   @override
   State<ConversacionesScreen> createState() => _ConversacionesScreenState();
 }
 
+/// Estado para [ConversacionesScreen].
+///
+/// Maneja la carga y actualización de la lista de [Conversacion].
 class _ConversacionesScreenState extends State<ConversacionesScreen> {
+  /// Futuro que contiene la lista de conversaciones.
   late Future<List<Conversacion>> _conversacionesFuture;
 
   @override
@@ -19,6 +30,7 @@ class _ConversacionesScreenState extends State<ConversacionesScreen> {
     _conversacionesFuture = PerfilService().getMisConversaciones();
   }
 
+  /// Recarga la lista de conversaciones desde la API.
   Future<void> _refreshConversaciones() async {
     setState(() {
       _conversacionesFuture = PerfilService().getMisConversaciones();
@@ -40,7 +52,9 @@ class _ConversacionesScreenState extends State<ConversacionesScreen> {
               return const EsqueletoListaReportes();
             }
             if (snapshot.hasError) {
-              return Center(child: Text('Error al cargar las conversaciones: ${snapshot.error}'));
+              return Center(
+                  child: Text(
+                      'Error al cargar las conversaciones: ${snapshot.error}'));
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return const Center(
@@ -54,19 +68,21 @@ class _ConversacionesScreenState extends State<ConversacionesScreen> {
                 ),
               );
             }
-            
+
             final conversaciones = snapshot.data!;
-            
+
             return ListView.builder(
               padding: const EdgeInsets.all(8.0),
               itemCount: conversaciones.length,
               itemBuilder: (context, index) {
                 final conv = conversaciones[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
                       child: Icon(
                         Icons.chat_bubble_outline,
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -78,7 +94,8 @@ class _ConversacionesScreenState extends State<ConversacionesScreen> {
                     ),
                     subtitle: Text(
                       conv.tituloReporte,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

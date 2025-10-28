@@ -1,18 +1,29 @@
-// lib/widgets/mi_actividad/tarjeta_actividad.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_resumen_model.dart';
-// Asegúrate de que este import sea correcto
-import 'package:mobile_app/widgets/mi_actividad/activity_list_view.dart';
+import 'package:mobile_app/widgets/mi_actividad/activity_list_view.dart'; // Importa el enum Fetcher
 
-/// Una tarjeta reutilizable que muestra un resumen de reporte en
-/// las diferentes pestañas de "Mi Actividad". Adapta su apariencia
-/// basado en el [Fetcher] (contexto de la pestaña).
+/// {@template tarjeta_actividad}
+/// Tarjeta **reutilizable y unificada** que muestra un resumen de reporte
+/// adaptado al contexto de las diferentes pestañas de la pantalla [MiActividadScreen].
+///
+/// Adapta su apariencia basándose en el [fetcher] (contexto de la pestaña) para mostrar:
+/// - Imagen, estado, título.
+/// - Categoría, Urgencia, Distrito (principalmente para [Fetcher.misReportes]).
+/// - Autor del reporte (para [Fetcher.misApoyos], [Fetcher.misSeguimientos], [Fetcher.misComentarios]).
+/// - Una "fila contextual" que indica la acción del usuario (Apoyaste, Siguiendo, Tu comentario).
+/// - Acepta un [trailingAction] opcional (ej. botón "Cancelar" para reportes pendientes).
+/// {@endtemplate}
 class TarjetaActividad extends StatelessWidget {
+  /// Los datos resumidos del reporte a mostrar.
   final ReporteResumen reporte;
-  final Fetcher fetcher; // El contexto (pestaña) desde donde se llama
-  final VoidCallback onTap; // Acción al tocar la tarjeta
-  final Widget? trailingAction; // Un widget opcional (ej. botón "Cancelar")
+  /// El contexto ([Fetcher]) que indica desde qué pestaña se está mostrando la tarjeta.
+  final Fetcher fetcher;
+  /// Callback que se ejecuta al tocar la tarjeta (navega al detalle).
+  final VoidCallback onTap;
+  /// Widget opcional que se muestra en el área del trailing (ej. botón cancelar).
+  final Widget? trailingAction;
 
+  /// {@macro tarjeta_actividad}
   const TarjetaActividad({
     super.key,
     required this.reporte,
@@ -21,10 +32,8 @@ class TarjetaActividad extends StatelessWidget {
     this.trailingAction, // Acepta la acción del trailing
   });
 
-  // --- Helpers Visuales (Reutilizables) ---
-
+  /// Construye el chip que muestra el estado del reporte con icono y color.
   Widget _buildStatusChip(BuildContext context) {
-    // ... (código del _buildStatusChip sin cambios, ya proporcionado) ...
     String label = reporte.estado.toUpperCase();
     Color bgColor = Colors.grey.shade200;
     Color fgColor = Colors.grey.shade800;
@@ -39,8 +48,8 @@ class TarjetaActividad extends StatelessWidget {
         label = 'Rechazado'; bgColor = Colors.red.shade100; fgColor = Colors.red.shade900; icon = Icons.cancel_outlined; break;
       case 'oculto':
         label = 'Oculto'; bgColor = Colors.blueGrey.shade100; fgColor = Colors.blueGrey.shade900; icon = Icons.visibility_off_outlined; break;
-       case 'fusionado':
-         label = 'Fusionado'; bgColor = Colors.purple.shade100; fgColor = Colors.purple.shade900; icon = Icons.merge_type_outlined; break;
+      case 'fusionado':
+        label = 'Fusionado'; bgColor = Colors.purple.shade100; fgColor = Colors.purple.shade900; icon = Icons.merge_type_outlined; break;
       default: label = reporte.estado; icon = Icons.info_outline; break;
     }
     return Chip(
@@ -50,13 +59,15 @@ class TarjetaActividad extends StatelessWidget {
       backgroundColor: bgColor,
       visualDensity: VisualDensity.compact,
       padding: const EdgeInsets.symmetric(horizontal: 4),
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, // Reduce padding extra
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
+  /// Construye el chip que muestra la urgencia del reporte con color.
   Widget _buildUrgencyChip(BuildContext context) {
-    // ... (código del _buildUrgencyChip sin cambios, ya proporcionado) ...
-    if (reporte.urgencia == null) return const SizedBox.shrink();
+    if (reporte.urgencia == null) {
+      return const SizedBox.shrink(); // No muestra nada si no hay urgencia
+    }
     String label = reporte.urgencia!;
     Color color = Colors.grey;
     switch (reporte.urgencia!.toLowerCase()) {
@@ -67,17 +78,19 @@ class TarjetaActividad extends StatelessWidget {
     return Chip(
       label: Text(label),
       labelStyle: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold),
-      backgroundColor: color.withOpacity(0.15),
+      backgroundColor: color.withAlpha(38), // Fondo semitransparente
       visualDensity: VisualDensity.compact,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
+  /// Construye la fila contextual que varía según la pestaña ([fetcher]).
+  /// Muestra "Apoyaste", "Siguiendo" o "Tu comentario: ...".
   Widget _buildContextualRow(BuildContext context, ThemeData theme) {
-    // ... (código del _buildContextualRow sin cambios, ya proporcionado) ...
+    // Estilos comunes para la fila contextual.
     final contextualBoxDecoration = BoxDecoration(
-      color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+      color: theme.colorScheme.surfaceContainerHighest.withAlpha(102),
       borderRadius: BorderRadius.circular(8),
     );
     final contextualTextStyle = TextStyle(
@@ -86,15 +99,23 @@ class TarjetaActividad extends StatelessWidget {
       fontSize: 12,
     );
 
+    // Determina qué mostrar según el contexto.
     switch (fetcher) {
       case Fetcher.misApoyos:
+        // Muestra un indicador de que el usuario apoyó este reporte.
         return Container( padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6), decoration: contextualBoxDecoration.copyWith( color: Colors.green.shade50, border: Border.all(color: Colors.green.shade200, width: 0.5)), child: Row( mainAxisSize: MainAxisSize.min, children: [ Icon(Icons.thumb_up_alt, size: 14, color: Colors.green.shade700), const SizedBox(width: 6), Text( 'Apoyaste este reporte', style: contextualTextStyle.copyWith(color: Colors.green.shade800), ), ], ), );
       case Fetcher.misSeguimientos:
+        // Muestra un indicador de que el usuario sigue este reporte.
         return Container( padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6), decoration: contextualBoxDecoration.copyWith( color: Colors.blue.shade50, border: Border.all(color: Colors.blue.shade200, width: 0.5)), child: Row( mainAxisSize: MainAxisSize.min, children: [ Icon(Icons.bookmark, size: 14, color: Colors.blue.shade700), const SizedBox(width: 6), Text( 'Estás siguiendo este reporte', style: contextualTextStyle.copyWith(color: Colors.blue.shade800), ), ], ), );
       case Fetcher.misComentarios:
-        if (reporte.miComentario == null || reporte.miComentario!.isEmpty) return const SizedBox.shrink();
+        // Muestra un extracto del comentario del usuario en este reporte.
+        if (reporte.miComentario == null || reporte.miComentario!.isEmpty) {
+          return const SizedBox.shrink(); // No muestra nada si no hay comentario
+        }
         return Container( width: double.infinity, padding: const EdgeInsets.all(10), decoration: contextualBoxDecoration, child: Text.rich( TextSpan( text: 'Tu comentario: ', style: contextualTextStyle.copyWith(fontWeight: FontWeight.bold), children: [ TextSpan( text: '"${reporte.miComentario!}"', style: contextualTextStyle.copyWith( fontStyle: FontStyle.italic, fontWeight: FontWeight.normal ), ), ] ), maxLines: 2, overflow: TextOverflow.ellipsis, ), );
-      case Fetcher.misReportes: return const SizedBox.shrink(); // No contextual row for My Reports
+      case Fetcher.misReportes:
+        // No muestra fila contextual en la pestaña "Mis Reportes".
+        return const SizedBox.shrink();
     }
   }
 
@@ -109,65 +130,61 @@ class TarjetaActividad extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap, // Navega al detalle al tocar la tarjeta.
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Imagen y Badges Superpuestos ---
+            /// Muestra la imagen si existe.
             if (showImage)
               Stack(
                 children: [
-                  // Imagen
                   Image.network(
                     reporte.fotoUrl!, height: 140, width: double.infinity, fit: BoxFit.cover,
                     loadingBuilder: (context, child, progress) => progress == null ? child : const SizedBox(height: 140, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
                     errorBuilder: (context, error, stackTrace) => Container( height: 140, color: Colors.grey.shade200, child: const Center(child: Icon(Icons.broken_image, size: 40, color: Colors.grey))),
                   ),
-                  // Chip de Categoría (Solo si NO es MisReportes O si MisReportes NO tiene imagen)
-                  // Para evitar redundancia si la categoría está abajo en MisReportes
-                  if (fetcher != Fetcher.misReportes || !showImage)
+                  /// Muestra la categoría sobre la imagen si no es "Mis Reportes".
+                  if (fetcher != Fetcher.misReportes || !showImage) // Evita redundancia si ya se muestra abajo
                      Positioned(
                       top: 8, left: 8,
                       child: Chip(
                         label: Text(reporte.categoria ?? 'Sin Categoría', style: const TextStyle(fontSize: 11)),
                         visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                        backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.9),
+                        backgroundColor: theme.colorScheme.secondaryContainer.withAlpha(230),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
-                  // Estrella de Prioridad (Siempre visible si aplica)
+                  /// Muestra estrella si es prioritario.
                   if (reporte.esPrioritario)
                      Positioned(
                       top: 8, right: 8,
-                      child: Container( padding: const EdgeInsets.all(4), decoration: BoxDecoration( color: Colors.black.withOpacity(0.5), shape: BoxShape.circle, ), child: const Icon(Icons.star, color: Colors.amber, size: 20), ),
+                      child: Container( padding: const EdgeInsets.all(4), decoration: BoxDecoration( color: Colors.black.withAlpha(128), shape: BoxShape.circle, ), child: const Icon(Icons.star, color: Colors.amber, size: 20), ),
                     ),
                 ],
               ),
-
-            // --- Detalles Debajo ---
+            /// Contenedor de los detalles textuales.
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Fila Superior: Estado y (Fecha O Acción Trailing) ---
+                  /// Fila 1: Chip de estado y acción trailing (ej. botón Cancelar o fecha).
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start, // Alinea arriba
                     children: [
-                      Flexible(child: _buildStatusChip(context)), // Chip de estado
-                      const SizedBox(width: 8), // Espacio
-                      // Muestra la acción (ej. "Cancelar") si existe, si no, muestra la fecha.
+                      Flexible(child: _buildStatusChip(context)), // Chip de Estado
+                      const SizedBox(width: 8),
+                      // Muestra la acción (ej. Cancelar) o la fecha por defecto.
                       trailingAction ??
                         Text(
-                          reporte.fecha ?? '', // Fecha de la actividad
+                          reporte.fecha ?? '',
                           style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                         ),
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // --- Título ---
+                  /// Título del reporte.
                   Text(
                     reporte.titulo,
                     style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -176,9 +193,9 @@ class TarjetaActividad extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
 
-                  // --- Información Específica de "Mis Reportes" ---
+                  /// Fila 2: Chips de Categoría y Urgencia (solo para "Mis Reportes").
                   if (fetcher == Fetcher.misReportes) ...[
-                    Wrap( // Usa Wrap por si los textos son largos
+                    Wrap(
                       spacing: 8.0,
                       runSpacing: 4.0,
                       crossAxisAlignment: WrapCrossAlignment.center,
@@ -187,19 +204,22 @@ class TarjetaActividad extends StatelessWidget {
                            Chip(
                              label: Text(reporte.categoria!), labelStyle: const TextStyle(fontSize: 10),
                              visualDensity: VisualDensity.compact, padding: const EdgeInsets.symmetric(horizontal: 4),
-                             backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.7),
+                             backgroundColor: theme.colorScheme.secondaryContainer.withAlpha(179),
                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                            ),
-                        _buildUrgencyChip(context), // Muestra chip de urgencia
+                        _buildUrgencyChip(context), // Chip de Urgencia
                       ],
                     ),
                     const SizedBox(height: 6),
-                    if (reporte.distrito != null)
+                  ],
+
+                  /// Fila 3: Distrito (solo para "Mis Reportes").
+                  if (fetcher == Fetcher.misReportes && reporte.distrito != null) ...[
                       Row(
                         children: [
                            Icon(Icons.location_city_outlined, size: 14, color: Colors.grey[600]),
                            const SizedBox(width: 4),
-                           Expanded( // Para que el distrito no desborde
+                           Expanded( // Evita que el nombre del distrito desborde
                               child: Text(
                                 reporte.distrito!,
                                 style: theme.textTheme.bodySmall,
@@ -211,9 +231,9 @@ class TarjetaActividad extends StatelessWidget {
                      const SizedBox(height: 4), // Espacio extra
                   ],
 
-                  // --- Autor (si NO es "Mis Reportes") ---
+                  /// Muestra el autor del reporte si NO estamos en "Mis Reportes".
                   if (fetcher != Fetcher.misReportes && reporte.autor != null)
-                    Padding( // Añade padding
+                    Padding(
                       padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
                       child: Text(
                         'Reporte original de: ${reporte.autor}',
@@ -222,13 +242,12 @@ class TarjetaActividad extends StatelessWidget {
                       ),
                     ),
 
-                  // --- Separador y Fila Contextual ---
-                  // Solo muestra Divider si hay fila contextual O si no es "Mis Reportes"
-                  if (fetcher != Fetcher.misReportes)
-                     const Divider(height: 16),
+                  /// Separador y Fila Contextual.
+                  // Muestra el divisor si hay fila contextual o si no es "Mis Reportes".
+                  if (fetcher != Fetcher.misReportes) const Divider(height: 16),
 
-                  _buildContextualRow(context, theme), // Muestra la fila de apoyo/seguimiento/comentario
-
+                  // Muestra la fila de apoyo/seguimiento/comentario según el contexto.
+                  _buildContextualRow(context, theme),
                 ],
               ),
             ),

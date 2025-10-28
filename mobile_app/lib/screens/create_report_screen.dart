@@ -1,4 +1,3 @@
-//import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,31 +7,41 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_app/models/categoria_model.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
-
-// Importamos los nuevos widgets que hemos creado
 import 'package:mobile_app/widgets/crear_reporte/seccion_evidencia.dart';
 import 'package:mobile_app/widgets/crear_reporte/seccion_detalles_principales.dart';
 import 'package:mobile_app/widgets/crear_reporte/seccion_detalles_adicionales.dart';
 import 'package:mobile_app/widgets/crear_reporte/seccion_acciones_finales.dart';
 
+/// {@template create_report_screen}
+/// Pantalla de formulario para que los usuarios creen un nuevo reporte.
+///
+/// Organizada en secciones reutilizables:
+/// - [SeccionEvidencia]
+/// - [SeccionDetallesPrincipales]
+/// - [SeccionDetallesAdicionales]
+/// - [SeccionAccionesFinales]
+/// {@endtemplate}
 class CreateReportScreen extends StatefulWidget {
+  /// {@macro create_report_screen}
   const CreateReportScreen({super.key});
 
   @override
   State<CreateReportScreen> createState() => _CreateReportScreenState();
 }
 
+/// Estado para [CreateReportScreen].
+///
+/// Maneja todos los controladores del formulario, la lógica de selección de imagen/ubicación,
+/// y la presentación del formulario a la API.
 class _CreateReportScreenState extends State<CreateReportScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Controladores para los campos del formulario
+
   final _tituloController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _categoriaSugeridaController = TextEditingController();
   final _tagsController = TextEditingController();
   final _referenciaController = TextEditingController();
 
-  // Estado de la pantalla
   int? _selectedCategoria;
   bool _isAnonimo = false;
   LatLng? _currentLocation;
@@ -45,10 +54,12 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   String? _distrito;
   XFile? _imageFile;
 
-  // Servicios y datos estáticos
   final ReporteService _reporteService = ReporteService();
   final ImagePicker _picker = ImagePicker();
-  final List<String> _distritosDePiura = ['Piura', 'Castilla', 'Veintiséis de Octubre', 'Catacaos', 'Cura Mori', 'El Tallán', 'La Arena', 'La Unión', 'Las Lomas', 'Tambo Grande'];
+  final List<String> _distritosDePiura = [
+    'Piura', 'Castilla', 'Veintiséis de Octubre', 'Catacaos', 'Cura Mori',
+    'El Tallán', 'La Arena', 'La Unión', 'Las Lomas', 'Tambo Grande'
+  ];
   final List<String> _recommendedTags = ['peligroso', 'tráfico', 'niños', 'urgente'];
 
   @override
@@ -68,8 +79,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     super.dispose();
   }
 
-  // --- LÓGICA DE LA PANTALLA ---
-
+  /// Obtiene la lista de categorías desde la API para poblar el dropdown.
   Future<void> _fetchCategories() async {
     try {
       final cats = await _reporteService.getCategorias();
@@ -85,11 +95,13 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingCategories = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al cargar categorías')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Error al cargar categorías')));
       }
     }
   }
 
+  /// Abre la galería para seleccionar una imagen de evidencia.
   Future<void> _pickImage() async {
     final XFile? selectedImage = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (selectedImage != null) {
@@ -97,55 +109,82 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     }
   }
 
+  /// Solicita permisos y obtiene la ubicación GPS actual del dispositivo.
   Future<void> _getCurrentLocation() async {
     var status = await Permission.location.request();
     if (status.isGranted) {
       setState(() => _isLoading = true);
       try {
-        Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        Position position = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                timeLimit: Duration(seconds: 15)));
         if (mounted) {
-          setState(() => _currentLocation = LatLng(position.latitude, position.longitude));
+          setState(
+              () => _currentLocation = LatLng(position.latitude, position.longitude));
         }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo obtener la ubicación.')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No se pudo obtener la ubicación.')));
+        }
       } finally {
-        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
       }
     } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Se necesita permiso de ubicación.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Se necesita permiso de ubicación.')));
+      }
     }
   }
 
+  /// Valida y envía el formulario completo a [ReporteService.createReport].
   Future<void> _submitReport() async {
     if (_formKey.currentState!.validate() && _currentLocation != null) {
-      final otroCategoria = _categorias.firstWhere((cat) => cat.nombre.toLowerCase() == 'otro', orElse: () => Categoria(id: -1, nombre: ''));
-      if (_selectedCategoria == otroCategoria.id && _categoriaSugeridaController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, especifica la categoría.')));
+      final otroCategoria = _categorias.firstWhere(
+          (cat) => cat.nombre.toLowerCase() == 'otro',
+          orElse: () => Categoria(id: -1, nombre: ''));
+      if (_selectedCategoria == otroCategoria.id &&
+          _categoriaSugeridaController.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Por favor, especifica la categoría.')));
         return;
       }
 
       setState(() => _isLoading = true);
-      
+
       bool success = await _reporteService.createReport(
         idCategoria: _selectedCategoria!,
         titulo: _tituloController.text,
         descripcion: _descripcionController.text,
         location: _currentLocation!,
         esAnonimo: _isAnonimo,
-        categoriaSugerida: _selectedCategoria == otroCategoria.id ? _categoriaSugeridaController.text : null,
+        categoriaSugerida: _selectedCategoria == otroCategoria.id
+            ? _categoriaSugeridaController.text
+            : null,
         imagePath: _imageFile?.path,
         urgencia: _urgencia,
         horaIncidente: _horaIncidente?.format(context),
-        tags: _tagsController.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList(),
+        tags: _tagsController.text
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList(),
         impacto: _impacto,
-        referenciaUbicacion: _referenciaController.text.isEmpty ? null : _referenciaController.text,
+        referenciaUbicacion: _referenciaController.text.isEmpty
+            ? null
+            : _referenciaController.text,
         distrito: _distrito,
       );
 
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(success ? 'Reporte enviado para verificación' : 'Error al crear reporte'),
+          content: Text(
+              success ? 'Reporte enviado para verificación' : 'Error al crear reporte'),
           backgroundColor: success ? Colors.green : Colors.red,
         ));
         if (success) {
@@ -153,10 +192,12 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         }
       }
     } else if (_currentLocation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, obtén tu ubicación actual')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor, obtén tu ubicación actual')));
     }
   }
 
+  /// Muestra el selector de hora para [horaIncidente].
   Future<void> _selectTime() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -167,19 +208,23 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     }
   }
 
+  /// Añade una etiqueta recomendada al campo de texto de tags.
   void _addTag(String tag) {
-    final currentTags = _tagsController.text.split(',').map((t) => t.trim()).toList();
+    final currentTags =
+        _tagsController.text.split(',').map((t) => t.trim()).toList();
     if (!currentTags.contains(tag)) {
-      _tagsController.text = _tagsController.text.isEmpty ? tag : '${_tagsController.text}, $tag';
+      _tagsController.text =
+          _tagsController.text.isEmpty ? tag : '${_tagsController.text}, $tag';
     }
   }
 
-  // --- CONSTRUCCIÓN DE LA UI USANDO LOS NUEVOS WIDGETS ---
-
   @override
   Widget build(BuildContext context) {
-    final authNotifier = context.watch<AuthNotifier>(); 
-    final otroCategoriaId = _categorias.firstWhere((cat) => cat.nombre.toLowerCase() == 'otro', orElse: () => Categoria(id: -1, nombre: '')).id;
+    final authNotifier = context.watch<AuthNotifier>();
+    final otroCategoriaId = _categorias
+        .firstWhere((cat) => cat.nombre.toLowerCase() == 'otro',
+            orElse: () => Categoria(id: -1, nombre: ''))
+        .id;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Crear Nuevo Reporte')),
@@ -197,7 +242,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                     padding: const EdgeInsets.all(12.0),
                     child: Row(
                       children: [
-                        Icon(Icons.star_border, color: const Color.fromARGB(255, 224, 127, 0)),
+                        const Icon(Icons.star_border,
+                            color: Color.fromARGB(255, 224, 127, 0)),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Text(
@@ -210,13 +256,11 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                   ),
                 ),
               const SizedBox(height: 16),
-              
               SeccionEvidencia(
                 imageFile: _imageFile,
                 onPickImage: _pickImage,
               ),
               const SizedBox(height: 16),
-
               SeccionDetallesPrincipales(
                 tituloController: _tituloController,
                 urgenciaSeleccionada: _urgencia,
@@ -224,12 +268,12 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 categoriaSeleccionada: _selectedCategoria,
                 categorias: _categorias,
                 isLoadingCategories: _isLoadingCategories,
-                onCategoriaChanged: (value) => setState(() => _selectedCategoria = value),
+                onCategoriaChanged: (value) =>
+                    setState(() => _selectedCategoria = value),
                 otroCategoriaId: otroCategoriaId,
                 categoriaSugeridaController: _categoriaSugeridaController,
               ),
               const SizedBox(height: 16),
-              
               SeccionDetallesAdicionales(
                 descripcionController: _descripcionController,
                 referenciaController: _referenciaController,
@@ -245,7 +289,6 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 onAddTag: _addTag,
               ),
               const SizedBox(height: 16),
-
               SeccionAccionesFinales(
                 isAnonimo: _isAnonimo,
                 onAnonimoChanged: (value) => setState(() => _isAnonimo = value!),

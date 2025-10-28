@@ -1,17 +1,24 @@
-// lib/screens/pantalla_agregar_metodo_pago.dart
-
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/metodo_pago_service.dart';
 import 'package:mobile_app/widgets/pago/formulario_pago.dart';
 
+/// {@template pantalla_agregar_metodo_pago}
+/// Pantalla de formulario para añadir un nuevo método de pago (tarjeta).
+///
+/// Utiliza el widget reutilizable [FormularioPago] para los campos de la tarjeta.
+/// {@endtemplate}
 class PantallaAgregarMetodoPago extends StatefulWidget {
+  /// {@macro pantalla_agregar_metodo_pago}
   const PantallaAgregarMetodoPago({super.key});
   @override
-  State<PantallaAgregarMetodoPago> createState() => _PantallaAgregarMetodoPagoState();
+  State<PantallaAgregarMetodoPago> createState() =>
+      _PantallaAgregarMetodoPagoState();
 }
 
-class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
-  final _formKey = GlobalKey<FormState>(); // El FormKey vive aquí
+/// Estado para [PantallaAgregarMetodoPago].
+class _PantallaAgregarMetodoPagoState
+    extends State<PantallaAgregarMetodoPago> {
+  final _formKey = GlobalKey<FormState>();
   final _numeroTarjetaController = TextEditingController();
   final _fechaExpController = TextEditingController();
   final _cvcController = TextEditingController();
@@ -28,8 +35,12 @@ class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
     super.dispose();
   }
 
+  /// Valida el formulario y envía los datos de la nueva tarjeta a
+  /// [MetodoPagoService.crearMetodo].
   Future<void> _guardarMetodo() async {
-    if (!_formKey.currentState!.validate() || _isLoading) return;
+    if (!_formKey.currentState!.validate() || _isLoading) {
+      return;
+    }
     setState(() => _isLoading = true);
 
     final datosTarjeta = {
@@ -44,13 +55,18 @@ class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success ? 'Tarjeta guardada con éxito.' : 'Error al guardar la tarjeta.'),
+        content: Text(
+            success ? 'Tarjeta guardada con éxito.' : 'Error al guardar la tarjeta.'),
         backgroundColor: success ? Colors.green : Colors.red,
       ));
-      if (success) Navigator.pop(context, true); // Devuelve true para refrescar la lista
+      if (success) {
+        Navigator.pop(context, true);
+      }
     }
 
-    if (mounted) setState(() => _isLoading = false);
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -59,7 +75,6 @@ class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
       appBar: AppBar(title: const Text('Añadir Método de Pago')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        // ESTE ES EL ÚNICO FORMULARIO
         child: Form(
           key: _formKey,
           child: Column(
@@ -82,10 +97,15 @@ class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
                 onPressed: _isLoading ? null : _guardarMetodo,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isLoading
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 3))
                     : const Text('Guardar Tarjeta'),
               ),
             ],

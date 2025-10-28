@@ -1,20 +1,41 @@
-// lib/widgets/crear_reporte/seccion_detalles_principales.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/categoria_model.dart';
 
+/// {@template seccion_detalles_principales}
+/// Widget reutilizable que agrupa los campos de entrada *principales y requeridos*
+/// para el formulario de creación/edición de reportes.
+///
+/// Incluye campos para:
+/// - Título
+/// - Nivel de Urgencia
+/// - Categoría (con un [DropdownButtonFormField] poblado desde [categorias])
+/// - Campo condicional para "Sugerir Categoría" si se selecciona "Otro".
+///
+/// Usado en [CreateReportScreen] y [PantallaEditarReporteAutor].
+/// {@endtemplate}
 class SeccionDetallesPrincipales extends StatelessWidget {
+  /// Controlador para el campo 'Título'.
   final TextEditingController tituloController;
+  /// Valor actual seleccionado en el dropdown 'Urgencia'.
   final String urgenciaSeleccionada;
+  /// Callback que se ejecuta al cambiar la urgencia.
   final Function(String) onUrgenciaChanged;
+  /// ID de la categoría actualmente seleccionada.
   final int? categoriaSeleccionada;
+  /// Lista de todas las [Categoria]s disponibles para el dropdown.
   final List<Categoria> categorias;
+  /// Indica si la lista de [categorias] aún se está cargando.
   final bool isLoadingCategories;
+  /// Callback que se ejecuta al cambiar la categoría.
   final Function(int?) onCategoriaChanged;
-  final int otroCategoriaId; // ID de la categoría 'Otro'
+  /// El ID específico de la categoría "Otro".
+  final int otroCategoriaId;
+  /// Controlador para el campo condicional 'Especifica la categoría'.
   final TextEditingController categoriaSugeridaController;
-  // --- PARÁMETRO AÑADIDO ---
-  final bool isEditing; // Nuevo parámetro, default a false
+  /// Flag para ajustar la lógica (actualmente no se usa, pero está disponible).
+  final bool isEditing;
 
+  /// {@macro seccion_detalles_principales}
   const SeccionDetallesPrincipales({
     super.key,
     required this.tituloController,
@@ -26,18 +47,18 @@ class SeccionDetallesPrincipales extends StatelessWidget {
     required this.onCategoriaChanged,
     required this.otroCategoriaId,
     required this.categoriaSugeridaController,
-    this.isEditing = false, // --- AÑADIDO: Default a false ---
+    this.isEditing = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Determinar si mostrar el campo de sugerencia
+    /// Determina si el campo de sugerencia debe mostrarse.
     final bool mostrarSugerencia = categoriaSeleccionada == otroCategoriaId;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // --- Título ---
+        /// Campo Título (Requerido).
         TextFormField(
           controller: tituloController,
           decoration: const InputDecoration(
@@ -45,12 +66,13 @@ class SeccionDetallesPrincipales extends StatelessWidget {
             hintText: 'Ej. Bache peligroso en Av. Grau',
             border: OutlineInputBorder(),
           ),
-          validator: (value) =>
-              (value == null || value.trim().isEmpty) ? 'El título es requerido' : null,
+          validator: (value) => (value == null || value.trim().isEmpty)
+              ? 'El título es requerido'
+              : null,
         ),
         const SizedBox(height: 16),
 
-        // --- Urgencia ---
+        /// Campo Urgencia (Requerido).
         DropdownButtonFormField<String>(
           value: urgenciaSeleccionada,
           decoration: const InputDecoration(
@@ -64,9 +86,13 @@ class SeccionDetallesPrincipales extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // --- Categoría ---
+        /// Campo Categoría (Requerido).
         isLoadingCategories
-            ? const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
+            // Muestra un spinner mientras se cargan las categorías.
+            ? const Center(
+                child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator()))
             : DropdownButtonFormField<int>(
                 value: categoriaSeleccionada,
                 decoration: const InputDecoration(
@@ -74,17 +100,17 @@ class SeccionDetallesPrincipales extends StatelessWidget {
                   border: OutlineInputBorder(),
                 ),
                 items: categorias
-                    .map((cat) => DropdownMenuItem(value: cat.id, child: Text(cat.nombre)))
+                    .map((cat) =>
+                        DropdownMenuItem(value: cat.id, child: Text(cat.nombre)))
                     .toList(),
                 onChanged: onCategoriaChanged,
-                validator: (value) => value == null ? 'Selecciona una categoría' : null,
+                validator: (value) =>
+                    value == null ? 'Selecciona una categoría' : null,
               ),
         const SizedBox(height: 16),
 
-        // --- Sugerir Categoría (Condicional) ---
-        // --- LÓGICA ACTUALIZADA ---
-        // Mostrar si (la categoría seleccionada es 'Otro') Y (NO estamos editando O SÍ estamos editando)
-        // Simplificado: Siempre mostrar si es 'Otro'
+        /// Campo Sugerir Categoría (Condicional).
+        /// Se muestra solo si la categoría seleccionada es "Otro".
         if (mostrarSugerencia)
           TextFormField(
             controller: categoriaSugeridaController,
@@ -93,12 +119,12 @@ class SeccionDetallesPrincipales extends StatelessWidget {
               hintText: 'Ej. Poste caído, Semáforo malogrado',
               border: OutlineInputBorder(),
             ),
-            // La validación solo aplica si el campo es visible
-            validator: (value) => (mostrarSugerencia && (value == null || value.trim().isEmpty))
-                ? 'Debes sugerir una categoría si eliges "Otro"'
-                : null,
+            /// Se valida solo si está visible.
+            validator: (value) =>
+                (mostrarSugerencia && (value == null || value.trim().isEmpty))
+                    ? 'Debes sugerir una categoría si eliges "Otro"'
+                    : null,
           ),
-        // --- FIN LÓGICA ACTUALIZADA ---
       ],
     );
   }

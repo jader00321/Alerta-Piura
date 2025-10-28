@@ -1,18 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/servicio_suscripcion.dart';
 import 'package:mobile_app/models/plan_suscripcion_model.dart';
-import 'package:mobile_app/screens/pantalla_pago.dart'; // <-- IMPORT THE NEW PAYMENT SCREEN
+import 'package:mobile_app/screens/pantalla_pago.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_planes.dart';
 import 'package:mobile_app/widgets/planes/tarjeta_plan.dart';
 
+/// {@template pantalla_planes_suscripcion}
+/// Pantalla que muestra los planes de suscripción premium disponibles.
+///
+/// Obtiene los planes de [ServicioSuscripcion.getPlanes] y los muestra
+/// usando [TarjetaPlan]. Al seleccionar un plan, navega a [PantallaPago].
+/// {@endtemplate}
 class PantallaPlanesSuscripcion extends StatefulWidget {
+  /// {@macro pantalla_planes_suscripcion}
   const PantallaPlanesSuscripcion({super.key});
 
   @override
-  State<PantallaPlanesSuscripcion> createState() => _PantallaPlanesSuscripcionState();
+  State<PantallaPlanesSuscripcion> createState() =>
+      _PantallaPlanesSuscripcionState();
 }
 
-class _PantallaPlanesSuscripcionState extends State<PantallaPlanesSuscripcion> {
+/// Estado para [PantallaPlanesSuscripcion].
+///
+/// Maneja la carga de los planes disponibles.
+class _PantallaPlanesSuscripcionState
+    extends State<PantallaPlanesSuscripcion> {
+  /// Futuro que contiene la lista de planes de suscripción.
   late Future<List<PlanSuscripcion>> _plansFuture;
   final ServicioSuscripcion _servicioSuscripcion = ServicioSuscripcion();
 
@@ -22,12 +35,12 @@ class _PantallaPlanesSuscripcionState extends State<PantallaPlanesSuscripcion> {
     _plansFuture = _servicioSuscripcion.getPlanes();
   }
 
-  // --- UPDATED NAVIGATION LOGIC ---
+  /// Navega a la pantalla de pago [PantallaPago] pasando el [plan] seleccionado.
   void _navigateToPayment(PlanSuscripcion plan) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PantallaPago(plan: plan), // Navigate to the functional payment screen
+        builder: (context) => PantallaPago(plan: plan),
       ),
     );
   }
@@ -66,6 +79,7 @@ class _PantallaPlanesSuscripcionState extends State<PantallaPlanesSuscripcion> {
                 child: TarjetaPlan(
                   plan: plan,
                   onSelected: () => _navigateToPayment(plan),
+                  // Marca el primer plan (generalmente el más barato) como recomendado
                   isRecommended: index == 0,
                 ),
               );

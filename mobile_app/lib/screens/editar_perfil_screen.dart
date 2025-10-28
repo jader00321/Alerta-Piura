@@ -3,21 +3,32 @@ import 'package:mobile_app/api/perfil_service.dart';
 import 'package:mobile_app/models/perfil_model.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
-
-// Importamos los nuevos widgets que hemos creado
 import 'package:mobile_app/widgets/editar_perfil/seccion_datos_personales.dart';
 import 'package:mobile_app/widgets/editar_perfil/seccion_seguridad.dart';
-import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart'; // Reutilizamos un esqueleto
+import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
 
+/// {@template editar_perfil_screen}
+/// Pantalla que permite al usuario editar su información personal y de seguridad.
+///
+/// Esta pantalla está dividida en dos secciones principales:
+/// - [SeccionDatosPersonales]: Para nombre, alias, teléfono y email.
+/// - [SeccionSeguridad]: Para cambiar la contraseña.
+///
+/// Carga el perfil actual del usuario para pre-llenar los campos.
+/// {@endtemplate}
 class EditarPerfilScreen extends StatefulWidget {
+  /// {@macro editar_perfil_screen}
   const EditarPerfilScreen({super.key});
 
   @override
   State<EditarPerfilScreen> createState() => _EditarPerfilScreenState();
 }
 
+/// Estado para [EditarPerfilScreen].
 class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
   final PerfilService _perfilService = PerfilService();
+  
+  /// Futuro que contiene la información del perfil del usuario.
   late Future<Perfil> _perfilFuture;
 
   @override
@@ -26,12 +37,15 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     _perfilFuture = _perfilService.getMiPerfil();
   }
 
-  // Esta función se pasará como callback para refrescar el estado del AuthProvider
-  // y notificar a la pantalla anterior que debe recargar los datos.
+  /// Callback que se ejecuta cuando los datos del perfil se actualizan
+  /// exitosamente en un widget hijo (ej. [SeccionDatosPersonales]).
+  ///
+  /// Refresca el estado del [AuthNotifier] y notifica a la pantalla anterior
+  /// (PerfilScreen) que debe recargar los datos.
   void _onProfileUpdated() {
     if (mounted) {
-      Provider.of<AuthNotifier>(context, listen: false).checkAuthStatus();
-      // Se podría pasar un valor al hacer pop, pero el refresh en la pantalla de perfil ya maneja la recarga.
+      Provider.of<AuthNotifier>(context, listen: false).refreshUserStatus();
+      Navigator.pop(context, true); // Devuelve 'true' para indicar éxito
     }
   }
 
@@ -43,14 +57,14 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         future: _perfilFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            // Usamos un esqueleto de carga para una mejor UX
             return const Padding(
               padding: EdgeInsets.all(8.0),
               child: EsqueletoListaActividad(),
             );
           }
           if (snapshot.hasError || !snapshot.hasData) {
-            return const Center(child: Text('Error al cargar la información del perfil.'));
+            return const Center(
+                child: Text('Error al cargar la información del perfil.'));
           }
 
           final perfil = snapshot.data!;
@@ -60,7 +74,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Renderizamos el primer widget con los datos personales iniciales
                 SeccionDatosPersonales(
                   nombreInicial: perfil.nombre,
                   aliasInicial: perfil.alias ?? '',
@@ -69,7 +82,6 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                   onProfileUpdated: _onProfileUpdated,
                 ),
                 const SizedBox(height: 24),
-                // Renderizamos el segundo widget para la seguridad
                 const SeccionSeguridad(),
               ],
             ),

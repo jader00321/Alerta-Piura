@@ -1,18 +1,39 @@
-// lib/models/reporte_pendiente_model.dart
-
-// Asegúrate de que el nombre de la clase sea consistente (ReportePendiente)
+/// Representa un reporte que está pendiente de moderación por un líder.
+///
+/// Este es un modelo resumido que se usa para poblar la lista
+/// de reportes en la cola de moderación.
 class ReportePendiente {
+  /// El ID único del reporte.
   final int id;
+
+  /// El título del reporte.
   final String titulo;
-  final String estado; // Debe ser 'pendiente_verificacion'
-  final String fecha; // Formatted date string from backend
+
+  /// El estado del reporte (debería ser 'pendiente_verificacion').
+  final String estado;
+
+  /// La fecha de creación del reporte (formateada como String, ej. "hace 1 día").
+  final String fecha;
+
+  /// La URL (opcional) de la foto principal del reporte.
   final String? fotoUrl;
+
+  /// El nombre de la categoría a la que pertenece el reporte.
   final String categoria;
-  final String autor; // Alias/Nombre or 'Anónimo'
+
+  /// El nombre o alias del autor del reporte (o 'Anónimo').
+  final String autor;
+
+  /// Indica si el reporte es prioritario (basado en apoyos, urgencia, etc.).
   final bool esPrioritario;
+
+  /// El nivel de urgencia reportado (ej. "alta", "media").
   final String? urgencia;
+
+  /// El número de apoyos ("unirse") que recibió el reporte mientras estaba pendiente.
   final int apoyosPendientes;
 
+  /// Crea una instancia de [ReportePendiente].
   ReportePendiente({
     required this.id,
     required this.titulo,
@@ -26,6 +47,11 @@ class ReportePendiente {
     required this.apoyosPendientes,
   });
 
+  /// Crea una instancia de [ReportePendiente] a partir de un mapa JSON.
+  ///
+  /// Este factory es utilizado para deserializar la respuesta de la API.
+  /// Proporciona valores por defecto (fallbacks) para campos que
+  /// podrían ser nulos y parsea de forma segura [apoyos_pendientes].
   factory ReportePendiente.fromJson(Map<String, dynamic> json) {
     return ReportePendiente(
       id: json['id'],

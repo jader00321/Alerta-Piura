@@ -1,35 +1,46 @@
-// lib/screens/pantalla_editar_reporte_autor.dart (NUEVO ARCHIVO)
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Para formatear TimeOfDay
+import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/categoria_model.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';
-// Reutiliza los widgets de Crear Reporte si son adecuados
 import 'package:mobile_app/widgets/crear_reporte/seccion_detalles_principales.dart';
 import 'package:mobile_app/widgets/crear_reporte/seccion_detalles_adicionales.dart';
 
-
+/// {@template pantalla_editar_reporte_autor}
+/// Pantalla que permite al autor original de un reporte editarlo,
+/// siempre y cuando el reporte siga en estado 'pendiente_verificacion'.
+///
+/// Reutiliza varios widgets de [CreateReportScreen] para los campos del formulario.
+/// Recibe el [ReporteDetallado] inicial para pre-llenar los campos.
+/// {@endtemplate}
 class PantallaEditarReporteAutor extends StatefulWidget {
+  /// Los datos iniciales del reporte a editar.
   final ReporteDetallado reporteInicial;
 
+  /// {@macro pantalla_editar_reporte_autor}
   const PantallaEditarReporteAutor({super.key, required this.reporteInicial});
 
   @override
-  State<PantallaEditarReporteAutor> createState() => _PantallaEditarReporteAutorState();
+  State<PantallaEditarReporteAutor> createState() =>
+      _PantallaEditarReporteAutorState();
 }
 
-class _PantallaEditarReporteAutorState extends State<PantallaEditarReporteAutor> {
+/// Estado para [PantallaEditarReporteAutor].
+///
+/// Maneja los controladores del formulario, carga las categorías disponibles,
+/// y envía los datos actualizados a [ReporteService.editarReporteAutor].
+class _PantallaEditarReporteAutorState
+    extends State<PantallaEditarReporteAutor> {
   final _formKey = GlobalKey<FormState>();
   final ReporteService _reporteService = ReporteService();
 
-  // Controladores
   late TextEditingController _tituloController;
   late TextEditingController _descripcionController;
   late TextEditingController _referenciaController;
   late TextEditingController _tagsController;
-  late TextEditingController _categoriaSugeridaController; // Necesario si elige 'Otro'
+  late TextEditingController _categoriaSugeridaController;
 
-  // Estado
   int? _selectedCategoriaId;
   String _urgencia = 'Media';
   String _impacto = 'A mi calle';
@@ -42,56 +53,69 @@ class _PantallaEditarReporteAutorState extends State<PantallaEditarReporteAutor>
   @override
   void initState() {
     super.initState();
-    // Inicializar controladores con datos existentes
     _tituloController = TextEditingController(text: widget.reporteInicial.titulo);
-    _descripcionController = TextEditingController(text: widget.reporteInicial.descripcion);
-    _referenciaController = TextEditingController(text: widget.reporteInicial.referenciaUbicacion);
+    _descripcionController =
+        TextEditingController(text: widget.reporteInicial.descripcion);
+    _referenciaController =
+        TextEditingController(text: widget.reporteInicial.referenciaUbicacion);
     _tagsController = TextEditingController(text: widget.reporteInicial.tags.join(', '));
-    _categoriaSugeridaController = TextEditingController(); // Inicialmente vacío
+    // Inicialmente vacío, se llena si 'Otro' está seleccionado y ya había sugerencia.
+    _categoriaSugeridaController = TextEditingController();
 
     _urgencia = widget.reporteInicial.urgencia ?? 'Media';
     _impacto = widget.reporteInicial.impacto ?? 'A mi calle';
     _distrito = widget.reporteInicial.distrito;
 
-    // Parsear hora inicial si existe
     if (widget.reporteInicial.horaIncidente != null) {
       try {
-        final format = DateFormat.Hm(); // HH:mm
+        final format = DateFormat.Hm(); // Formato HH:mm
         final dt = format.parse(widget.reporteInicial.horaIncidente!);
         _horaIncidente = TimeOfDay.fromDateTime(dt);
       } catch (e) {
-        print("Error parsing initial time: $e");
+        debugPrint("Error parseando hora inicial: $e");
         _horaIncidente = TimeOfDay.now();
       }
     } else {
-       _horaIncidente = TimeOfDay.now();
+      _horaIncidente = TimeOfDay.now();
     }
 
     _loadCategoriesAndSetInitial();
   }
 
-   Future<void> _loadCategoriesAndSetInitial() async {
+  /// Carga las categorías desde la API y establece la categoría inicial del reporte.
+  Future<void> _loadCategoriesAndSetInitial() async {
     setState(() => _isLoadingCategories = true);
     try {
       final cats = await _reporteService.getCategorias();
       if (mounted) {
         int? initialCatId;
+        String initialSuggestedCategory = '';
         try {
-           initialCatId = cats.firstWhere((c) => c.nombre == widget.reporteInicial.categoria).id;
+          final initialCat =
+              cats.firstWhere((c) => c.nombre == widget.reporteInicial.categoria);
+          initialCatId = initialCat.id;
+          // Si la categoría inicial es 'Otro', pre-llenar la sugerencia si existe
+          if (initialCat.nombre.toLowerCase() == 'otro' && mounted) {
+             // Asumiendo que el modelo detallado tuviera categoria_sugerida
+             // initialSuggestedCategory = widget.reporteInicial.categoriaSugerida ?? '';
+          }
         } catch (e) {
-           initialCatId = null;
-           print("Categoría inicial no encontrada: ${widget.reporteInicial.categoria}");
+          initialCatId = null;
+          debugPrint("Categoría inicial no encontrada: ${widget.reporteInicial.categoria}");
         }
 
         setState(() {
           _categoriasDisponibles = cats;
           _selectedCategoriaId = initialCatId;
+          _categoriaSugeridaController.text = initialSuggestedCategory;
           _isLoadingCategories = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoadingCategories = false);
-      print("Error cargando categorías: $e");
+      if (mounted) {
+        setState(() => _isLoadingCategories = false);
+      }
+      debugPrint("Error cargando categorías: $e");
     }
   }
 
@@ -105,37 +129,47 @@ class _PantallaEditarReporteAutorState extends State<PantallaEditarReporteAutor>
     super.dispose();
   }
 
-  // --- Lógica de Guardado ---
+  /// Valida el formulario y envía los datos actualizados del reporte a la API.
   Future<void> _guardarCambios() async {
-    if (!_formKey.currentState!.validate() || _isLoading || _isLoadingCategories || _selectedCategoriaId == null) return;
+    if (!_formKey.currentState!.validate() ||
+        _isLoading ||
+        _isLoadingCategories ||
+        _selectedCategoriaId == null) {
+      return;
+    }
 
-    final otroCategoria = _categoriasDisponibles.firstWhere((cat) => cat.nombre.toLowerCase() == 'otro', orElse: () => Categoria(id: -1, nombre: ''));
-    if (_selectedCategoriaId == otroCategoria.id && _categoriaSugeridaController.text.trim().isEmpty) {
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Si eliges "Otro", debes sugerir una categoría.')));
-       return;
+    final otroCategoria = _categoriasDisponibles.firstWhere(
+        (cat) => cat.nombre.toLowerCase() == 'otro',
+        orElse: () => Categoria(id: -1, nombre: ''));
+    if (_selectedCategoriaId == otroCategoria.id &&
+        _categoriaSugeridaController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Si eliges "Otro", debes sugerir una categoría.')));
+      return;
     }
 
     setState(() => _isLoading = true);
 
-    List<String> tagsList = _tagsController.text.split(',')
+    List<String> tagsList = _tagsController.text
+        .split(',')
         .map((tag) => tag.trim())
         .where((tag) => tag.isNotEmpty)
         .toList();
 
     try {
-      // Llama a la nueva función del servicio
       final response = await _reporteService.editarReporteAutor(
         widget.reporteInicial.id,
         titulo: _tituloController.text.trim(),
         descripcion: _descripcionController.text.trim(),
         idCategoria: _selectedCategoriaId!,
-        referenciaUbicacion: _referenciaController.text.trim().isEmpty ? null : _referenciaController.text.trim(),
-        tags: tagsList.isEmpty ? null : tagsList, // Enviar null si está vacío
+        referenciaUbicacion: _referenciaController.text.trim().isEmpty
+            ? null
+            : _referenciaController.text.trim(),
+        tags: tagsList.isEmpty ? null : tagsList,
         urgencia: _urgencia,
-        horaIncidente: _horaIncidente?.format(context), // Enviar hora formateada o null
+        horaIncidente: _horaIncidente?.format(context),
         impacto: _impacto,
         distrito: _distrito,
-        // No se envía categoriaSugerida aquí, el backend no la actualiza
       );
 
       if (!mounted) return;
@@ -149,7 +183,7 @@ class _PantallaEditarReporteAutorState extends State<PantallaEditarReporteAutor>
       ));
 
       if (success) {
-        Navigator.pop(context, true); // Devolver true para indicar éxito y refrescar
+        Navigator.pop(context, true); // Devuelve true para indicar éxito
       } else {
         setState(() => _isLoading = false);
       }
@@ -164,8 +198,8 @@ class _PantallaEditarReporteAutorState extends State<PantallaEditarReporteAutor>
     }
   }
 
-  // --- Selección de Hora ---
-   Future<void> _selectTime() async {
+  /// Muestra el selector de hora para [horaIncidente].
+  Future<void> _selectTime() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _horaIncidente ?? TimeOfDay.now(),
@@ -175,26 +209,37 @@ class _PantallaEditarReporteAutorState extends State<PantallaEditarReporteAutor>
     }
   }
 
-  // --- Añadir Tag ---
+  /// Añade una etiqueta recomendada al campo de texto de tags.
   void _addTag(String tag) {
-     final currentTags = _tagsController.text.split(',').map((t) => t.trim()).where((t)=> t.isNotEmpty).toList();
-     if (!currentTags.contains(tag)) {
-       _tagsController.text = _tagsController.text.isEmpty ? tag : '${_tagsController.text}, $tag';
-     }
+    final currentTags = _tagsController.text
+        .split(',')
+        .map((t) => t.trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
+    if (!currentTags.contains(tag)) {
+      _tagsController.text =
+          _tagsController.text.isEmpty ? tag : '${_tagsController.text}, $tag';
+    }
   }
 
-  // --- Build Method ---
   @override
   Widget build(BuildContext context) {
-    // ID de la categoría 'Otro' para lógica condicional
-    final otroCategoriaId = _categoriasDisponibles.firstWhere((cat) => cat.nombre.toLowerCase() == 'otro', orElse: () => Categoria(id: -1, nombre: '')).id;
+    final otroCategoriaId = _categoriasDisponibles
+        .firstWhere((cat) => cat.nombre.toLowerCase() == 'otro',
+            orElse: () => Categoria(id: -1, nombre: ''))
+        .id;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editar Mi Reporte'),
         actions: [
           IconButton(
-            icon: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white)) : const Icon(Icons.save_outlined),
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(color: Colors.white))
+                : const Icon(Icons.save_outlined),
             onPressed: _guardarCambios,
             tooltip: 'Guardar Cambios',
           )
@@ -209,47 +254,54 @@ class _PantallaEditarReporteAutorState extends State<PantallaEditarReporteAutor>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Reutiliza los widgets de Crear Reporte
                     SeccionDetallesPrincipales(
                       tituloController: _tituloController,
                       urgenciaSeleccionada: _urgencia,
-                      onUrgenciaChanged: (value) => setState(() => _urgencia = value),
+                      onUrgenciaChanged: (value) =>
+                          setState(() => _urgencia = value),
                       categoriaSeleccionada: _selectedCategoriaId,
                       categorias: _categoriasDisponibles,
                       isLoadingCategories: _isLoadingCategories,
-                      onCategoriaChanged: (value) => setState(() => _selectedCategoriaId = value),
+                      onCategoriaChanged: (value) =>
+                          setState(() => _selectedCategoriaId = value),
                       otroCategoriaId: otroCategoriaId,
                       categoriaSugeridaController: _categoriaSugeridaController,
-                      isEditing: true, // Indica que es edición (puede ocultar sugerencia si no es 'Otro')
+                      isEditing: true, // Indica que estamos editando
                     ),
                     const SizedBox(height: 16),
-
                     SeccionDetallesAdicionales(
                       descripcionController: _descripcionController,
                       referenciaController: _referenciaController,
                       distritoSeleccionado: _distrito,
-                      // TODO: Obtener lista de distritos dinámicamente si es necesario
-                      distritos: const ['Piura', 'Castilla', 'Veintiséis de Octubre', 'Catacaos', 'Cura Mori', 'El Tallán', 'La Arena', 'La Unión', 'Las Lomas', 'Tambo Grande'],
-                      onDistritoChanged: (value) => setState(() => _distrito = value),
+                      distritos: const [
+                        'Piura', 'Castilla', 'Veintiséis de Octubre', 'Catacaos',
+                        'Cura Mori', 'El Tallán', 'La Arena', 'La Unión',
+                        'Las Lomas', 'Tambo Grande'
+                      ],
+                      onDistritoChanged: (value) =>
+                          setState(() => _distrito = value),
                       horaIncidente: _horaIncidente,
                       onSelectTime: _selectTime,
                       impactoSeleccionado: _impacto,
-                      onImpactoChanged: (value) => setState(() => _impacto = value!),
+                      onImpactoChanged: (value) =>
+                          setState(() => _impacto = value!),
                       tagsController: _tagsController,
-                       // TODO: Obtener tags recomendados dinámicamente si es necesario
-                      recommendedTags: const ['peligroso', 'tráfico', 'niños', 'urgente'],
+                      recommendedTags: const [
+                        'peligroso', 'tráfico', 'niños', 'urgente'
+                      ],
                       onAddTag: _addTag,
                     ),
-
-                    // NO incluimos SeccionEvidencia ni SeccionAccionesFinales (no se edita foto ni ubicación)
-
                     const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: _isLoading ? null : _guardarCambios,
-                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                      style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16)),
                       child: _isLoading
-                           ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white))
-                           : const Text('Guardar Cambios'),
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(color: Colors.white))
+                          : const Text('Guardar Cambios'),
                     )
                   ],
                 ),

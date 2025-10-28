@@ -1,68 +1,88 @@
-// backend/src/controllers/sos.controller.js
 const db = require('../config/db');
 
 const activateSos = async (req, res) => {
   const id_usuario = req.user.userId;
-  // --- MODIFICADO: Recibir duración y contacto ---
   const { lat, lon, emergencyContact, durationInSeconds } = req.body;
 
   try {
     const year = new Date().getFullYear();
+    // --- Lógica para obtener nextId (podría ser susceptible a race conditions, considera usar secuencias de DB si hay mucho tráfico) ---
     const countResult = await db.query('SELECT COUNT(*) FROM sos_alerts');
-    const nextId = parseInt(countResult.rows[0].count, 10) + 1;
+    const nextId = parseInt(countResult.rows[0].count, 10) + 1; // Simplificado, ¡cuidado con concurrencia!
     const codigo_alerta = `SOS-${year}-${nextId.toString().padStart(5, '0')}`;
+    // --- Considera usar secuencia de DB para codigo_alerta para robustez ---
+
 
     const alertQuery = `
-      INSERT INTO sos_alerts (id_usuario, codigo_alerta, contacto_emergencia_telefono, contacto_emergencia_mensaje, duracion_segundos) 
+      INSERT INTO sos_alerts (id_usuario, codigo_alerta, contacto_emergencia_telefono, contacto_emergencia_mensaje, duracion_segundos)
       VALUES ($1, $2, $3, $4, $5) RETURNING *
     `;
-    // --- MODIFICADO: Usar los nuevos parámetros ---
     const alertResult = await db.query(alertQuery, [
       id_usuario,
       codigo_alerta,
-      emergencyContact?.telefono, // Usar 'telefono' (coincide con tu mapa_view)
-      emergencyContact?.mensaje, // Usar 'mensaje'
-      durationInSeconds || 600 // Default 10 min si no se envía
+      emergencyContact?.telefono,
+      emergencyContact?.mensaje,
+      durationInSeconds || 600
     ]);
     const newAlertRaw = alertResult.rows[0];
 
-    if (lat && lon) {
+    // Insertar ubicación inicial si se proporcionó
+    if (lat != null && lon != null) { // Verificar no nulidad explícitamente
       const locationQuery = `
-        INSERT INTO sos_location_updates (id_alerta_sos, location) 
+        INSERT INTO sos_location_updates (id_alerta_sos, location)
         VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326))
       `;
       await db.query(locationQuery, [newAlertRaw.id, lon, lat]);
+    } else {
+       console.warn(`SOS activado para usuario ${id_usuario} sin coordenadas iniciales.`);
     }
-    
-    // Lógica de SMS simulado (actualizada para usar 'telefono' y 'mensaje')
+
+    // Lógica de SMS simulado
     if (emergencyContact && emergencyContact.telefono) {
       const userResult = await db.query('SELECT nombre, telefono FROM usuarios WHERE id = $1', [id_usuario]);
-      const user = userResult.rows[0];
-      const messageBody = `ALERTA SOS de ${user.nombre || 'Usuario de Reporta Piura'} (${user.telefono || 'N/A'}). Ubicación: http://googleusercontent.com/maps?q=${lat},${lon}. Mensaje: "${emergencyContact.mensaje || '¡Necesito ayuda urgente!'}"`;
-      
+      const user = userResult.rows[0] || {}; // Objeto vacío si no se encuentra
+      const messageLat = lat || 'N/A';
+      const messageLon = lon || 'N/A';
+      const messageBody = `ALERTA SOS de ${user.nombre || 'Usuario ReportaPiura'} (${user.telefono || 'N/A'}). Ubicación: http://googleusercontent.com/maps?q=${messageLat},${messageLon}. Mensaje: "${emergencyContact.mensaje || '¡Necesito ayuda urgente!'}"`;
+
       await db.query(
         'INSERT INTO simulated_sms_log (id_usuario_sos, contacto_nombre, contacto_telefono, mensaje) VALUES ($1, $2, $3, $4)',
-        [id_usuario, emergencyContact.nombre, emergencyContact.telefono, messageBody] // 'nombre' puede ser null, está bien
+        [id_usuario, emergencyContact.nombre, emergencyContact.telefono, messageBody]
       );
     }
 
+    // Obtener datos completos del usuario para el evento de socket
     const userResultForSocket = await db.query('SELECT nombre, alias, email, telefono, rol FROM usuarios WHERE id = $1', [id_usuario]);
-    
+
     const newAlert = {
       ...newAlertRaw,
-      ...userResultForSocket.rows[0],
+      ...(userResultForSocket.rows[0] || {}), // Fusionar datos del usuario
+      // Incluir lat/lon iniciales en el evento de socket si existen
       latitude: lat,
       longitude: lon
     };
 
+    // Notificar al panel de administración
     const io = req.app.get('socketio');
-    io.emit('new-sos-alert', newAlert); // Notifica al panel de admin
+    io.emit('new-sos-alert', newAlert);
 
-    // --- MODIFICADO: Devolver la alerta completa (incluyendo el ID) ---
+    // --- VERIFICACIÓN ANTES DE ENVIAR RESPUESTA ---
+    if (res.headersSent) {
+        console.warn(`activateSos: Headers ya enviados antes de la respuesta final para usuario ${id_usuario}.`);
+        return;
+    }
+    // --- FIN VERIFICACIÓN ---
     res.status(201).json({ message: 'Alerta SOS activada.', alert: newAlert });
+
   } catch (error) {
-    console.error("Error al activar SOS:", error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
+    console.error("Error al activar SOS:", error); // Loguear el error completo
+    // --- VERIFICACIÓN ANTES DE ENVIAR RESPUESTA DE ERROR ---
+    if (res.headersSent) {
+        console.error(`activateSos: Headers ya enviados al intentar manejar error para usuario ${id_usuario}.`);
+        return;
+    }
+    // --- FIN VERIFICACIÓN ---
+    res.status(500).json({ message: 'Error interno del servidor al activar SOS.' });
   }
 };
 
@@ -144,8 +164,8 @@ const getSosLocationHistory = async (req, res) => {
   }
 };
 
-const updateSosStatus = async (req, res) => {
-  const { id } = req.params; // id de la alerta
+const updateSosStatus = async (req, res) => { // Función del admin
+  const { id } = req.params;
   const { estado, estado_atencion, revisada } = req.body;
   const io = req.app.get('socketio');
 
@@ -153,16 +173,18 @@ const updateSosStatus = async (req, res) => {
     const fields = [];
     const values = [];
     let queryIndex = 1;
+    let isFinalizing = false; // Flag para saber si se está finalizando
 
     if (estado !== undefined) {
       fields.push(`estado = $${queryIndex++}`);
       values.push(estado);
-      // --- MODIFICADO: Añadir fecha_fin si se finaliza ---
       if (estado === 'finalizado') {
         fields.push(`fecha_fin = CURRENT_TIMESTAMP`);
+        isFinalizing = true; // Marcar que se está finalizando
       }
     }
-    if (estado_atencion !== undefined) {
+    // ... (resto de la lógica para añadir estado_atencion, revisada) ...
+     if (estado_atencion !== undefined) {
       fields.push(`estado_atencion = $${queryIndex++}`);
       values.push(estado_atencion);
     }
@@ -170,37 +192,52 @@ const updateSosStatus = async (req, res) => {
       fields.push(`revisada = $${queryIndex++}`);
       values.push(revisada);
     }
-    
+
     if (fields.length === 0) {
+      // --- VERIFICACIÓN ---
+      if (res.headersSent) return;
+      // --- FIN ---
       return res.status(400).json({ message: 'No fields to update.' });
     }
-    
+
     values.push(id);
     const query = `UPDATE sos_alerts SET ${fields.join(', ')} WHERE id = $${queryIndex} RETURNING *`;
     const result = await db.query(query, values);
+
+    if (result.rows.length === 0) {
+        // --- VERIFICACIÓN ---
+        if (res.headersSent) return;
+        // --- FIN ---
+        return res.status(404).json({ message: 'Alerta no encontrada.' });
+    }
     const updatedAlert = result.rows[0];
 
-    // --- LÓGICA DE SOCKET MODIFICADA ---
-    if (estado === 'finalizado' && updatedAlert) {
-      // 1. Obtener el id_usuario de la alerta
+    // Lógica de Socket para notificar al usuario si se finalizó
+    if (isFinalizing && updatedAlert) {
       const id_usuario = updatedAlert.id_usuario;
       if (id_usuario) {
-        // 2. Emitir evento 'stopSos' a la sala privada de ESE usuario
         const userRoom = `user_${id_usuario}`;
-        io.to(userRoom).emit('stopSos', { alertId: parseInt(id, 10) });
-        console.log(`Admin finalizó SOS. Enviando 'stopSos' a la sala ${userRoom}`);
+        io.to(userRoom).emit('stopSos', { alertId: parseInt(id, 10), reason: 'admin_stop' }); // Enviar evento
+        console.log(`Admin finalizó SOS ${id}. Enviando 'stopSos' a la sala ${userRoom}`);
       }
     }
-    
-    // Notificar a todos los clientes (paneles de admin) de la actualización
+
+    // Notificar a todos los admins de la actualización
     io.emit('sos-alert-updated', updatedAlert);
+
+    // --- VERIFICACIÓN ---
+    if (res.headersSent) return;
+    // --- FIN ---
     res.status(200).json(updatedAlert);
+
   } catch (error) {
-    console.error('Error al actualizar alerta SOS (admin):', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
+    console.error(`Error al actualizar alerta SOS ${id} (admin):`, error);
+    // --- VERIFICACIÓN ---
+    if (res.headersSent) return;
+    // --- FIN ---
+    res.status(500).json({ message: 'Error interno del servidor al actualizar alerta.' });
   }
 };
-
 
 module.exports = {
   activateSos,

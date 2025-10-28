@@ -1,7 +1,7 @@
-// lib/screens/mapa_view.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart'; 
+import 'package:flutter/foundation.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/reporte_model.dart';
@@ -19,6 +19,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_app/widgets/mapa/capa_mapa_base.dart';
 import 'package:mobile_app/widgets/mapa/acciones_mapa.dart';
 
+/// Vista principal de la aplicación que muestra el mapa interactivo,
+/// los reportes, el indicador de riesgo y las acciones principales (Filtros, SOS, etc.).
 class MapaView extends StatefulWidget {
   const MapaView({super.key});
 
@@ -26,7 +28,11 @@ class MapaView extends StatefulWidget {
   State<MapaView> createState() => _MapaViewState();
 }
 
-class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
+/// Estado para [MapaView].
+///
+/// Maneja la carga de reportes, filtros, cálculo de riesgo,
+/// estado de SOS y la interacción del usuario con el mapa.
+class _MapaViewState extends State<MapaView> {
   final LatLng _initialCenter = const LatLng(-5.19449, -80.63282);
   final ReporteService _reporteService = ReporteService();
   final MapController _mapController = MapController();
@@ -38,54 +44,73 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
   int _riesgoScore = 0;
   bool _isLoadingRisk = true;
   String _searchQuery = '';
-  bool _isHeatmapVisible = false;
-  Future<List<LatLng>>? _heatmapFuture;
 
-  // ignore: unused_field
-  int? _activeAlertId; 
+  int? _activeAlertId;
   bool _isSosActive = false;
   int _sosRemainingSeconds = 0;
-  Timer? _sosHoldTimer;
-  // late AnimationController _glowController; // No lo estabas usando, lo comenté
 
   @override
   void initState() {
     super.initState();
-    _loadReportes(); // Carga inicial
-    // _glowController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+    _loadReportes();
 
     FlutterBackgroundService().on('update').listen((event) {
       if (!mounted || event == null) return;
-      
       final action = event['action'] as String?;
-      print("MAPA_VIEW: Evento recibido del servicio: $action");
+      debugPrint("MAPA_VIEW: Evento recibido del servicio: $action, Data: $event");
+
+      if (!mounted) return;
 
       switch (action) {
-        case 'updateTimer': 
-          if (mounted) setState(() => _sosRemainingSeconds = event['seconds']);
+        case 'currentSosStatus':
+          setState(() {
+            _isSosActive = event['isActive'] ?? false;
+            _activeAlertId = event['alertId'];
+            _sosRemainingSeconds = event['seconds'] ?? 0;
+            debugPrint("MAPA_VIEW: Estado inicial/actual de SOS recibido -> isActive: $_isSosActive, alertId: $_activeAlertId, remaining: $_sosRemainingSeconds");
+          });
           break;
-        case 'sosStarted': 
-          if (mounted) setState(() { 
-            _isSosActive = true; 
-            _activeAlertId = event['alertId']; 
-            _sosRemainingSeconds = event['seconds'];
-          }); 
+        case 'updateTimer':
+          setState(() => _sosRemainingSeconds = event['seconds'] ?? 0);
           break;
-        case 'sosFinished': 
-          if (mounted) setState(() { 
-            _isSosActive = false; 
-            _activeAlertId = null; 
-            _sosRemainingSeconds = 0; 
-          }); 
+        case 'sosStarted':
+          setState(() {
+            _isSosActive = true;
+            _activeAlertId = event['alertId'];
+            _sosRemainingSeconds = event['seconds'] ?? 0;
+          });
           break;
-        case 'connectionLost': 
-          if (mounted && ScaffoldMessenger.maybeOf(context) != null) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Conexión perdida...'), 
-              backgroundColor: Colors.orange,
-            ));
+        case 'sosFinished':
+          setState(() {
+            _isSosActive = false;
+            _activeAlertId = null;
+            _sosRemainingSeconds = 0;
+          });
+          if (event['error'] != null) {
+            if (ScaffoldMessenger.maybeOf(context) != null) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('Error en SOS: ${event['error']}'),
+                backgroundColor: Colors.red,
+              ));
+            }
           }
           break;
+        case 'connectionLost':
+          if (ScaffoldMessenger.maybeOf(context) != null) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('SOS: Conexión perdida...'),
+                backgroundColor: Colors.orange));
+          }
+          break;
+        default:
+          debugPrint("MAPA_VIEW: Evento desconocido recibido del servicio: $action");
+      }
+    });
+
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (mounted) {
+        debugPrint("MAPA_VIEW: Solicitando estado inicial de SOS al servicio...");
+        FlutterBackgroundService().invoke('getSosStatus');
       }
     });
   }
@@ -94,186 +119,201 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
   void dispose() {
     _debounce?.cancel();
     _riesgoDebounce?.cancel();
-    _sosHoldTimer?.cancel();
-    // _glowController.dispose();
     _mapController.dispose();
     super.dispose();
   }
 
-  // --- FUNCIÓN _loadReportes CORREGIDA ---
+  /// Carga los reportes desde [ReporteService] aplicando los filtros actuales.
   void _loadReportes() {
-    // 1. Obtener Búsqueda y Estado
-    final String search = _searchQuery; // Usar el estado actual
+    final String search = _searchQuery;
     final String estado;
-    // Traducir estado de UI a estado de API ('pendiente_verificacion' o 'verificado')
     if (_activeFilters.estado == 'Pendiente') {
       estado = 'pendiente_verificacion';
-    } else if (_activeFilters.estado == 'Verificado' || _activeFilters.estado == 'Todos' || _activeFilters.estado == null) {
-      // Por defecto o si selecciona 'Todos', mostrar verificados
-      estado = 'verificado'; 
     } else {
-       estado = 'verificado'; // Fallback seguro
+      estado = 'verificado';
     }
-    
-    const int limit = 100; // Límite por defecto
-
-    // 2. Construir mapa de filtros opcionales (categoriaId, dias)
-    //    Estos nombres DEBEN coincidir con lo que ReporteService espera internamente
+    const int limit = 100;
     final apiFilters = <String, String>{};
     if (_activeFilters.categoriaId != null) {
-      // ReporteService espera 'categoriaId'
       apiFilters['categoriaId'] = _activeFilters.categoriaId.toString();
     }
     if (_activeFilters.rangoFechas == 'Últimos 7 días') {
-      // ReporteService espera 'dias'
       apiFilters['dias'] = '7';
     } else if (_activeFilters.rangoFechas == 'Últimos 30 días') {
-      // ReporteService espera 'dias'
       apiFilters['dias'] = '30';
     }
-    // Si _activeFilters.rangoFechas es 'Cualquier fecha' o null, no se añade el filtro 'dias'
-
-    // 3. Llamar al servicio con todos los parámetros
     setState(() {
       _reportesFuture = _reporteService.getAllReports(
-        filters: apiFilters.isNotEmpty ? apiFilters : null, // Pasar filtros si los hay
-        search: search,   // Pasar término de búsqueda
-        estado: estado,   // Pasar estado traducido
-        limit: limit,     // Pasar límite
+        filters: apiFilters.isNotEmpty ? apiFilters : null,
+        search: search,
+        estado: estado,
+        limit: limit,
       );
     });
   }
-  // --- FIN FUNCIÓN CORREGIDA ---
-  
+
+  /// Obtiene el puntaje de riesgo para el centro actual del mapa.
   Future<void> _fetchRiesgoZona() async {
     if (!mounted) return;
     setState(() => _isLoadingRisk = true);
     final center = _mapController.camera.center;
     try {
       final score = await _reporteService.getRiesgoZona(
-        center, 
+        center,
         centerPoint: center,
         radius: 500.0,
       );
       if (mounted) {
-          setState(() { _riesgoScore = score; _isLoadingRisk = false; });
+        setState(() {
+          _riesgoScore = score;
+          _isLoadingRisk = false;
+        });
       }
     } catch (e) {
-        print("Error fetching riesgo zona: $e");
-        if (mounted) setState(() => _isLoadingRisk = false);
+      debugPrint("Error fetching riesgo zona: $e");
+      if (mounted) {
+        setState(() => _isLoadingRisk = false);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('No se pudo calcular el riesgo de la zona.'),
+          backgroundColor: Colors.orange,
+        ));
+      }
     }
   }
 
+  /// Maneja el cambio de texto en la barra de búsqueda con un debounce.
   void _onSearchChanged(String query) {
-      if (_debounce?.isActive ?? false) _debounce!.cancel();
-      _debounce = Timer(const Duration(milliseconds: 700), () {
-          if (mounted && query.trim() != _searchQuery) {
-            setState(() { 
-              _searchQuery = query.trim(); // Actualizar estado de búsqueda
-            });
-            _loadReportes(); // Volver a cargar con la nueva búsqueda y filtros actuales
-          }
-      });
-  }
-
-  void _showFilterSheet() {
-      showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => PanelFiltrosAvanzados(
-              filtrosIniciales: _activeFilters,
-              onAplicarFiltros: (newFilters) {
-                  if (mounted) {
-                    setState(() => _activeFilters = newFilters); // Actualizar filtros
-                    _loadReportes(); // Volver a cargar con los nuevos filtros y búsqueda actual
-                  }
-              },
-          ),
-      );
-  }
-
-  void _showReportSummary(BuildContext context, Reporte reporte) {
-      showModalBottomSheet(
-        context: context, 
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))), 
-        builder: (context) => ReportSummarySheet(reporte: reporte)
-      );
-  }
-
-  Future<void> _centerOnUserLocation() async {
-      final status = await Permission.location.request();
-      if (!mounted) return;
-      if (status.isGranted) {
-          try {
-              Position p = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high, timeLimit: const Duration(seconds: 10));
-              if (mounted) _mapController.move(LatLng(p.latitude, p.longitude), 16.0);
-          } catch (e) {
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo obtener la ubicación.')));
-          }
-      } else {
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Se necesita permiso de ubicación.')));
+    if (_debounce?.isActive ?? false) {
+      _debounce!.cancel();
+    }
+    _debounce = Timer(const Duration(milliseconds: 700), () {
+      if (mounted && query.trim() != _searchQuery) {
+        setState(() {
+          _searchQuery = query.trim();
+        });
+        _loadReportes();
       }
-  }
-  
-  void _toggleHeatmap() {
-      setState(() {
-          _isHeatmapVisible = !_isHeatmapVisible;
-          if (_isHeatmapVisible && _heatmapFuture == null) {
-              _heatmapFuture = _reporteService.getDatosMapaDeCalor();
-          }
-      });
+    });
   }
 
-  void _onSosPressStart(LongPressStartDetails details) {
-      _sosHoldTimer = Timer(const Duration(seconds: 2), () async {
-          print("SOS Long press completado. Invocando servicio...");
-          final prefs = await SharedPreferences.getInstance();
-          
-          final durationInMinutes = prefs.getDouble('sosDuration') ?? 10.0;
-          final durationInSeconds = durationInMinutes.toInt() * 60;
-          
-          final contact = {
-            'nombre': prefs.getString('contactNombre'),
-            'telefono': prefs.getString('contactTelefono'),
-            'mensaje': prefs.getString('contactMensaje'),
-          };
-
-          FlutterBackgroundService().invoke('startSosTracking', { 
-            'durationInSeconds': durationInSeconds,
-            'emergencyContact': contact
-          });
-
+  /// Muestra el modal [PanelFiltrosAvanzados].
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PanelFiltrosAvanzados(
+        filtrosIniciales: _activeFilters,
+        onAplicarFiltros: (newFilters) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Alerta SOS activada.'), 
-              backgroundColor: Colors.red,
-            ));
+            setState(() => _activeFilters = newFilters);
+            _loadReportes();
           }
-      });
+        },
+      ),
+    );
   }
 
-  void _onSosPressEnd(LongPressEndDetails details) { 
-    _sosHoldTimer?.cancel(); 
+  /// Muestra el modal [ReportSummarySheet] al tocar un reporte.
+  void _showReportSummary(BuildContext context, Reporte reporte) {
+    showModalBottomSheet(
+        context: context,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (context) => ReportSummarySheet(reporte: reporte));
   }
 
-  void _deactivateSosFromUI() {
-      showDialog(context: context, builder: (ctx) => AlertDialog(
-          title: const Text('Finalizar Alerta SOS'), 
-          content: const Text('¿Estás seguro que deseas finalizar tu alerta?'),
-          actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-              ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  onPressed: () {
-                      FlutterBackgroundService().invoke('stopSosFromUI');
-                      Navigator.pop(ctx);
-                  }, 
-                  child: const Text('Sí, Finalizar')),
-          ],
+  /// Centra el mapa en la ubicación actual del usuario.
+  Future<void> _centerOnUserLocation() async {
+    var status = await Permission.locationWhenInUse.status;
+    if (!status.isGranted) {
+      status = await Permission.locationWhenInUse.request();
+    }
+
+    if (!mounted) return;
+
+    if (status.isGranted) {
+      try {
+        Position p = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.high,
+                timeLimit: Duration(seconds: 10)));
+        if (mounted) {
+          _mapController.move(LatLng(p.latitude, p.longitude), 16.0);
+        }
+      } catch (e) {
+        debugPrint("Error obteniendo ubicación: $e");
+        if (mounted && ScaffoldMessenger.maybeOf(context) != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No se pudo obtener la ubicación actual.')));
+        }
+      }
+    } else {
+      debugPrint("Permiso de ubicación denegado.");
+      if (mounted && ScaffoldMessenger.maybeOf(context) != null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Se necesita permiso de ubicación para centrar.')));
+      }
+    }
+  }
+
+  /// Inicia el flujo de activación de SOS contactando al [BackgroundService].
+  Future<void> _activateSos() async {
+    if (!mounted) return;
+
+    if (_isSosActive) {
+      debugPrint("MAPA_VIEW: SOS ya está activo. Mostrando diálogo de desactivación.");
+      _deactivateSosFromUI();
+      return;
+    }
+
+    debugPrint("MAPA_VIEW: Solicitando activación de SOS al servicio...");
+
+    if (ScaffoldMessenger.maybeOf(context) != null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Activando Alerta SOS...'),
+        backgroundColor: Colors.orange,
+        duration: Duration(seconds: 3),
       ));
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final durationInMinutes = prefs.getDouble('sosDuration') ?? 10.0;
+    final durationInSeconds = durationInMinutes.toInt() * 60;
+    final contact = {
+      'nombre': prefs.getString('contactNombre'),
+      'telefono': prefs.getString('contactTelefono'),
+      'mensaje': prefs.getString('contactMensaje'),
+    };
+
+    FlutterBackgroundService().invoke('startSosTracking',
+        {'durationInSeconds': durationInSeconds, 'emergencyContact': contact});
   }
 
+  /// Muestra un diálogo para confirmar la desactivación de SOS.
+  void _deactivateSosFromUI() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Finalizar Alerta SOS'),
+        content: const Text('¿Estás seguro que deseas finalizar tu alerta?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar')),
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                debugPrint("MAPA_VIEW: Solicitando detención de SOS al servicio...");
+                FlutterBackgroundService().invoke('stopSosFromUI');
+                Navigator.pop(ctx);
+              },
+              child: const Text('Sí, Finalizar')),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -284,40 +324,55 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
         children: [
           CapaMapaBase(
             reportesFuture: _reportesFuture,
-            heatmapFuture: _heatmapFuture,
             mapController: _mapController,
             initialCenter: _initialCenter,
             onMapReady: _fetchRiesgoZona,
             onPositionChanged: (MapEvent event) {
-              if (event.source != MapEventSource.mapController) {
-                if (_riesgoDebounce?.isActive ?? false) _riesgoDebounce!.cancel();
-                _riesgoDebounce = Timer(const Duration(milliseconds: 750), _fetchRiesgoZona);
+              if (event.source != MapEventSource.mapController &&
+                  event.source != MapEventSource.custom) {
+                if (_riesgoDebounce?.isActive ?? false) {
+                  _riesgoDebounce!.cancel();
+                }
+                _riesgoDebounce =
+                    Timer(const Duration(milliseconds: 750), _fetchRiesgoZona);
               }
             },
             onShowReportSummary: _showReportSummary,
-            isHeatmapVisible: _isHeatmapVisible,
+            isHeatmapVisible: false,
           ),
-
           const PinPulsante(),
-
-          SafeArea(
-            child: Column(
-              children: [
-                TopSearchBar(onSearchChanged: _onSearchChanged),
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: _isLoadingRisk
-                      ? Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)), child: const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)))
-                      : IndicadorRiesgo(riesgoScore: _riesgoScore),
-                ),
-              ],
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TopSearchBar(onSearchChanged: _onSearchChanged),
+                  _isLoadingRisk
+                      ? Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(20)),
+                          child: const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white)))
+                      : Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: IndicadorRiesgo(riesgoScore: _riesgoScore),
+                        ),
+                ],
+              ),
             ),
           ),
         ],
       ),
       floatingActionButton: AccionesMapa(
-        onToggleHeatmap: _toggleHeatmap,
-        isHeatmapVisible: _isHeatmapVisible,
         onShowFilterSheet: _showFilterSheet,
         onCenterOnUser: _centerOnUserLocation,
         onCreateReport: () {
@@ -329,8 +384,7 @@ class _MapaViewState extends State<MapaView> with TickerProviderStateMixin {
         },
         isSosActive: _isSosActive,
         sosRemainingSeconds: _sosRemainingSeconds,
-        onSosPressStart: _onSosPressStart,
-        onSosPressEnd: _onSosPressEnd,
+        onActivateSos: _activateSos,
         onDeactivateSos: _deactivateSosFromUI,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

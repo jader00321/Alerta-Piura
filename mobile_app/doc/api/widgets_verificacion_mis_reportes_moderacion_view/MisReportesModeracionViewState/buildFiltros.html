@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the buildFiltros method from the MisReportesModeracionViewState class, for the Dart programming language.">
+  <title>buildFiltros method - MisReportesModeracionViewState class - mis_reportes_moderacion_view library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">mobile_app</a></li>
+    <li><a href="../../widgets_verificacion_mis_reportes_moderacion_view/">widgets\verificacion\mis_reportes_moderacion_view.dart</a></li>
+    <li><a href="../../widgets_verificacion_mis_reportes_moderacion_view/MisReportesModeracionViewState-class.html">MisReportesModeracionViewState</a></li>
+    <li class="self-crumb">buildFiltros method</li>
+  </ol>
+  <div class="self-name">buildFiltros</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="widgets_verificacion_mis_reportes_moderacion_view&#47;MisReportesModeracionViewState-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">buildFiltros</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="https://api.flutter.dev/flutter/widgets/Widget-class.html">Widget</a></span>
+<span class="name ">buildFiltros</span>(<wbr>)
+
+      
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Construye la fila de filtros (Tipo y Fecha).</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">Widget buildFiltros() {
+  final DateFormat dateFormat = DateFormat(&#39;dd MMM&#39;, &#39;es_ES&#39;);
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          &#47;&#47;&#47; Chips para filtrar por tipo.
+          Wrap(
+            spacing: 8.0,
+            children: FiltroTipoModeracion.values.map((filtro) {
+              String label;
+              switch (filtro) {
+                case FiltroTipoModeracion.comentario: label = &#39;Comentarios&#39;; break;
+                case FiltroTipoModeracion.usuario: label = &#39;Usuarios&#39;; break;
+                default: label = &#39;Todos&#39;; break;
+              }
+              return ChoiceChip(
+                label: Text(label, style: const TextStyle(fontSize: 12)),
+                selected: _filtroTipo == filtro,
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() =&gt; _filtroTipo = filtro);
+                    refreshData(); &#47;&#47; Recarga con el nuevo filtro
+                  }
+                },
+                visualDensity: VisualDensity.compact,
+              );
+            }).toList(),
+          ),
+          const SizedBox(width: 16),
+          &#47;&#47;&#47; Botón para seleccionar rango de fechas.
+          TextButton.icon(
+            icon: const Icon(Icons.calendar_today, size: 16),
+            label: Text(
+              _startDate != null &amp;&amp; _endDate != null
+                  ? &#39;${dateFormat.format(_startDate!)} - ${dateFormat.format(_endDate!)}&#39;
+                  : &#39;Seleccionar Fechas&#39;,
+              style: const TextStyle(fontSize: 12),
+            ),
+            onPressed: _selectDateRange,
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">mobile_app</a></li>
+    <li><a href="../../widgets_verificacion_mis_reportes_moderacion_view/">mis_reportes_moderacion_view</a></li>
+    <li><a href="../../widgets_verificacion_mis_reportes_moderacion_view/MisReportesModeracionViewState-class.html">MisReportesModeracionViewState</a></li>
+    <li class="self-crumb">buildFiltros method</li>
+</ol>
+
+    <h5>MisReportesModeracionViewState class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    mobile_app
+      1.0.0+1
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
