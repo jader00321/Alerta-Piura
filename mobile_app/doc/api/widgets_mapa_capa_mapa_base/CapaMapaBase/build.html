@@ -109,13 +109,16 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47;&#47; Usa [FutureBuilder] para manejar el estado asíncrono de [reportesFuture].
   return FutureBuilder&lt;List&lt;Reporte&gt;&gt;(
     future: reportesFuture,
     builder: (context, snapshot) {
+      &#47;&#47; Muestra esqueleto de carga solo en el estado inicial.
       if (snapshot.connectionState == ConnectionState.waiting &amp;&amp;
           (snapshot.data == null || snapshot.data!.isEmpty)) {
         return const EsqueletoMapa();
       }
+      &#47;&#47; Muestra error si el futuro falla.
       if (snapshot.hasError) {
         return Center(
             child: Padding(
@@ -123,50 +126,82 @@ Widget build(BuildContext context) {
                 child: Text(&#39;Error al cargar reportes: ${snapshot.error}&#39;)));
       }
 
-      final markers = (snapshot.data ?? [])
-          .map((reporte) =&gt; Marker(
-                point: reporte.location,
-                width: 50,
-                height: 50,
-                child: GestureDetector(
-                  onTap: () =&gt; onShowReportSummary(context, reporte),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Icon(Icons.location_pin,
-                          color: _getCategoryColor(reporte.categoria),
-                          size: 45),
-                      if (reporte.esPrioritario)
-                        Positioned(
-                          top: 5,
-                          child: Icon(Icons.star,
-                              color: Colors.amber,
-                              size: 18,
-                              shadows: [
-                                BoxShadow(
-                                    color: Colors.black.withAlpha(128),
-                                    blurRadius: 3)
-                              ]),
-                        ),
-                    ],
+      &#47;&#47;&#47; Convierte la lista de [Reporte] en una lista de [Marker].
+      final markers = (snapshot.data ?? []).map((reporte) {
+        return Marker(
+          point: reporte.location,
+          width: 50,
+          height: 50,
+          child: GestureDetector(
+            onTap: () =&gt; onShowReportSummary(context, reporte),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                &#47;&#47;&#47; Icono principal del pin, coloreado por categoría.
+                Icon(Icons.location_pin,
+                    color: _getCategoryColor(reporte.categoria), size: 45),
+                &#47;&#47;&#47; Muestra una estrella si el reporte es prioritario.
+                if (reporte.esPrioritario)
+                  Positioned(
+                    top: 5,
+                    child: Icon(Icons.star,
+                        color: Colors.amber,
+                        size: 18,
+                        shadows: [
+                          BoxShadow(
+                              color: Colors.black.withAlpha(128),
+                              blurRadius: 3)
+                        ]),
                   ),
-                ),
-              ))
-          .toList();
+              ],
+            ),
+          ),
+        );
+      }).toList();
 
+      &#47;&#47;&#47; Construye el widget del mapa.
       return FlutterMap(
         mapController: mapController,
         options: MapOptions(
           initialCenter: initialCenter,
           initialZoom: 14.0,
           onMapReady: onMapReady,
-          onMapEvent: onPositionChanged,
+          onMapEvent: onPositionChanged, &#47;&#47; Llama al callback al mover el mapa
         ),
         children: [
+          &#47;&#47;&#47; Capa de tiles de OpenStreetMap.
           TileLayer(
             urlTemplate: &#39;https:&#47;&#47;tile.openstreetmap.org&#47;{z}&#47;{x}&#47;{y}.png&#39;,
             userAgentPackageName: &#39;com.example.mobile_app&#39;,
           ),
+
+          &#47;&#47;&#47; TODO: Funcionalidad de Heatmap (código comentado).
+          &#47;&#47;&#47; Descomentar y pasar el [heatmapFuture] para reactivar.
+          &#47;*
+          if (isHeatmapVisible &amp;&amp; heatmapFuture != null)
+            FutureBuilder&lt;List&lt;LatLng&gt;&gt;(
+              future: heatmapFuture,
+              builder: (context, heatmapSnapshot) {
+                if (!heatmapSnapshot.hasData || heatmapSnapshot.data!.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                final heatmapData = heatmapSnapshot.data!
+                    .map((latlng) =&gt; WeightedLocation(location: latlng, weight: 1.0))
+                    .toList();
+
+                return Heatmap(
+                  heatmapData: heatmapData,
+                  config: HeatmapConfig(
+                    radius: 30,
+                    colorPalette: HeatmapColor.defaults,
+                  ),
+                );
+              },
+            ),
+          *&#47;
+
+          &#47;&#47;&#47; Capa de agrupación de marcadores (si no está activo el heatmap).
           if (!isHeatmapVisible)
             MarkerClusterLayerWidget(
               options: MarkerClusterLayerOptions(
@@ -174,7 +209,8 @@ Widget build(BuildContext context) {
                 size: const Size(40, 40),
                 alignment: Alignment.center,
                 padding: const EdgeInsets.all(50),
-                markers: markers,
+                markers: markers, &#47;&#47; Lista de marcadores creada arriba.
+                &#47;&#47;&#47; Constructor para el cluster (círculo con número).
                 builder: (context, markers) =&gt; Container(
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),

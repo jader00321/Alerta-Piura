@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_historial_moderado_model.dart';
 
+/// {@template tarjeta_historial_moderado}
+/// Widget que representa una tarjeta para mostrar un reporte ya moderado
+/// en la lista del historial del líder ([ListaReportesVerificacion]).
+///
+/// Muestra el estado final, título, categoría y fecha de moderación.
+/// Incluye lógica condicional para mostrar un botón "Solicitar Revisión"
+/// o el estado de una solicitud ya enviada ([estadoSolicitud]).
+/// También puede mostrar un botón para ir al reporte original si fue fusionado.
+/// {@endtemplate}
 class TarjetaHistorialModerado extends StatelessWidget {
+  /// Los datos del reporte moderado a mostrar.
   final ReporteHistorialModerado reporte;
+  /// El estado actual de la solicitud de revisión para este reporte
+  /// ('pendiente', 'aprobada', 'desestimada', o `null` si no hay solicitud).
   final String? estadoSolicitud;
+  /// Callback que se ejecuta al tocar la tarjeta (para ver detalles).
   final VoidCallback onTap;
+  /// Callback que se ejecuta al presionar "Solicitar Revisión".
   final VoidCallback onSolicitarRevision;
+  /// Callback opcional que se ejecuta al presionar el ícono de enlace
+  /// en reportes fusionados (para navegar al reporte original).
   final VoidCallback? onIrAlOriginal;
 
+  /// {@macro tarjeta_historial_moderado}
   const TarjetaHistorialModerado({
     super.key,
     required this.reporte,
@@ -17,6 +34,7 @@ class TarjetaHistorialModerado extends StatelessWidget {
     this.onIrAlOriginal,
   });
 
+  /// Construye el chip que muestra el estado final de la moderación.
   Widget _buildStatusChip(ThemeData theme) {
     String label;
     IconData icon;
@@ -51,8 +69,8 @@ class TarjetaHistorialModerado extends StatelessWidget {
     return Chip(
       avatar: Icon(icon, size: 14, color: fgColor),
       label: Text(label),
-      labelStyle:
-          TextStyle(color: fgColor, fontWeight: FontWeight.bold, fontSize: 10),
+      labelStyle: TextStyle(
+          color: fgColor, fontWeight: FontWeight.bold, fontSize: 10),
       backgroundColor: bgColor,
       visualDensity: VisualDensity.compact,
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
@@ -63,6 +81,7 @@ class TarjetaHistorialModerado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Determina si se puede solicitar revisión basado en el estado del reporte.
     final bool puedeSolicitarRevision = reporte.estado == 'verificado' ||
         reporte.estado == 'rechazado' ||
         reporte.estado == 'fusionado';
@@ -70,6 +89,7 @@ class TarjetaHistorialModerado extends StatelessWidget {
     Widget? trailingWidget;
     List<Widget> trailingWidgets = [];
 
+    // Lógica para el botón/estado de "Solicitar Revisión".
     if (puedeSolicitarRevision) {
       switch (estadoSolicitud) {
         case 'pendiente':
@@ -84,8 +104,10 @@ class TarjetaHistorialModerado extends StatelessWidget {
           ));
           break;
         case 'aprobada':
+          // No muestra nada si ya fue aprobada.
           break;
         case 'desestimada':
+        // Si no hay solicitud o fue desestimada, muestra el botón.
         default:
           trailingWidgets.add(TextButton(
             onPressed: onSolicitarRevision,
@@ -94,13 +116,14 @@ class TarjetaHistorialModerado extends StatelessWidget {
               visualDensity: VisualDensity.compact,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text('Solicitar Revisión',
-                style: TextStyle(fontSize: 12)),
+            child:
+                const Text('Solicitar Revisión', style: TextStyle(fontSize: 12)),
           ));
           break;
       }
     }
 
+    // Lógica para el botón de enlace (solo si está fusionado y hay callback).
     if (reporte.estado == 'fusionado' && onIrAlOriginal != null) {
       trailingWidgets.add(Tooltip(
         message: 'Ir al reporte original',
@@ -114,11 +137,13 @@ class TarjetaHistorialModerado extends StatelessWidget {
       ));
     }
 
+    // Combina los widgets del trailing si hay más de uno.
     if (trailingWidgets.isEmpty) {
       trailingWidget = null;
     } else if (trailingWidgets.length == 1) {
       trailingWidget = trailingWidgets.first;
     } else {
+      // Muestra ambos widgets (estado solicitud y enlace) si aplican.
       trailingWidget = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -129,6 +154,7 @@ class TarjetaHistorialModerado extends StatelessWidget {
       );
     }
 
+    // Construye el ListTile principal.
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
       child: ListTile(
@@ -138,9 +164,9 @@ class TarjetaHistorialModerado extends StatelessWidget {
             overflow: TextOverflow.ellipsis),
         subtitle: Text('${reporte.categoria} • ${reporte.fecha}',
             style: const TextStyle(fontSize: 12)),
-        leading: _buildStatusChip(theme),
-        trailing: trailingWidget,
-        onTap: onTap,
+        leading: _buildStatusChip(theme), // Muestra el chip de estado.
+        trailing: trailingWidget, // Muestra las acciones/estado calculados.
+        onTap: onTap, // Permite navegar al detalle.
       ),
     );
   }

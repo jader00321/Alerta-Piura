@@ -112,14 +112,17 @@ Widget build(BuildContext context) {
   final theme = Theme.of(context);
   return Column(
     children: [
+      &#47;&#47;&#47; Icono de la aplicación.
       const Icon(Icons.shield_moon_outlined, size: 80, color: Colors.teal),
       const SizedBox(height: 16),
+      &#47;&#47;&#47; Título principal.
       Text(
         &#39;Bienvenido a Reporta Piura&#39;,
         textAlign: TextAlign.center,
         style: theme.textTheme.headlineSmall
             ?.copyWith(fontWeight: FontWeight.bold),
       ),
+      &#47;&#47;&#47; Subtítulo de bienvenida.
       Text(
         &#39;Inicia sesión para continuar&#39;,
         textAlign: TextAlign.center,

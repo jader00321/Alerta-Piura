@@ -3,15 +3,27 @@ import 'package:mobile_app/api/gamificacion_service.dart';
 import 'package:mobile_app/models/insignia_detalle_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
 
+/// {@template pantalla_insignias}
+/// Pantalla que muestra el progreso del usuario en el sistema de gamificación.
+///
+/// Muestra los puntos actuales del usuario, la próxima insignia a desbloquear,
+/// y una galería de todas las insignias disponibles (ganadas y bloqueadas).
+/// {@endtemplate}
 class PantallaInsignias extends StatefulWidget {
+  /// {@macro pantalla_insignias}
   const PantallaInsignias({super.key});
 
   @override
   State<PantallaInsignias> createState() => _PantallaInsigniasState();
 }
 
+/// Estado para [PantallaInsignias].
+///
+/// Maneja la carga del progreso de insignias desde [GamificacionService].
 class _PantallaInsigniasState extends State<PantallaInsignias> {
   final GamificacionService _gamificacionService = GamificacionService();
+  
+  /// Futuro que contiene el [ProgresoInsignias] del usuario.
   late Future<ProgresoInsignias> _progresoFuture;
 
   @override
@@ -20,24 +32,17 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
     _progresoFuture = _gamificacionService.getProgresoInsignias();
   }
 
+  /// Mapea el nombre del icono (string) a un [IconData].
   IconData _obtenerIcono(String? iconoUrl) {
     switch (iconoUrl) {
-      case 'premium_shield':
-        return Icons.shield_rounded;
-      case 'reporter_badge':
-        return Icons.assignment_ind_rounded;
-      case 'collaborator_star':
-        return Icons.star_purple500_rounded;
-      case 'city_defender_crest':
-        return Icons.verified_user_rounded;
-      case 'school':
-        return Icons.school_rounded;
-      case 'record_voice_over':
-        return Icons.record_voice_over_rounded;
-      case 'security':
-        return Icons.security_rounded;
-      default:
-        return Icons.emoji_events_outlined;
+      case 'premium_shield': return Icons.shield_rounded;
+      case 'reporter_badge': return Icons.assignment_ind_rounded;
+      case 'collaborator_star': return Icons.star_purple500_rounded;
+      case 'city_defender_crest': return Icons.verified_user_rounded;
+      case 'school': return Icons.school_rounded;
+      case 'record_voice_over': return Icons.record_voice_over_rounded;
+      case 'security': return Icons.security_rounded;
+      default: return Icons.emoji_events_outlined;
     }
   }
 
@@ -75,8 +80,9 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
               .toList();
 
           InsigniaDetalle? proximaInsignia;
-          insigniasBloqueadas.sort((a, b) =>
-              (a.puntosNecesarios ?? 0).compareTo(b.puntosNecesarios ?? 0));
+          // Ordenar bloqueadas por puntos necesarios para encontrar la próxima
+          insigniasBloqueadas.sort(
+              (a, b) => (a.puntosNecesarios ?? 0).compareTo(b.puntosNecesarios ?? 0));
           if (insigniasBloqueadas.isNotEmpty) {
             proximaInsignia = insigniasBloqueadas.firstWhere(
                 (i) => (i.puntosNecesarios ?? 0) > puntosUsuario,
@@ -94,8 +100,8 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                   child: Column(
                     children: [
                       Text('Tus Puntos de Comunidad',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer)),
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(color: theme.colorScheme.onPrimaryContainer)),
                       Text(
                         puntosUsuario.toString(),
                         style: theme.textTheme.displayMedium?.copyWith(
@@ -108,8 +114,8 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                         proximaInsignia != null
                             ? 'Siguiente Desafío:'
                             : '¡Has desbloqueado todo!',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                            color: theme.colorScheme.onPrimaryContainer),
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(color: theme.colorScheme.onPrimaryContainer),
                       ),
                       Text(
                         proximaInsignia != null
@@ -126,21 +132,19 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
                           proximaInsignia.puntosNecesarios! > 0) ...[
                         const SizedBox(height: 12),
                         LinearProgressIndicator(
-                          value: (puntosUsuario /
-                                  proximaInsignia.puntosNecesarios!)
+                          value: (puntosUsuario / proximaInsignia.puntosNecesarios!)
                               .clamp(0.0, 1.0),
                           minHeight: 10,
                           borderRadius: BorderRadius.circular(5),
-                          backgroundColor: theme.colorScheme.primary.withAlpha(
-                              51), // CORREGIDO: withOpacity -> withAlpha
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.colorScheme.primary),
+                          backgroundColor: theme.colorScheme.primary.withAlpha(51),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '${(proximaInsignia.puntosNecesarios! - puntosUsuario).clamp(0, proximaInsignia.puntosNecesarios!)} puntos restantes',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer),
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: theme.colorScheme.onPrimaryContainer),
                         ),
                       ]
                     ],
@@ -155,8 +159,7 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
               if (insigniasGanadas.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                      '¡Sigue participando para ganar tu primera insignia!'),
+                  child: Text('¡Sigue participando para ganar tu primera insignia!'),
                 )
               else
                 GridView.builder(
@@ -220,6 +223,7 @@ class _PantallaInsigniasState extends State<PantallaInsignias> {
   }
 }
 
+/// Widget interno para mostrar una tarjeta de insignia (ganada o bloqueada).
 class _InsigniaCard extends StatelessWidget {
   final InsigniaDetalle insignia;
   final IconData icono;
@@ -243,9 +247,7 @@ class _InsigniaCard extends StatelessWidget {
       preferBelow: false,
       child: Card(
         elevation: isLocked ? 0 : 2,
-        color: isLocked
-            ? theme.colorScheme.onSurface.withAlpha(13)
-            : theme.cardColor, // CORREGIDO: withOpacity -> withAlpha
+        color: isLocked ? theme.colorScheme.onSurface.withAlpha(13) : theme.cardColor,
         clipBehavior: Clip.antiAlias,
         child: Padding(
           padding: const EdgeInsets.all(5.0),

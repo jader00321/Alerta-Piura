@@ -117,8 +117,10 @@ Widget build(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          &#47;&#47;&#47; Título de la sección.
           Text(&#39;Resumen de tu Compra&#39;, style: theme.textTheme.titleLarge),
           const Divider(height: 24),
+          &#47;&#47;&#47; Fila con el nombre del plan y el precio mensual.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -129,10 +131,11 @@ Widget build(BuildContext context) {
             ],
           ),
           const SizedBox(height: 8),
+          &#47;&#47;&#47; Nota sobre la renovación automática.
           Text(&#39;Suscripción mensual, renovable automáticamente.&#39;,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: Colors.grey[600])),
+              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600])),
           const Divider(height: 24),
+          &#47;&#47;&#47; Fila con el Total a Pagar.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

@@ -110,12 +110,14 @@ and</li>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
   final theme = Theme.of(context);
+  &#47;&#47;&#47; Determina el estado para la UI (actualmente solo &#39;APROBADO&#39; es éxito).
   final bool isApproved = pago.estadoTransaccion == &#39;APROBADO&#39;;
 
   return Card(
     elevation: 2,
     margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
     child: ListTile(
+      &#47;&#47;&#47; Icono de estado (Éxito o Error).
       leading: CircleAvatar(
         backgroundColor:
             isApproved ? Colors.green.shade100 : Colors.red.shade100,
@@ -124,11 +126,14 @@ Widget build(BuildContext context) {
           color: isApproved ? Colors.green.shade800 : Colors.red.shade800,
         ),
       ),
+      &#47;&#47;&#47; Nombre del plan.
       title: Text(
         &#39;Suscripción: ${pago.nombrePlan}&#39;,
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
+      &#47;&#47;&#47; Fecha de pago.
       subtitle: Text(&#39;Pagado el: ${pago.fechaFormateada}&#39;),
+      &#47;&#47;&#47; Monto y estado.
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -141,10 +146,16 @@ Widget build(BuildContext context) {
               color: theme.colorScheme.primary,
             ),
           ),
-          const Icon(Icons.chevron_right),
+          Text(
+            pago.estadoTransaccion,
+            style: TextStyle(
+              fontSize: 12,
+              color: isApproved ? Colors.green.shade700 : Colors.red.shade700,
+            ),
+          ),
         ],
       ),
-      onTap: onTap,
+      onTap: onTap, &#47;&#47; Permite navegar al detalle de la boleta.
     ),
   );
 }</code></pre>

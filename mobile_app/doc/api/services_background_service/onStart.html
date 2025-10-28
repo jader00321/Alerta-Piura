@@ -62,6 +62,12 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Punto de entrada para el servicio en segundo plano.</p>
+<p>Esta función se ejecuta en un Isolate separado cuando el servicio se inicia.
+Configura los listeners para los eventos invocados desde la UI principal
+(ej. 'startSosTracking', 'stopSosFromUI').</p>
+</section>
 
 
     
@@ -69,8 +75,10 @@
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@pragma(&#39;vm:entry-point&#39;)
 void onStart(ServiceInstance service) async {
+  &#47;&#47;&#47; Instancia única del manejador de lógica SOS dentro de este Isolate.
   final SosTrackingService trackingService = SosTrackingService(service);
 
+  &#47;&#47;&#47; Listener para iniciar el seguimiento SOS.
   service.on(&#39;startSosTracking&#39;).listen((payload) {
     if (payload != null) {
       trackingService.startTracking(
@@ -80,14 +88,17 @@ void onStart(ServiceInstance service) async {
     }
   });
 
+  &#47;&#47;&#47; Listener para detener el seguimiento desde la UI (botón del usuario).
   service.on(&#39;stopSosFromUI&#39;).listen((payload) {
     trackingService.stopTracking(byUser: true);
   });
 
+  &#47;&#47;&#47; Listener para detener el seguimiento forzosamente desde el servidor (vía Socket).
   service.on(&#39;serverForceStop&#39;).listen((payload) {
     trackingService.stopTracking(byUser: false);
   });
 
+  &#47;&#47;&#47; Listener para que la UI consulte el estado actual del SOS al reconectarse.
   service.on(&#39;getSosStatus&#39;).listen((payload) {
     trackingService.sendStatusToUI();
   });

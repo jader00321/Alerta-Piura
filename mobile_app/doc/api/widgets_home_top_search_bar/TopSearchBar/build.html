@@ -109,13 +109,17 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47;&#47; Observa el [AuthNotifier] para reaccionar a cambios en la autenticación
+  &#47;&#47;&#47; (ej. cambiar el avatar después de iniciar sesión).
   final authNotifier = context.watch&lt;AuthNotifier&gt;();
 
+  &#47;&#47; SafeArea asegura que la barra no se solape con la barra de estado del sistema.
   return SafeArea(
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         children: [
+          &#47;&#47;&#47; Campo de texto de búsqueda dentro de una [Card].
           Expanded(
             child: Card(
               elevation: 4.0,
@@ -126,16 +130,19 @@ Widget build(BuildContext context) {
                 decoration: InputDecoration(
                   hintText: &#39;Buscar por código o título...&#39;,
                   prefixIcon: const Icon(Icons.search),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14.0),
+                  border: InputBorder.none, &#47;&#47; Sin borde, la Card lo provee
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 14.0),
                 ),
-                onChanged: onSearchChanged,
+                onChanged: onSearchChanged, &#47;&#47; Llama al callback en cada cambio
               ),
             ),
           ),
           const SizedBox(width: 12),
+          &#47;&#47;&#47; Avatar&#47;Botón de Perfil.
           GestureDetector(
             onTap: () {
+              &#47;&#47; Navega a Perfil si está autenticado, si no a Login.
               if (authNotifier.isAuthenticated) {
                 Navigator.pushNamed(context, &#39;&#47;perfil&#39;);
               } else {
@@ -147,6 +154,7 @@ Widget build(BuildContext context) {
               backgroundColor: Theme.of(context).colorScheme.primary,
               child: authNotifier.isAuthenticated &amp;&amp;
                       authNotifier.userAlias != null
+                  &#47;&#47; Muestra la inicial del alias si está autenticado.
                   ? Text(
                       authNotifier.userAlias![0].toUpperCase(),
                       style: const TextStyle(
@@ -155,6 +163,7 @@ Widget build(BuildContext context) {
                         fontWeight: FontWeight.bold,
                       ),
                     )
+                  &#47;&#47; Muestra icono de persona si es invitado.
                   : const Icon(
                       Icons.person,
                       color: Colors.white,

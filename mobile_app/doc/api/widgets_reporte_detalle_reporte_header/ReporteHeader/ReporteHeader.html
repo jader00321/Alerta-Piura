@@ -60,6 +60,13 @@
 </ol>})
     </section>
     
+<section class="desc markdown">
+  <p>Widget que muestra la cabecera principal con la información detallada de un reporte.</p>
+<p>Incluye opcionalmente la imagen del reporte (<a href="../../widgets_reporte_detalle_reporte_header/ReporteHeader/showImage.html">showImage</a>), chips de categoría y urgencia,
+título, autor, fecha, descripción, código de seguimiento, y otros detalles
+como distrito, referencia, hora, impacto y etiquetas.
+Utiliza un helper <code>_buildInfoRow</code> para mostrar las líneas de detalles.</p>
+</section>
 
 
     
@@ -68,7 +75,7 @@
   <pre class="language-dart"><code class="language-dart">const ReporteHeader({
   super.key,
   required this.reporte,
-  this.showImage = true,
+  this.showImage = true, &#47;&#47; Por defecto, muestra la imagen.
 });</code></pre>
 </section>
 

@@ -62,6 +62,12 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Detiene el servicio de seguimiento SOS.</p>
+<p><code>byUser</code>: Si es <code>true</code>, notifica al backend que el usuario
+(o el temporizador) finalizó la alerta. Si es <code>false</code> (detenido por
+servidor), solo detiene los timers locales.</p>
+</section>
 
 
     
@@ -73,8 +79,7 @@
     return;
   }
 
-  debugPrint(
-      &quot;BG_SERVICE: Deteniendo seguimiento... (Iniciado por usuario: $byUser)&quot;);
+  debugPrint(&quot;BG_SERVICE: Deteniendo seguimiento... (Iniciado por usuario: $byUser)&quot;);
   _isActive = false;
 
   _countdownTimer?.cancel();
@@ -86,6 +91,7 @@
   _alertId = null;
   _remainingSeconds = 0;
 
+  &#47;&#47;&#47; 1. Notificar al backend (si aplica).
   if (byUser &amp;&amp; alertIdToDeactivate != null) {
     try {
       await _apiService.deactivateSos(alertIdToDeactivate);
@@ -97,7 +103,9 @@
     }
   }
 
+  &#47;&#47;&#47; 2. Notificar a la UI que el SOS finalizó.
   service.invoke(&#39;sosFinished&#39;, {&#39;action&#39;: &#39;sosFinished&#39;});
+  &#47;&#47;&#47; 3. Detener el servicio en segundo plano.
   service.stopSelf();
   debugPrint(&quot;BG_SERVICE: Servicio detenido.&quot;);
 }</code></pre>

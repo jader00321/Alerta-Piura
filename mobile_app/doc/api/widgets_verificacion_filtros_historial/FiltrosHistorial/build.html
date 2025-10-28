@@ -109,52 +109,52 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47; Formateador para mostrar las fechas seleccionadas en el botón.
   final DateFormat dateFormat = DateFormat(&#39;dd MMM&#39;, &#39;es_ES&#39;);
 
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+    &#47;&#47; Permite scroll horizontal si los filtros no caben en pantalla.
     child: SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
+          &#47;&#47;&#47; Chips para seleccionar el estado del reporte.
           Wrap(
             spacing: 8.0,
             children: FiltroHistorialEstado.values.map((filtro) {
+              &#47;&#47; Mapea el enum a una etiqueta legible.
               String label;
               switch (filtro) {
-                case FiltroHistorialEstado.verificado:
-                  label = &#39;Verificados&#39;;
-                  break;
-                case FiltroHistorialEstado.rechazado:
-                  label = &#39;Rechazados&#39;;
-                  break;
-                case FiltroHistorialEstado.fusionado:
-                  label = &#39;Fusionados&#39;;
-                  break;
-                default:
-                  label = &#39;Todos&#39;;
-                  break;
+                case FiltroHistorialEstado.verificado: label = &#39;Verificados&#39;; break;
+                case FiltroHistorialEstado.rechazado: label = &#39;Rechazados&#39;; break;
+                case FiltroHistorialEstado.fusionado: label = &#39;Fusionados&#39;; break;
+                default: label = &#39;Todos&#39;; break;
               }
               return ChoiceChip(
                 label: Text(label, style: const TextStyle(fontSize: 12)),
                 selected: filtroHistorialEstado == filtro,
                 onSelected: (selected) {
-                  if (selected) onEstadoChanged(filtro);
+                  if (selected) {
+                    onEstadoChanged(filtro); &#47;&#47; Llama al callback del padre
+                  }
                 },
                 visualDensity: VisualDensity.compact,
               );
             }).toList(),
           ),
           const SizedBox(width: 16),
+          &#47;&#47;&#47; Botón para abrir el selector de rango de fechas.
           TextButton.icon(
             icon: const Icon(Icons.calendar_today, size: 16),
             label: Text(
+              &#47;&#47; Muestra el rango seleccionado o texto por defecto.
               startDate != null &amp;&amp; endDate != null
                   ? &#39;${dateFormat.format(startDate!)} - ${dateFormat.format(endDate!)}&#39;
                   : &#39;Seleccionar Fechas&#39;,
               style: const TextStyle(fontSize: 12),
             ),
-            onPressed: onSelectDateRange,
+            onPressed: onSelectDateRange, &#47;&#47; Llama al callback del padre
             style: TextButton.styleFrom(
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 8),

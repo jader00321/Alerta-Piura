@@ -1,14 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_cercano_model.dart';
 
+/// {@template tarjeta_reporte_cercano}
+/// Tarjeta que muestra un resumen de un reporte cercano en la lista
+/// de [PantallaCercaDeTi].
+///
+/// Muestra información clave como imagen, título, categoría, urgencia, distancia,
+/// autor y estado.
+///
+/// La característica principal es el **botón de acción dinámico** para reportes
+/// en estado 'pendiente_verificacion':
+/// - Muestra "Unirme (+X)" si [reporte.puedeUnirse] es `true`.
+/// - Muestra "Unido (+X)" si [reporte.usuarioActualUnido] es `true`.
+/// - Muestra "Es tu reporte" (deshabilitado) si el usuario es el autor.
+///
+/// Maneja los estados de carga [isJoining] y [isUnjoining] para los botones.
+/// {@endtemplate}
 class TarjetaReporteCercano extends StatelessWidget {
+  /// Los datos del reporte cercano a mostrar.
   final ReporteCercano reporte;
+  /// Indica si se está procesando la acción de "unirse".
   final bool isJoining;
+  /// Indica si se está procesando la acción de "quitar apoyo".
   final bool isUnjoining;
+  /// Callback al tocar cualquier parte de la tarjeta.
   final VoidCallback onCardTap;
+  /// Callback al presionar el botón "Unirme".
   final VoidCallback onJoinTap;
+  /// Callback al presionar el botón "Unido" (para quitar apoyo).
   final VoidCallback onUnjoinTap;
 
+  /// {@macro tarjeta_reporte_cercano}
   const TarjetaReporteCercano({
     super.key,
     required this.reporte,
@@ -19,6 +41,7 @@ class TarjetaReporteCercano extends StatelessWidget {
     this.isUnjoining = false,
   });
 
+  /// Helper para determinar el color basado en la urgencia.
   Color _getUrgencyColor(String? urgency) {
     switch (urgency?.toLowerCase()) {
       case 'alta':
@@ -32,6 +55,7 @@ class TarjetaReporteCercano extends StatelessWidget {
     }
   }
 
+  /// Helper para determinar el icono basado en la urgencia.
   IconData _getUrgencyIcon(String? urgency) {
     switch (urgency?.toLowerCase()) {
       case 'alta':
@@ -49,6 +73,7 @@ class TarjetaReporteCercano extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bool esPendiente = reporte.estado == 'pendiente_verificacion';
+    /// Flag para deshabilitar botones si cualquier acción está en progreso.
     final bool isLoadingAction = isJoining || isUnjoining;
 
     return Card(
@@ -61,16 +86,17 @@ class TarjetaReporteCercano extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// Sección de Imagen y Chips superpuestos.
             Stack(
               children: [
+                /// Imagen del reporte (o placeholder).
                 if (reporte.fotoUrl != null)
                   Image.network(
                     reporte.fotoUrl!,
                     height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    loadingBuilder: (context, child, progress) => progress ==
-                            null
+                    loadingBuilder: (context, child, progress) => progress == null
                         ? child
                         : const SizedBox(
                             height: 160,
@@ -89,6 +115,8 @@ class TarjetaReporteCercano extends StatelessWidget {
                       child: Center(
                           child: Icon(Icons.image_not_supported,
                               size: 40, color: Colors.grey.shade400))),
+
+                /// Chips de Categoría y Urgencia (arriba a la izquierda).
                 Positioned(
                   top: 8,
                   left: 8,
@@ -101,9 +129,8 @@ class TarjetaReporteCercano extends StatelessWidget {
                         visualDensity: VisualDensity.compact,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 4, vertical: 0),
-                        backgroundColor: theme.colorScheme.secondaryContainer
-                            .withAlpha(
-                                230), // CORREGIDO: withOpacity -> withAlpha
+                        backgroundColor:
+                            theme.colorScheme.secondaryContainer.withAlpha(230),
                       ),
                       if (reporte.urgencia != null)
                         Chip(
@@ -118,13 +145,14 @@ class TarjetaReporteCercano extends StatelessWidget {
                           visualDensity: VisualDensity.compact,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 4, vertical: 0),
-                          backgroundColor: _getUrgencyColor(reporte.urgencia)
-                              .withAlpha(
-                                  38), // CORREGIDO: withOpacity -> withAlpha
+                          backgroundColor:
+                              _getUrgencyColor(reporte.urgencia).withAlpha(38),
                         ),
                     ],
                   ),
                 ),
+
+                /// Chip de Distancia (arriba a la derecha).
                 Positioned(
                   top: 8,
                   right: 8,
@@ -136,10 +164,11 @@ class TarjetaReporteCercano extends StatelessWidget {
                     visualDensity: VisualDensity.compact,
                     padding:
                         const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                    backgroundColor: Colors.black
-                        .withAlpha(153), // CORREGIDO: withOpacity -> withAlpha
+                    backgroundColor: Colors.black.withAlpha(153),
                   ),
                 ),
+
+                /// Icono de Prioridad (abajo a la derecha).
                 if (reporte.esPrioritario)
                   Positioned(
                     bottom: 8,
@@ -147,8 +176,7 @@ class TarjetaReporteCercano extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withAlpha(
-                            128), // CORREGIDO: withOpacity -> withAlpha
+                        color: Colors.black.withAlpha(128),
                         shape: BoxShape.circle,
                       ),
                       child:
@@ -157,6 +185,8 @@ class TarjetaReporteCercano extends StatelessWidget {
                   ),
               ],
             ),
+
+            /// Sección de Detalles Textuales.
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -170,6 +200,7 @@ class TarjetaReporteCercano extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
+                  /// Fila de Autor/Fecha y Estado.
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -209,11 +240,13 @@ class TarjetaReporteCercano extends StatelessWidget {
                       ),
                     ],
                   ),
+                  /// Botón de Acción Dinámico (solo para reportes pendientes).
                   if (esPendiente) ...[
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: reporte.usuarioActualUnido
+                          /// Caso 1: El usuario ya se unió. Muestra botón "Unido".
                           ? ElevatedButton.icon(
                               icon: isUnjoining
                                   ? const SizedBox(
@@ -238,6 +271,7 @@ class TarjetaReporteCercano extends StatelessWidget {
                               ),
                             )
                           : reporte.puedeUnirse
+                              /// Caso 2: El usuario puede unirse. Muestra botón "Unirme".
                               ? OutlinedButton.icon(
                                   icon: isJoining
                                       ? const SizedBox(
@@ -263,6 +297,7 @@ class TarjetaReporteCercano extends StatelessWidget {
                                         const EdgeInsets.symmetric(vertical: 8),
                                   ),
                                 )
+                              /// Caso 3: El usuario es el autor. Muestra botón deshabilitado.
                               : ElevatedButton.icon(
                                   icon: const Icon(Icons.person_outline,
                                       size: 18, color: Colors.white70),
@@ -270,13 +305,13 @@ class TarjetaReporteCercano extends StatelessWidget {
                                       reporte.apoyosPendientes > 0
                                           ? 'Es tu reporte (+${reporte.apoyosPendientes})'
                                           : 'Es tu reporte',
-                                      style: const TextStyle(
-                                          color: Colors.white70)),
-                                  onPressed: null,
+                                      style:
+                                          const TextStyle(color: Colors.white70)),
+                                  onPressed: null, // Deshabilitado
                                   style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.blueGrey.shade400,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8)),
+                                      padding:
+                                          const EdgeInsets.symmetric(vertical: 8)),
                                 ),
                     ),
                   ],

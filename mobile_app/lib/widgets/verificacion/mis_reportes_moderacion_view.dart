@@ -1,18 +1,25 @@
-// lib/widgets/verificacion/mis_reportes_moderacion_view.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Importar para formateo de fechas
+import 'package:intl/intl.dart';
 import 'package:mobile_app/api/lider_service.dart';
 import 'package:mobile_app/models/reporte_moderacion_model.dart';
-import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart'; // Cambiado Esqueleto
+import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
 import 'package:mobile_app/widgets/verificacion/tarjeta_moderacion_reporte.dart';
 
-// Enums para filtros
+/// Enum para los filtros de tipo en esta vista.
 enum FiltroTipoModeracion { todos, comentario, usuario }
-// Eliminamos FiltroFechaModeracion enum
 
+/// {@template mis_reportes_moderacion_view}
+/// Widget con estado que muestra la lista de reportes de moderación
+/// (sobre comentarios o usuarios) creados por el líder actual.
+///
+/// Se utiliza como una de las pestañas en [VerificacionScreen].
+/// Maneja la carga paginada combinada de ambos tipos de reportes,
+/// filtros por tipo y fecha, scroll infinito y la acción de "Quitar"
+/// un reporte de moderación pendiente.
+/// {@endtemplate}
 class MisReportesModeracionView extends StatefulWidget {
-  // Key es necesaria para que el padre (verificacion_screen) llame a refreshData()
+  /// La [key] es necesaria para que [VerificacionScreen] pueda llamar a `refreshData`.
   const MisReportesModeracionView({required Key key}) : super(key: key);
 
   @override
@@ -20,211 +27,193 @@ class MisReportesModeracionView extends StatefulWidget {
       MisReportesModeracionViewState();
 }
 
+/// Estado para [MisReportesModeracionView].
 class MisReportesModeracionViewState extends State<MisReportesModeracionView>
     with AutomaticKeepAliveClientMixin {
   final LiderService _liderService = LiderService();
   final ScrollController _scrollController = ScrollController();
 
+  /// Lista combinada de reportes de moderación (comentarios y usuarios).
   List<ReporteModeracion> _reportes = [];
+  /// Página actual para cargar comentarios reportados.
   int _currentPageComentarios = 1;
+  /// Página actual para cargar usuarios reportados.
   int _currentPageUsuarios = 1;
+  /// Indica si hay más comentarios por cargar.
   bool _hasMoreComentarios = true;
+  /// Indica si hay más usuarios por cargar.
   bool _hasMoreUsuarios = true;
-  bool _isLoading = true; // Carga inicial o refresh
-  bool _isLoadingMore = false; // Carga de paginación
+  /// Indica si se está realizando la carga inicial.
+  bool _isLoading = true;
+  /// Indica si se está cargando la siguiente página.
+  bool _isLoadingMore = false;
+  /// Mensaje de error a mostrar.
   String? _errorMessage;
-  // --- CORRECCIÓN: Añadido _totalFiltrado ---
-  int _totalFiltrado = 0;
-
-  // Filtros
+  /// Filtro de tipo actualmente seleccionado.
   FiltroTipoModeracion _filtroTipo = FiltroTipoModeracion.todos;
-  // --- CORRECCIÓN: Añadido _startDate y _endDate ---
+  /// Fecha de inicio para el filtro de rango.
   DateTime? _startDate;
+  /// Fecha de fin para el filtro de rango.
   DateTime? _endDate;
-  // Eliminamos _filtroFecha
-
-  // Estado de carga para botón Quitar (ID_Tipo)
+  /// Mapa para rastrear el estado de eliminación de reportes de moderación.
   final Map<String, bool> _deletingStatus = {};
-
-  @override
-  bool get wantKeepAlive => true; // Mantener estado de la pestaña
 
   @override
   void initState() {
     super.initState();
-    // --- CORRECCIÓN: Inicializar fechas ---
-    final now = DateTime.now();
-    _startDate =
-        now.subtract(const Duration(days: 7)); // Última semana por defecto
-    _endDate = now;
-    // --- FIN CORRECCIÓN ---
-    refreshData(); // Carga inicial
-    _scrollController.addListener(_onScroll);
+    _fetchCombinedReports(isInitialLoad: true); // Carga inicial
+    _scrollController.addListener(_onScroll); // Listener para scroll infinito
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
 
-  // --- CORRECCIÓN: Método público devuelve Future<int> ---
-  Future<int> refreshData() async {
-    _currentPageComentarios = 1;
-    _currentPageUsuarios = 1;
-    _hasMoreComentarios = true;
-    _hasMoreUsuarios = true;
-    // No limpiar _reportes aquí para evitar parpadeo
-    await _fetchCombinedReports(isRefresh: true);
-    return _totalFiltrado; // Devolver el total
+  /// Mantiene el estado de la pestaña.
+  @override
+  bool get wantKeepAlive => true;
+
+  /// Listener del scroll para cargar más datos al llegar al final.
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore &&
+        (_hasMoreComentarios || _hasMoreUsuarios) && // Si hay más de alguno
+        !_isLoading) {
+      _fetchCombinedReports(); // Carga la siguiente página combinada
+    }
   }
-  // --- FIN CORRECCIÓN ---
 
-  Future<void> _fetchCombinedReports({bool isRefresh = false}) async {
-    if (!mounted || (_isLoading && !isRefresh) || _isLoadingMore) return;
+  /// Carga los datos combinados de comentarios y usuarios reportados, paginados.
+  ///
+  /// [isInitialLoad]: Si es `true`, resetea el estado y carga la primera página.
+  /// Retorna el número total de reportes cargados.
+  Future<int> _fetchCombinedReports({bool isInitialLoad = false}) async {
+    if (isInitialLoad) {
+      _currentPageComentarios = 1;
+      _currentPageUsuarios = 1;
+      _hasMoreComentarios = true;
+      _hasMoreUsuarios = true;
+      _reportes = [];
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+          _errorMessage = null;
+        });
+      }
+    } else if (_isLoading || !(_hasMoreComentarios || _hasMoreUsuarios)) {
+      return _reportes.length; // Evita cargas innecesarias
+    }
 
-    setState(() {
-      if (isRefresh)
-        _isLoading = true;
-      else
-        _isLoadingMore = true;
-      _errorMessage = null;
-    });
-
-    List<ReporteModeracion> nuevosReportes = [];
-    int totalComentarios = 0;
-    int totalUsuarios = 0;
-    bool moreCom = isRefresh ? true : _hasMoreComentarios;
-    bool moreUsr = isRefresh ? true : _hasMoreUsuarios;
-    int pageCom = isRefresh ? 1 : _currentPageComentarios;
-    int pageUsr = isRefresh ? 1 : _currentPageUsuarios;
-
-    bool loadComentarios = (_filtroTipo == FiltroTipoModeracion.todos ||
-            _filtroTipo == FiltroTipoModeracion.comentario) &&
-        moreCom;
-    bool loadUsuarios = (_filtroTipo == FiltroTipoModeracion.todos ||
-            _filtroTipo == FiltroTipoModeracion.usuario) &&
-        moreUsr;
+    if (mounted) {
+      setState(() => _isLoadingMore = true);
+    }
 
     try {
       List<Future<PagedResult<ReporteModeracion>>> futures = [];
-      if (loadComentarios) {
+
+      // Añade la llamada para comentarios si aplica según el filtro y si hay más
+      if ((_filtroTipo == FiltroTipoModeracion.todos ||
+              _filtroTipo == FiltroTipoModeracion.comentario) &&
+          _hasMoreComentarios) {
         futures.add(_liderService.getMisComentariosReportados(
-            page: pageCom,
-            startDate: _startDate, // Pasar fechas
-            endDate: _endDate // Pasar fechas
-            ));
-      }
-      if (loadUsuarios) {
-        futures.add(_liderService.getMisUsuariosReportados(
-            page: pageUsr,
-            startDate: _startDate, // Pasar fechas
-            endDate: _endDate // Pasar fechas
-            ));
+          page: _currentPageComentarios,
+          startDate: _startDate,
+          endDate: _endDate,
+        ));
       }
 
-      if (futures.isNotEmpty) {
-        final results = await Future.wait(futures);
-        int resultIndex = 0;
-        if (loadComentarios) {
-          final commentResult = results[resultIndex++];
-          nuevosReportes.addAll(commentResult.items);
-          moreCom = commentResult.hasMore;
-          // --- CORRECCIÓN: Guardar total filtrado ---
-          totalComentarios = commentResult.totalFiltrado;
-        }
-        if (loadUsuarios) {
-          final userResult = results[resultIndex];
-          nuevosReportes.addAll(userResult.items);
-          moreUsr = userResult.hasMore;
-          // --- CORRECCIÓN: Guardar total filtrado ---
-          totalUsuarios = userResult.totalFiltrado;
-        }
-      } else {
-        moreCom = false;
-        moreUsr = false;
+      // Añade la llamada para usuarios si aplica según el filtro y si hay más
+      if ((_filtroTipo == FiltroTipoModeracion.todos ||
+              _filtroTipo == FiltroTipoModeracion.usuario) &&
+          _hasMoreUsuarios) {
+        futures.add(_liderService.getMisUsuariosReportados(
+          page: _currentPageUsuarios,
+          startDate: _startDate,
+          endDate: _endDate,
+        ));
       }
+
+      if (futures.isEmpty) {
+        // Si no se necesita cargar nada más
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _isLoadingMore = false;
+          });
+        }
+        return _reportes.length;
+      }
+
+      // Espera a que ambas (o una) llamadas terminen
+      final results = await Future.wait(futures);
+
+      List<ReporteModeracion> nuevosReportes = [];
+      int resultIndex = 0;
+
+      // Procesa resultado de comentarios
+      if ((_filtroTipo == FiltroTipoModeracion.todos ||
+              _filtroTipo == FiltroTipoModeracion.comentario) &&
+          _hasMoreComentarios) {
+        final commentResult = results[resultIndex++];
+        nuevosReportes.addAll(commentResult.items);
+        _hasMoreComentarios = commentResult.hasMore;
+        if (commentResult.hasMore) _currentPageComentarios++;
+      }
+
+      // Procesa resultado de usuarios
+      if ((_filtroTipo == FiltroTipoModeracion.todos ||
+              _filtroTipo == FiltroTipoModeracion.usuario) &&
+          _hasMoreUsuarios) {
+        final userResult = results[resultIndex];
+        nuevosReportes.addAll(userResult.items);
+        _hasMoreUsuarios = userResult.hasMore;
+        if (userResult.hasMore) _currentPageUsuarios++;
+      }
+
+      // Ordena los nuevos reportes combinados por fecha descendente
+      nuevosReportes.sort((a, b) => b.sortDate.compareTo(a.sortDate));
 
       if (mounted) {
         setState(() {
-          if (isRefresh) {
-            _reportes = nuevosReportes; // Reemplazar
-          } else {
-            _reportes.addAll(nuevosReportes); // Añadir
-          }
-
-          if (loadComentarios &&
-              nuevosReportes
-                  .any((r) => r.tipo == TipoReporteModeracion.comentario))
-            _currentPageComentarios++;
-          if (loadUsuarios &&
-              nuevosReportes
-                  .any((r) => r.tipo == TipoReporteModeracion.usuario))
-            _currentPageUsuarios++;
-
-          _reportes.sort((a, b) => b.sortDate.compareTo(a.sortDate));
-
-          _hasMoreComentarios = moreCom;
-          _hasMoreUsuarios = moreUsr;
-          // --- CORRECCIÓN: Calcular total filtrado combinado ---
-          _totalFiltrado = totalComentarios + totalUsuarios;
-          // --- FIN CORRECCIÓN ---
+          _reportes.addAll(nuevosReportes); // Añade los nuevos reportes ordenados
           _isLoading = false;
           _isLoadingMore = false;
           _errorMessage = null;
         });
       }
+      // Devuelve el total actual (no devuelto por API combinada, así que usamos length)
+      return _reportes.length;
     } catch (e) {
-      print("Error fetching combined moderation reports: $e");
+      debugPrint("Error fetching combined moderation reports: $e");
       if (mounted) {
         setState(() {
           _isLoading = false;
           _isLoadingMore = false;
-          // --- CORRECCIÓN: Resetear total ---
-          _totalFiltrado = 0;
-          // --- FIN CORRECCIÓN ---
-          if (isRefresh) {
-            _errorMessage = e.toString().replaceFirst('Exception: ', '');
-            _reportes = [];
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Error al cargar más: $e'),
-                backgroundColor: Colors.orange));
-            _hasMoreComentarios = false;
-            _hasMoreUsuarios = false;
-          }
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
         });
       }
+      return 0; // Devuelve 0 en caso de error
     }
   }
 
-  void _onScroll() {
-    bool hasMoreFiltered = (_filtroTipo == FiltroTipoModeracion.comentario &&
-            _hasMoreComentarios) ||
-        (_filtroTipo == FiltroTipoModeracion.usuario && _hasMoreUsuarios) ||
-        (_filtroTipo == FiltroTipoModeracion.todos &&
-            (_hasMoreComentarios || _hasMoreUsuarios));
-
-    if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent * 0.9 &&
-        hasMoreFiltered &&
-        !_isLoading &&
-        !_isLoadingMore) {
-      _fetchCombinedReports();
-    }
+  /// Método público para refrescar los datos desde cero.
+  /// Retorna el nuevo total de elementos.
+  Future<int> refreshData() {
+    return _fetchCombinedReports(isInitialLoad: true);
   }
 
-  // --- CORRECCIÓN: Mostrar DateRangePicker ---
+  /// Muestra el selector de rango de fechas y refresca los datos si se selecciona un rango.
   Future<void> _selectDateRange() async {
-    final picked = await showDateRangePicker(
+    final DateTimeRange? picked = await showDateRangePicker(
       context: context,
+      firstDate: DateTime(2024),
+      lastDate: DateTime.now(),
       initialDateRange: _startDate != null && _endDate != null
           ? DateTimeRange(start: _startDate!, end: _endDate!)
           : null,
-      firstDate: DateTime(2023),
-      lastDate: DateTime.now(),
-      locale: const Locale('es', 'ES'),
     );
     if (picked != null) {
       setState(() {
@@ -234,9 +223,8 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView>
       refreshData();
     }
   }
-  // --- FIN CORRECCIÓN ---
 
-  // Lógica Quitar Reporte (sin cambios funcionales)
+  /// Maneja la acción de "Quitar" un reporte de moderación pendiente.
   Future<void> _handleQuitarReporte(
       int moderacionReporteId, TipoReporteModeracion tipo) async {
     final String loadingKey = '${tipo.name}-$moderacionReporteId';
@@ -245,155 +233,138 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Quitar Reporte'),
+        title: const Text('Quitar Reporte de Moderación'),
         content: const Text(
-            '¿Estás seguro de que quieres eliminar este reporte de moderación pendiente? Esta acción no se puede deshacer.'),
+            '¿Estás seguro de que quieres cancelar este reporte de moderación? El contenido seguirá siendo visible.'),
         actions: [
           TextButton(
-              child: const Text('No'),
-              onPressed: () => Navigator.pop(ctx, false)),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Sí, Quitar'),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar')),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sí, Quitar'),
           ),
         ],
       ),
     );
 
-    if (confirm != true) return;
-
-    if (mounted) setState(() => _deletingStatus[loadingKey] = true);
-
-    Map<String, dynamic> response = {};
-    try {
-      response = await _liderService.eliminarReporteModeracion(
-          moderacionReporteId, tipo);
-      if (!mounted) return;
-
-      final message = response['message'] ?? 'Error';
-      final success = response['statusCode'] == 200;
-
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(message),
-        backgroundColor: success ? Colors.green : Colors.red,
-      ));
-
-      if (success) {
-        setState(() {
-          _reportes.removeWhere(
-              (r) => r.id == moderacionReporteId && r.tipo == tipo);
-          _deletingStatus.remove(loadingKey);
-          // Decrementar contador localmente para UI instantánea
-          if (_totalFiltrado > 0) _totalFiltrado--;
-        });
-        // Podríamos notificar al padre, pero el refresh global lo hará eventualmente
-      } else {
-        if (mounted) setState(() => _deletingStatus.remove(loadingKey));
-      }
-    } catch (e) {
+    if (confirm == true) {
+      setState(() => _deletingStatus[loadingKey] = true);
+      final response =
+          await _liderService.eliminarReporteModeracion(moderacionReporteId, tipo);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        final success = response['statusCode'] == 200;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(response['message'] ?? 'Acción completada.'),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ));
+        if (success) {
+          // Elimina el item de la lista localmente para UI instantánea
+          setState(() {
+            _reportes.removeWhere((r) => r.id == moderacionReporteId && r.tipo == tipo);
+          });
+          // Podrías llamar a refreshData() pero quitar localmente es más rápido
+        }
         setState(() => _deletingStatus.remove(loadingKey));
       }
     }
   }
 
+  /// Construye la fila de filtros (Tipo y Fecha).
+  Widget buildFiltros() {
+    final DateFormat dateFormat = DateFormat('dd MMM', 'es_ES');
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            /// Chips para filtrar por tipo.
+            Wrap(
+              spacing: 8.0,
+              children: FiltroTipoModeracion.values.map((filtro) {
+                String label;
+                switch (filtro) {
+                  case FiltroTipoModeracion.comentario: label = 'Comentarios'; break;
+                  case FiltroTipoModeracion.usuario: label = 'Usuarios'; break;
+                  default: label = 'Todos'; break;
+                }
+                return ChoiceChip(
+                  label: Text(label, style: const TextStyle(fontSize: 12)),
+                  selected: _filtroTipo == filtro,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() => _filtroTipo = filtro);
+                      refreshData(); // Recarga con el nuevo filtro
+                    }
+                  },
+                  visualDensity: VisualDensity.compact,
+                );
+              }).toList(),
+            ),
+            const SizedBox(width: 16),
+            /// Botón para seleccionar rango de fechas.
+            TextButton.icon(
+              icon: const Icon(Icons.calendar_today, size: 16),
+              label: Text(
+                _startDate != null && _endDate != null
+                    ? '${dateFormat.format(_startDate!)} - ${dateFormat.format(_endDate!)}'
+                    : 'Seleccionar Fechas',
+                style: const TextStyle(fontSize: 12),
+              ),
+              onPressed: _selectDateRange,
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Mantener estado de pestaña
-    final DateFormat dateFormat =
-        DateFormat('dd MMM', 'es_ES'); // Formateador para botón de fecha
-
-    // --- UI de Filtros ---
-    Widget buildFiltros() {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-        // --- CORRECCIÓN: Hacer scrollable horizontalmente ---
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              // Filtro Tipo
-              Wrap(
-                spacing: 8.0,
-                children: FiltroTipoModeracion.values.map((filtro) {
-                  String label;
-                  switch (filtro) {
-                    case FiltroTipoModeracion.comentario:
-                      label = 'Comentarios';
-                      break;
-                    case FiltroTipoModeracion.usuario:
-                      label = 'Usuarios';
-                      break;
-                    default:
-                      label = 'Todos';
-                      break;
-                  }
-                  return ChoiceChip(
-                    label: Text(label, style: const TextStyle(fontSize: 12)),
-                    selected: _filtroTipo == filtro,
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() => _filtroTipo = filtro);
-                        refreshData(); // Refrescar con nuevo filtro
-                      }
-                    },
-                    visualDensity: VisualDensity.compact,
-                  );
-                }).toList(),
-              ),
-              const SizedBox(width: 16), // Espacio antes de fecha
-              // --- CORRECCIÓN: Botón para DateRangePicker ---
-              TextButton.icon(
-                icon: const Icon(Icons.calendar_today, size: 16),
-                label: Text(
-                  _startDate != null && _endDate != null
-                      ? '${dateFormat.format(_startDate!)} - ${dateFormat.format(_endDate!)}'
-                      : 'Seleccionar Fechas',
-                  style: const TextStyle(fontSize: 12),
-                ),
-                onPressed: _selectDateRange,
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-              ),
-              // --- FIN CORRECCIÓN ---
-            ],
-          ),
-        ),
-        // --- FIN CORRECCIÓN ---
-      );
-    }
-    // --- Fin UI Filtros ---
-
-    // --- Lógica Principal del Build ---
-    if (_isLoading && _reportes.isEmpty) {
-      return const EsqueletoListaActividad();
-    }
-    if (_errorMessage != null && _reportes.isEmpty) {
-      return Center(
-          child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Error: $_errorMessage')));
-    }
+    super.build(context); // Necesario para AutomaticKeepAliveClientMixin
 
     Widget listContent;
-    if (_reportes.isEmpty) {
-      listContent = const Center(
-          child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('No hay reportes de moderación con estos filtros.')));
+
+    if (_isLoading && _reportes.isEmpty) {
+      listContent = const EsqueletoListaActividad(); // Usar esqueleto adecuado
+    } else if (_errorMessage != null) {
+      listContent = ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+            Center(child: Text('Error: $_errorMessage')),
+            Center(child: TextButton(onPressed: () => refreshData(), child: const Text('Reintentar')))
+          ]);
+    } else if (_reportes.isEmpty) {
+      listContent = ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+            const Center(
+                child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                  'No hay reportes de moderación que coincidan con los filtros.',
+                  textAlign: TextAlign.center),
+            ))
+          ]);
     } else {
+      // Construye la lista de tarjetas de moderación.
       listContent = ListView.builder(
         controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: const EdgeInsets.only(bottom: 80), // Espacio para FAB/scroll
         itemCount: _reportes.length +
-            ((_hasMoreComentarios || _hasMoreUsuarios) ? 1 : 0),
+            ((_hasMoreComentarios || _hasMoreUsuarios)
+                ? 1
+                : 0), // +1 para indicador de carga
         itemBuilder: (context, index) {
+          // Muestra indicador de carga al final si hay más páginas
           if (index == _reportes.length) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -404,35 +375,40 @@ class MisReportesModeracionViewState extends State<MisReportesModeracionView>
             );
           }
           final reporte = _reportes[index];
+          // Clave única para el estado de eliminación
           final String loadingKey = '${reporte.tipo.name}-${reporte.id}';
           final bool isDeleting = _deletingStatus[loadingKey] ?? false;
 
+          // Renderiza la tarjeta de moderación
           return TarjetaModeracionReporte(
             reporteModeracion: reporte,
             isDeleting: isDeleting,
             onTap: () {
+              // Navega al detalle del reporte si es un reporte de comentario
               if (reporte.tipo == TipoReporteModeracion.comentario &&
                   reporte.idReporte != null) {
                 Navigator.pushNamed(context, '/reporte_detalle',
                     arguments: reporte.idReporte);
               }
+              // Podría añadirse navegación al perfil de usuario si es reporte de usuario
             },
-            onQuitar:
-                reporte.estado == 'pendiente' ? _handleQuitarReporte : null,
+            // Permite quitar solo si está pendiente
+            onQuitar: reporte.estado == 'pendiente' ? _handleQuitarReporte : null,
           );
         },
       );
     }
 
+    // Estructura final con filtros y lista
     return Column(
       children: [
-        buildFiltros(),
+        buildFiltros(), // Muestra la fila de filtros
         const Divider(height: 1, thickness: 1),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
               await refreshData();
-            }, // Llama al método público
+            }, // Permite pull-to-refresh
             child: listContent,
           ),
         ),

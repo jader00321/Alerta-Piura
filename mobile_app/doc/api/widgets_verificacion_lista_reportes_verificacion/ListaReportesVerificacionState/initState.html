@@ -100,16 +100,10 @@ method, as in <code>super.initState()</code>.</p>
   <pre class="language-dart"><code class="language-dart">@override
 void initState() {
   super.initState();
-  if (widget.isHistory) {
-    final now = DateTime.now();
-    _startDate = now.subtract(const Duration(days: 7));
-    _endDate = now;
-  }
-  refreshData(); &#47;&#47; Carga inicial
-  _scrollController.addListener(_onScroll);
+  _fetchData(isInitialLoad: true); &#47;&#47; Carga inicial
+  _scrollController.addListener(_onScroll); &#47;&#47; Listener para infinite scroll
   if (!widget.isHistory) {
-    _searchController.addListener(_onSearchChanged);
-    _loadCategories();
+    _loadCategories(); &#47;&#47; Carga categorías si es la lista de pendientes
   }
 }</code></pre>
 </section>

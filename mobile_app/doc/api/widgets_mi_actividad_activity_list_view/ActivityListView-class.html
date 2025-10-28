@@ -53,6 +53,18 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget reutilizable <strong>sin estado</strong> que muestra una lista de reportes
+resumidos (<a href="../models_reporte_resumen_model/ReporteResumen-class.html">ReporteResumen</a>) para las diferentes pestañas de la pantalla
+<a href="../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a>.</p>
+<p>Recibe la lista de reportes ya cargada, el estado de carga y los callbacks
+necesarios desde su widget padre (<a href="../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a>), que es el
+encargado de gestionar el estado y la lógica de carga de datos.
+Utiliza <a href="../widgets_mi_actividad_tarjeta_actividad/TarjetaActividad-class.html">TarjetaActividad</a> para renderizar cada elemento, pasándole el <a href="../widgets_mi_actividad_activity_list_view/ActivityListView/fetcher.html">fetcher</a>
+para adaptar la UI.
+Maneja los estados de carga inicial, lista vacía y permite refrescar
+mediante <code>RefreshIndicator</code>.</p>
+</section>
 
 
     <section>
@@ -88,7 +100,9 @@
           <span class="name"><a href="../widgets_mi_actividad_activity_list_view/ActivityListView/ActivityListView.html">ActivityListView.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-fetcher"><span>required</span> <span class="type-annotation"><a href="../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher</a></span> <span class="parameter-name">fetcher</span>, </span><span class="parameter" id="-param-reportes"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../models_reporte_resumen_model/ReporteResumen-class.html">ReporteResumen</a></span>&gt;</span></span> <span class="parameter-name">reportes</span>, </span><span class="parameter" id="-param-isLoading"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isLoading</span>, </span><span class="parameter" id="-param-onRefresh"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span> <span class="parameter-name">onRefresh</span>(), </span><span class="parameter" id="-param-onCancelarReporte"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onCancelarReporte</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span></span>), </span><span class="parameter" id="-param-onNavigateToDetail"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onNavigateToDetail</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span></span>)</span>})</span>
         </dt>
         <dd>
-          
+          Widget reutilizable <strong>sin estado</strong> que muestra una lista de reportes
+resumidos (<a href="../models_reporte_resumen_model/ReporteResumen-class.html">ReporteResumen</a>) para las diferentes pestañas de la pantalla
+<a href="../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a>.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +120,8 @@
 
 </dt>
 <dd>
-  
+  Identifica la pestaña actual para la cual se muestra la lista
+(ej. Mis Reportes, Mis Apoyos).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -130,7 +145,7 @@
 
 </dt>
 <dd>
-  
+  Indica si el widget padre (<a href="../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a>) está actualmente cargando datos.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +169,8 @@
 
 </dt>
 <dd>
-  
+  Callback ejecutado cuando se presiona el botón "Cancelar" en un reporte
+(solo aplicable si <code>fetcher == Fetcher.misReportes</code>). Recibe el ID del reporte.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +182,7 @@
 
 </dt>
 <dd>
-  
+  Callback ejecutado al tocar una tarjeta de reporte. Recibe el ID del reporte.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -178,7 +194,7 @@
 
 </dt>
 <dd>
-  
+  Callback ejecutado cuando el usuario hace "pull-to-refresh".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -190,7 +206,7 @@
 
 </dt>
 <dd>
-  
+  La lista de <a href="../models_reporte_resumen_model/ReporteResumen-class.html">ReporteResumen</a> a mostrar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

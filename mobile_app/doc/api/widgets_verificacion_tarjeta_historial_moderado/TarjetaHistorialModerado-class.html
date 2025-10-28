@@ -53,6 +53,14 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget que representa una tarjeta para mostrar un reporte ya moderado
+en la lista del historial del líder (<a href="../widgets_verificacion_lista_reportes_verificacion/ListaReportesVerificacion-class.html">ListaReportesVerificacion</a>).</p>
+<p>Muestra el estado final, título, categoría y fecha de moderación.
+Incluye lógica condicional para mostrar un botón "Solicitar Revisión"
+o el estado de una solicitud ya enviada (<a href="../widgets_verificacion_tarjeta_historial_moderado/TarjetaHistorialModerado/estadoSolicitud.html">estadoSolicitud</a>).
+También puede mostrar un botón para ir al reporte original si fue fusionado.</p>
+</section>
 
 
     <section>
@@ -88,7 +96,8 @@
           <span class="name"><a href="../widgets_verificacion_tarjeta_historial_moderado/TarjetaHistorialModerado/TarjetaHistorialModerado.html">TarjetaHistorialModerado.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-reporte"><span>required</span> <span class="type-annotation"><a href="../models_reporte_historial_moderado_model/ReporteHistorialModerado-class.html">ReporteHistorialModerado</a></span> <span class="parameter-name">reporte</span>, </span><span class="parameter" id="-param-estadoSolicitud"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">estadoSolicitud</span>, </span><span class="parameter" id="-param-onTap"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onTap</span>, </span><span class="parameter" id="-param-onSolicitarRevision"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onSolicitarRevision</span>, </span><span class="parameter" id="-param-onIrAlOriginal"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a>?</span> <span class="parameter-name">onIrAlOriginal</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget que representa una tarjeta para mostrar un reporte ya moderado
+en la lista del historial del líder (<a href="../widgets_verificacion_lista_reportes_verificacion/ListaReportesVerificacion-class.html">ListaReportesVerificacion</a>).
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +115,8 @@
 
 </dt>
 <dd>
-  
+  El estado actual de la solicitud de revisión para este reporte
+('pendiente', 'aprobada', 'desestimada', o <code>null</code> si no hay solicitud).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +152,8 @@
 
 </dt>
 <dd>
-  
+  Callback opcional que se ejecuta al presionar el ícono de enlace
+en reportes fusionados (para navegar al reporte original).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +165,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al presionar "Solicitar Revisión".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +177,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al tocar la tarjeta (para ver detalles).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -178,7 +189,7 @@
 
 </dt>
 <dd>
-  
+  Los datos del reporte moderado a mostrar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

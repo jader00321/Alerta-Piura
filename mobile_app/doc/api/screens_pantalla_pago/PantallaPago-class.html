@@ -53,6 +53,14 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Pantalla de checkout para confirmar y realizar el pago de una suscripción.</p>
+<p>Recibe el <a href="../models_plan_suscripcion_model/PlanSuscripcion-class.html">PlanSuscripcion</a> seleccionado.
+Muestra un resumen del plan (<a href="../widgets_pago_resumen_pago/ResumenPago-class.html">ResumenPago</a>).
+Permite al usuario seleccionar un método de pago guardado o ingresar uno nuevo
+usando <a href="../widgets_pago_formulario_pago/FormularioPago-class.html">FormularioPago</a>.
+Envía la solicitud de suscripción a <a href="../api_servicio_suscripcion/ServicioSuscripcion/suscribirseAlPlan.html">ServicioSuscripcion.suscribirseAlPlan</a>.</p>
+</section>
 
 
     <section>
@@ -88,7 +96,7 @@
           <span class="name"><a href="../screens_pantalla_pago/PantallaPago/PantallaPago.html">PantallaPago.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-plan"><span>required</span> <span class="type-annotation"><a href="../models_plan_suscripcion_model/PlanSuscripcion-class.html">PlanSuscripcion</a></span> <span class="parameter-name">plan</span></span>})</span>
         </dt>
         <dd>
-          
+          Pantalla de checkout para confirmar y realizar el pago de una suscripción.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -130,7 +138,7 @@
 
 </dt>
 <dd>
-  
+  El plan de suscripción seleccionado por el usuario.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

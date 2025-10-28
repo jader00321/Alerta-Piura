@@ -4,16 +4,26 @@ import 'package:mobile_app/api/perfil_service.dart';
 import 'package:mobile_app/models/notificacion_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_notificaciones.dart';
 
+/// {@template pantalla_alertas}
+/// Pantalla que muestra el historial de notificaciones del usuario.
+///
+/// Permite al usuario ver todas sus notificaciones y marcarlas todas como leídas.
+/// {@endtemplate}
 class PantallaAlertas extends StatefulWidget {
+  /// {@macro pantalla_alertas}
   const PantallaAlertas({super.key});
 
   @override
   State<PantallaAlertas> createState() => _PantallaAlertasState();
 }
 
+/// Estado para [PantallaAlertas].
 class _PantallaAlertasState extends State<PantallaAlertas> {
+  /// Futuro que contiene la lista de notificaciones.
   late Future<List<Notificacion>> _notificationsFuture;
   final PerfilService _perfilService = PerfilService();
+  
+  /// Flag para mostrar/ocultar el botón "Marcar todo como leído".
   bool _hasUnread = false;
 
   @override
@@ -22,6 +32,9 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
     _loadNotifications();
   }
 
+  /// Carga o recarga la lista de notificaciones desde [PerfilService].
+  ///
+  /// También actualiza el estado [_hasUnread].
   Future<void> _loadNotifications() async {
     setState(() {
       _notificationsFuture =
@@ -36,6 +49,8 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
     });
   }
 
+  /// Llama a la API para marcar todas las notificaciones como leídas
+  /// y recarga la lista.
   Future<void> _markAllAsRead() async {
     final success = await _perfilService.marcarTodasComoLeidas();
     if (mounted) {
@@ -81,8 +96,8 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
             }
             if (snapshot.hasError) {
               return Center(
-                  child: Text(
-                      'Error al cargar notificaciones: ${snapshot.error}'));
+                  child:
+                      Text('Error al cargar notificaciones: ${snapshot.error}'));
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return const Center(
@@ -104,14 +119,11 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
               itemBuilder: (context, index) {
                 final notif = notifications[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(
-                      vertical: 6.0, horizontal: 8.0),
+                  margin:
+                      const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
                   color: notif.leido
                       ? null
-                      : Theme.of(context)
-                          .colorScheme
-                          .primaryContainer
-                          .withAlpha(77), // CORREGIDO: withOpacity -> withAlpha
+                      : Theme.of(context).colorScheme.primaryContainer.withAlpha(77),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: notif.leido
@@ -129,9 +141,8 @@ class _PantallaAlertasState extends State<PantallaAlertas> {
                     title: Text(
                       notif.titulo,
                       style: TextStyle(
-                          fontWeight: notif.leido
-                              ? FontWeight.normal
-                              : FontWeight.bold),
+                          fontWeight:
+                              notif.leido ? FontWeight.normal : FontWeight.bold),
                     ),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4.0),

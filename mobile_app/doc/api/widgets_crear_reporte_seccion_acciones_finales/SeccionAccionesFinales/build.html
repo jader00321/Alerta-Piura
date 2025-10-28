@@ -116,22 +116,25 @@ Widget build(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          &#47;&#47;&#47; Checkbox para reporte anónimo.
           CheckboxListTile(
             title: const Text(&#39;Publicar como anónimo&#39;),
             value: isAnonimo,
             onChanged: onAnonimoChanged,
-            controlAffinity: ListTileControlAffinity.leading,
+            controlAffinity: ListTileControlAffinity.leading, &#47;&#47; Checkbox a la izquierda.
             contentPadding: EdgeInsets.zero,
           ),
           const SizedBox(height: 16),
+          &#47;&#47;&#47; Botón para obtener ubicación.
           OutlinedButton.icon(
             icon: const Icon(Icons.my_location),
             label: const Text(&#39;Obtener Ubicación Actual&#39;),
-            onPressed: onGetCurrentLocation,
+            onPressed: onGetCurrentLocation, &#47;&#47; Llama al callback del padre.
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
+          &#47;&#47;&#47; Muestra las coordenadas si se obtuvieron.
           if (currentLocation != null)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
@@ -139,12 +142,13 @@ Widget build(BuildContext context) {
                 &#39;Ubicación obtenida: ${currentLocation!.latitude.toStringAsFixed(4)}, ${currentLocation!.longitude.toStringAsFixed(4)}&#39;,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    color: Colors.green.shade700,
-                    fontWeight: FontWeight.bold),
+                    color: Colors.green.shade700, fontWeight: FontWeight.bold),
               ),
             ),
           const SizedBox(height: 24),
+          &#47;&#47;&#47; Botón principal para enviar el reporte.
           ElevatedButton(
+            &#47;&#47; Deshabilitado si [isLoading] es true.
             onPressed: isLoading ? null : onSubmitReport,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -152,6 +156,7 @@ Widget build(BuildContext context) {
                   borderRadius: BorderRadius.circular(12)),
             ),
             child: isLoading
+                &#47;&#47; Muestra un spinner si está cargando.
                 ? const SizedBox(
                     width: 24,
                     height: 24,

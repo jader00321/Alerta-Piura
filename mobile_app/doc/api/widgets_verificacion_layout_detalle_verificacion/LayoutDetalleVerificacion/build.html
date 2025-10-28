@@ -109,20 +109,19 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
-  &#47;&#47; Mantenemos CustomScrollView para la estructura Sliver
+  &#47;&#47; CustomScrollView permite combinar elementos scrollables y no scrollables (Slivers).
   return CustomScrollView(
     slivers: &lt;Widget&gt;[
-      &#47;&#47; Ya no hay SliverAppBar aquí
-
-      &#47;&#47; Cuerpo principal como SliverList
+      &#47;&#47; SliverList contiene los elementos principales del cuerpo.
       SliverList(
         delegate: SliverChildListDelegate(
           [
-            &#47;&#47; Mostramos el header COMPLETO CON IMAGEN aquí
+            &#47;&#47;&#47; Muestra la cabecera completa del reporte, incluyendo la imagen.
             ReporteHeader(reporte: reporte, showImage: true),
 
-            &#47;&#47; Divisor y mapa se mantienen igual
             const Divider(height: 24, indent: 16, endIndent: 16),
+
+            &#47;&#47;&#47; Sección que muestra el mapa de ubicación.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
@@ -131,12 +130,13 @@ Widget build(BuildContext context) {
                   Text(&#39;Ubicación del Reporte&#39;,
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  &#47;&#47; Eliminamos el Hero que envolvía al mapa
+                  &#47;&#47;&#47; Mapa no interactivo centrado en la ubicación del reporte.
                   MapaVerificacion(initialCenter: reporte.location),
                 ],
               ),
             ),
-            &#47;&#47; Espacio para la barra de acciones inferior
+            &#47;&#47;&#47; Espacio al final para asegurar que el contenido no quede oculto
+            &#47;&#47;&#47; por la barra de acciones inferior ([AccionesModeracion]).
             const SizedBox(height: 100),
           ],
         ),

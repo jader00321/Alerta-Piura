@@ -114,6 +114,7 @@ Widget build(BuildContext context) {
       reporteModeracion.tipo == TipoReporteModeracion.comentario;
   final bool estaPendiente = reporteModeracion.estado == &#39;pendiente&#39;;
 
+  &#47;&#47; Determina color e icono según el estado del reporte de moderación.
   Color statusColor;
   IconData statusIcon;
   switch (reporteModeracion.estado) {
@@ -129,111 +130,67 @@ Widget build(BuildContext context) {
 
   return Card(
     margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
-    elevation: 1.5,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12.0, 12.0, 8.0, 8.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            &#47;&#47; Fila Superior: Tipo de Reporte y Estado
+            &#47;&#47;&#47; Fila superior: Tipo (Comentario&#47;Usuario) y Estado.
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      esComentario
-                          ? Icons.chat_bubble_outline
-                          : Icons.person_outline,
-                      size: 18,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      esComentario
-                          ? &#39;Reporte de Comentario&#39;
-                          : &#39;Reporte de Usuario&#39;,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                Chip(
+                  avatar: Icon(esComentario
+                      ? Icons.comment_outlined
+                      : Icons.person_outline),
+                  label: Text(esComentario ? &#39;Comentario&#39; : &#39;Usuario&#39;),
+                  visualDensity: VisualDensity.compact,
                 ),
                 Chip(
                   avatar: Icon(statusIcon, size: 14, color: statusColor),
-                  label: Text(reporteModeracion.estado,
-                      style: TextStyle(fontSize: 10, color: statusColor)),
-                  backgroundColor: statusColor.withOpacity(0.1),
+                  label: Text(reporteModeracion.estado),
+                  labelStyle: TextStyle(
+                      fontSize: 10,
+                      color: statusColor,
+                      fontWeight: FontWeight.bold),
+                  backgroundColor: statusColor.withAlpha(26), &#47;&#47; Transparente
                   visualDensity: VisualDensity.compact,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ],
             ),
-            const Divider(height: 16),
-
-            &#47;&#47; Contenido&#47;Usuario Reportado
+            const SizedBox(height: 12),
+            &#47;&#47;&#47; Motivo del reporte.
             Text(
-              esComentario ? &#39;Contenido:&#39; : &#39;Usuario Reportado:&#39;,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: Colors.grey[600]),
+              &#39;Motivo: ${reporteModeracion.motivo}&#39;,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
-            Text(
-              esComentario
-                  ? &#39;&quot;${reporteModeracion.contenido}&quot;&#39;
-                  : reporteModeracion.contenido,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                  fontStyle:
-                      esComentario ? FontStyle.italic : FontStyle.normal),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            &#47;&#47; --- CORRECCIÓN: Mostrar Código&#47;ID ---
-            if (esComentario)
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Text(
-                  &#47;&#47; Muestra el código si existe, si no, el ID del reporte
-                  &#39;En reporte: ${reporteModeracion.codigoReporte ?? &#39;#${reporteModeracion.idReporte ?? &#39;N&#47;A&#39;}&#39;}&#39;,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: Colors.grey[600], fontSize: 11),
-                ),
-              )
-            else if (reporteModeracion.idUsuarioReportado != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Text(
-                  &#47;&#47; Muestra el ID del usuario
-                  &#39;Usuario ID: #${reporteModeracion.idUsuarioReportado}&#39;,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: Colors.grey[600], fontSize: 11),
-                ),
+            const SizedBox(height: 8),
+            &#47;&#47;&#47; Contenido afectado (extracto del comentario o alias del usuario).
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(4),
               ),
-            &#47;&#47; --- FIN CORRECCIÓN ---
-            const SizedBox(height: 8),
-
-            &#47;&#47; Motivo
-            Text(
-              &#39;Motivo:&#39;,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: Colors.grey[600]),
-            ),
-            Text(
-              reporteModeracion.motivo,
-              style: theme.textTheme.bodyMedium,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              child: Text(
+                reporteModeracion.contenido,
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(fontStyle: FontStyle.italic),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(height: 8),
-
-            &#47;&#47; Fecha y Botón Quitar
+            &#47;&#47;&#47; Fila inferior: Fecha y botón opcional &quot;Quitar&quot;.
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4.0),
@@ -243,20 +200,18 @@ Widget build(BuildContext context) {
                         ?.copyWith(color: Colors.grey[600]),
                   ),
                 ),
+                &#47;&#47; Muestra el botón &quot;Quitar&quot; solo si está pendiente y hay callback.
                 if (estaPendiente &amp;&amp; onQuitar != null)
                   SizedBox(
-                    height: 30,
+                    height: 30, &#47;&#47; Altura fija para el botón
                     child: TextButton.icon(
                       icon: isDeleting
                           ? const SizedBox(
                               width: 14,
                               height: 14,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.delete_forever_outlined,
-                              size: 16),
-                      label: const Text(&#39;Quitar&#39;,
-                          style: TextStyle(fontSize: 12)),
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.delete_forever_outlined, size: 16),
+                      label: const Text(&#39;Quitar&#39;, style: TextStyle(fontSize: 12)),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.red.shade400,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -265,8 +220,8 @@ Widget build(BuildContext context) {
                       ),
                       onPressed: isDeleting
                           ? null
-                          : () =&gt; onQuitar!(
-                              reporteModeracion.id, reporteModeracion.tipo),
+                          : () =&gt;
+                              onQuitar!(reporteModeracion.id, reporteModeracion.tipo),
                     ),
                   ),
               ],

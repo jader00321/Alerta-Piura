@@ -1,8 +1,14 @@
 // src/components/SOS/PanelAlertaActiva.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Paper, Typography, Box, Chip, Stack, CircularProgress } from '@mui/material';
-import { Warning as WarningIcon, NotificationsActive as BellIcon } from '@mui/icons-material';
+import { Warning as WarningIcon, NotificationsActive as BellIcon, AccessAlarm as TimerIcon } from '@mui/icons-material';
 
+/**
+ * PanelAlertaActiva - Componente para mostrar el estado de alertas SOS activas
+ * @param {Object} props - Propiedades del componente
+ * @param {Array} props.alerts - Array de alertas SOS
+ * @returns {JSX.Element}
+ */
 function PanelAlertaActiva({ alerts }) { // Recibe todas las alertas
   ///const theme = useTheme();
   const [timer, setTimer] = useState(null);
@@ -12,6 +18,10 @@ function PanelAlertaActiva({ alerts }) { // Recibe todas las alertas
   const latestActiveAlert = alerts.find(a => a.estado === 'activo');
   const activeUnreviewedCount = alerts.filter(a => a.estado === 'activo' && !a.revisada).length;
 
+  /**
+   * Efecto para manejar el timer de la alerta activa
+   * Calcula el tiempo restante y actualiza cada segundo
+   */
   useEffect(() => {
     clearInterval(intervalRef.current); // Limpiar timer anterior
     setTimer(null); // Resetear
@@ -20,6 +30,9 @@ function PanelAlertaActiva({ alerts }) { // Recibe todas las alertas
       const startTime = new Date(latestActiveAlert.fecha_inicio).getTime();
       const duration = latestActiveAlert.duracion_segundos || 600;
 
+      /**
+       * Función para actualizar el timer
+       */
       const update = () => {
         const remaining = duration - Math.floor((Date.now() - startTime) / 1000);
         if (remaining > 0) {
@@ -80,7 +93,5 @@ function PanelAlertaActiva({ alerts }) { // Recibe todas las alertas
     </Paper>
   );
 }
-// Importar TimerIcon si no está ya en la lista de imports
-import { AccessAlarm as TimerIcon } from '@mui/icons-material';
 
 export default PanelAlertaActiva;

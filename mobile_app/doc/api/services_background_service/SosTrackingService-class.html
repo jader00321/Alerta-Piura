@@ -53,6 +53,11 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Clase que encapsula toda la lógica de estado del seguimiento SOS.</p>
+<p>Maneja los temporizadores, la obtención de ubicación y la comunicación
+con la API y la UI principal.</p>
+</section>
 
 
 
@@ -64,7 +69,7 @@
           <span class="name"><a href="../services_background_service/SosTrackingService/SosTrackingService.html">SosTrackingService.new</a></span><span class="signature">(<span class="parameter" id="-param-service"><span class="type-annotation"><a href="https://pub.dev/documentation/flutter_background_service_platform_interface/5.1.2/flutter_background_service_platform_interface/ServiceInstance-class.html">ServiceInstance</a></span> <span class="parameter-name">service</span></span>)</span>
         </dt>
         <dd>
-          
+          Clase que encapsula toda la lógica de estado del seguimiento SOS.
         </dd>
     </dl>
   </section>
@@ -105,7 +110,7 @@
 
 </dt>
 <dd>
-  
+  La instancia del servicio en segundo plano.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -140,7 +145,8 @@
 
 </dt>
 <dd>
-  
+  Envía el estado actual del SOS (activo, ID, segundos) a la UI.
+Invocado por el listener 'getSosStatus'.
   
 
 </dd>
@@ -153,7 +159,7 @@
 
 </dt>
 <dd>
-  
+  Inicia el proceso completo de seguimiento SOS.
   
 
 </dd>
@@ -166,7 +172,7 @@
 
 </dt>
 <dd>
-  
+  Detiene el servicio de seguimiento SOS.
   
 
 </dd>

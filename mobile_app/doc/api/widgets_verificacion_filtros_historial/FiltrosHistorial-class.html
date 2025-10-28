@@ -53,6 +53,12 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget que muestra los controles de filtro para la lista del historial de moderación.</p>
+<p>Permite filtrar por estado (<a href="../widgets_verificacion_lista_reportes_verificacion/FiltroHistorialEstado.html">FiltroHistorialEstado</a>) usando <a href="https://api.flutter.dev/flutter/material/ChoiceChip-class.html">ChoiceChip</a>
+y por rango de fechas mediante un <a href="https://api.flutter.dev/flutter/material/TextButton-class.html">TextButton</a> que abre un selector de fechas
+(la lógica del selector está en el widget padre <a href="../widgets_verificacion_lista_reportes_verificacion/ListaReportesVerificacion-class.html">ListaReportesVerificacion</a>).</p>
+</section>
 
 
     <section>
@@ -88,7 +94,7 @@
           <span class="name"><a href="../widgets_verificacion_filtros_historial/FiltrosHistorial/FiltrosHistorial.html">FiltrosHistorial.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-filtroHistorialEstado"><span>required</span> <span class="type-annotation"><a href="../widgets_verificacion_lista_reportes_verificacion/FiltroHistorialEstado.html">FiltroHistorialEstado</a></span> <span class="parameter-name">filtroHistorialEstado</span>, </span><span class="parameter" id="-param-onEstadoChanged"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onEstadoChanged</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../widgets_verificacion_lista_reportes_verificacion/FiltroHistorialEstado.html">FiltroHistorialEstado</a></span></span>), </span><span class="parameter" id="-param-startDate"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/DateTime-class.html">DateTime</a>?</span> <span class="parameter-name">startDate</span>, </span><span class="parameter" id="-param-endDate"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/DateTime-class.html">DateTime</a>?</span> <span class="parameter-name">endDate</span>, </span><span class="parameter" id="-param-onSelectDateRange"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onSelectDateRange</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget que muestra los controles de filtro para la lista del historial de moderación.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +112,7 @@
 
 </dt>
 <dd>
-  
+  La fecha de fin del rango seleccionado (opcional).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -118,7 +124,7 @@
 
 </dt>
 <dd>
-  
+  El estado de filtro actualmente seleccionado.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +160,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta cuando se selecciona un nuevo estado.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +172,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al presionar el botón de selección de fechas.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -190,7 +196,7 @@
 
 </dt>
 <dd>
-  
+  La fecha de inicio del rango seleccionado (opcional).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

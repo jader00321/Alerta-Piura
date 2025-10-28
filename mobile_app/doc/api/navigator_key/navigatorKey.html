@@ -60,6 +60,15 @@
 
         </section>
         
+<section class="desc markdown">
+  <p>Una <a href="https://api.flutter.dev/flutter/widgets/GlobalKey-class.html">GlobalKey</a> estática para el <a href="https://api.flutter.dev/flutter/widgets/NavigatorState-class.html">NavigatorState</a> de <a href="https://api.flutter.dev/flutter/material/MaterialApp-class.html">MaterialApp</a>.</p>
+<p>Esta clave es esencial para permitir la navegación desde fuera del árbol
+de widgets (es decir, desde servicios que no tienen un <code>BuildContext</code>).</p>
+<p>Su principal consumidor es <a href="../services_notification_service/NotificationService-class.html">NotificationService</a>, que la utiliza para
+abrir la pantalla correcta (ej. <code>/reporte_detalle</code>) cuando el usuario
+toca una notificación mientras la app está terminada o en segundo plano.</p>
+<p>Se asigna en <code>main.dart</code> a la propiedad <code>navigatorKey</code> de <code>MaterialApp</code>.</p>
+</section>
 
         
 <section class="summary source-code" id="source">

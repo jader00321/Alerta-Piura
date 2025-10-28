@@ -125,7 +125,6 @@ for suggestions on how to release resources more eagerly.</p>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 void dispose() {
-  _scrollController.removeListener(_onScroll);
   _scrollController.dispose();
   super.dispose();
 }</code></pre>

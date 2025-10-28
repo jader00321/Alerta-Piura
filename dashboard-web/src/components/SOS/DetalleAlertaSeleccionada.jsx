@@ -6,7 +6,14 @@ import {
     ErrorOutline as AlertIcon, ContactPhone as ContactIcon // Icono para contacto emergencia
 } from '@mui/icons-material';
 
-// Reusable DetailItem
+/**
+ * DetailItem - Componente reutilizable para mostrar items de detalle con icono
+ * @param {Object} props - Propiedades del componente
+ * @param {ReactNode} props.icon - Componente de icono de Material-UI
+ * @param {string} props.primary - Texto primario (etiqueta)
+ * @param {string} props.secondary - Texto secundario (valor)
+ * @returns {JSX.Element}
+ */
 // eslint-disable-next-line no-unused-vars
 const DetailItem = ({ icon: Icon, primary, secondary }) => (
     <Stack direction="row" spacing={1.5} alignItems="center" sx={{ py: 0.5 }}>
@@ -22,7 +29,15 @@ const DetailItem = ({ icon: Icon, primary, secondary }) => (
     </Stack>
 );
 
-
+/**
+ * DetalleAlertaSeleccionada - Componente para mostrar detalles de una alerta SOS seleccionada
+ * @param {Object} props - Propiedades del componente
+ * @param {Object} props.alert - Objeto de alerta a mostrar
+ * @param {string} props.timer - Tiempo restante para alertas activas
+ * @param {boolean} props.loading - Estado de carga para mostrar skeletons
+ * @param {function} props.onFinishAlert - Callback para finalizar una alerta activa
+ * @returns {JSX.Element}
+ */
 function DetalleAlertaSeleccionada({ alert, timer, loading, onFinishAlert }) {
 
     if (loading) {

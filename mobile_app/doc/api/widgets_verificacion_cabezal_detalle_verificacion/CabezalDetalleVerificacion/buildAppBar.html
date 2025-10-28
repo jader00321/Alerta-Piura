@@ -66,6 +66,14 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Construye y devuelve el <a href="https://api.flutter.dev/flutter/material/AppBar-class.html">AppBar</a> configurado para la pantalla de detalle de verificación.</p>
+<p><code>context</code>: El <a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a> de la pantalla.
+<code>isLoadingAction</code>: Si es <code>true</code>, deshabilita los botones de acción.
+<code>onEditar</code>: Callback para el botón de editar.
+<code>onChat</code>: Callback para el botón de chat.
+<code>reporteEstado</code>: El estado actual del reporte ('pendiente_verificacion', 'verificado', etc.).</p>
+</section>
 
 
     
@@ -76,13 +84,12 @@
   required bool isLoadingAction,
   required VoidCallback onEditar,
   required VoidCallback onChat,
-  required String?
-      reporteEstado, &#47;&#47; Necesitamos el estado para la lógica condicional
+  required String? reporteEstado,
 }) {
   return AppBar(
-    title: const Text(&#39;Verificar Reporte&#39;), &#47;&#47; Título fijo
+    title: const Text(&#39;Verificar Reporte&#39;),
     actions: [
-      &#47;&#47; Botones solo visibles si el reporte está pendiente
+      &#47;&#47; Muestra botones de Editar y Chat solo si el reporte está pendiente
       if (reporteEstado == &#39;pendiente_verificacion&#39;) ...[
         IconButton(
           icon: const Icon(Icons.edit_note_outlined),

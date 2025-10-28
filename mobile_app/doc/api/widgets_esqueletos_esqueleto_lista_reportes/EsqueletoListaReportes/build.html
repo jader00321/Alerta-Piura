@@ -109,12 +109,17 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47; El widget [Shimmer] proporciona el efecto de brillo animado.
   return Shimmer.fromColors(
     baseColor: Colors.grey[300]!,
     highlightColor: Colors.grey[100]!,
+    &#47;&#47; Deshabilita el scroll del ListView para permitir que el
+    &#47;&#47; RefreshIndicator de la pantalla padre funcione correctamente.
     child: ListView.builder(
-      itemCount: 5, &#47;&#47; Muestra 5 placeholders
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 5, &#47;&#47; Muestra 5 placeholders para llenar la vista inicial.
       itemBuilder: (context, index) {
+        &#47;&#47;&#47; Simulación de una tarjeta de reporte individual.
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
           child: Padding(
@@ -122,18 +127,21 @@ Widget build(BuildContext context) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                &#47;&#47;&#47; Placeholder para el chip de categoría o estado.
                 Container(
                   width: 120,
                   height: 20,
                   color: Colors.white,
                 ),
                 const SizedBox(height: 8),
+                &#47;&#47;&#47; Placeholder para el título del reporte.
                 Container(
                   width: double.infinity,
                   height: 24,
                   color: Colors.white,
                 ),
                 const SizedBox(height: 8),
+                &#47;&#47;&#47; Placeholder para el subtítulo (autor&#47;fecha).
                 Container(
                   width: 200,
                   height: 16,

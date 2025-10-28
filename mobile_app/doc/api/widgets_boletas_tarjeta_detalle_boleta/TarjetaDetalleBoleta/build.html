@@ -110,6 +110,7 @@ and</li>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
   final theme = Theme.of(context);
+  &#47;&#47;&#47; Determina el estilo del chip de estado.
   final bool isApproved = boleta.estadoTransaccion == &#39;Aprobado&#39;;
 
   return Card(
@@ -120,7 +121,7 @@ Widget build(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          &#47;&#47; --- Cabecera de la Boleta ---
+          &#47;&#47;&#47; Cabecera de la Boleta: Título y Estado.
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -140,8 +141,8 @@ Widget build(BuildContext context) {
                         ? Colors.green.shade800
                         : Colors.red.shade800,
                     fontWeight: FontWeight.bold),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 2), &#47;&#47; Ajustar padding
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 visualDensity: VisualDensity.compact,
               ),
             ],
@@ -152,7 +153,7 @@ Widget build(BuildContext context) {
           ),
           const Divider(height: 30),
 
-          &#47;&#47; --- Detalles del Cliente ---
+          &#47;&#47;&#47; Detalles del Cliente.
           Text(&#39;Facturado a:&#39;, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           _buildDetailRow(context, &#39;Cliente&#39;, boleta.nombreUsuario),
@@ -160,9 +161,8 @@ Widget build(BuildContext context) {
 
           const Divider(height: 30),
 
-          &#47;&#47; --- Detalles del Producto ---
-          Text(&#39;Descripción del Servicio:&#39;,
-              style: theme.textTheme.titleMedium),
+          &#47;&#47;&#47; Detalles del Producto&#47;Servicio.
+          Text(&#39;Descripción del Servicio:&#39;, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           _buildDetailRow(context, &#39;Plan Contratado&#39;, boleta.nombrePlan),
           _buildDetailRow(
@@ -170,7 +170,7 @@ Widget build(BuildContext context) {
 
           const Divider(height: 30),
 
-          &#47;&#47; --- Detalles del Pago ---
+          &#47;&#47;&#47; Detalles del Pago.
           Text(&#39;Método de Pago:&#39;, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           _buildDetailRow(context, &#39;Tarjeta&#39;,
@@ -178,7 +178,7 @@ Widget build(BuildContext context) {
 
           const Divider(height: 30),
 
-          &#47;&#47; --- Total ---
+          &#47;&#47;&#47; Total.
           _buildDetailRow(context, &#39;Subtotal&#39;, &#39;S&#47; ${boleta.montoPagado}&#39;),
           _buildDetailRow(context, &#39;IGV (18%)&#39;, &#39;Incluido&#39;),
           const SizedBox(height: 8),

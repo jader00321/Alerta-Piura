@@ -19,6 +19,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_app/widgets/mapa/capa_mapa_base.dart';
 import 'package:mobile_app/widgets/mapa/acciones_mapa.dart';
 
+/// Vista principal de la aplicación que muestra el mapa interactivo,
+/// los reportes, el indicador de riesgo y las acciones principales (Filtros, SOS, etc.).
 class MapaView extends StatefulWidget {
   const MapaView({super.key});
 
@@ -26,6 +28,10 @@ class MapaView extends StatefulWidget {
   State<MapaView> createState() => _MapaViewState();
 }
 
+/// Estado para [MapaView].
+///
+/// Maneja la carga de reportes, filtros, cálculo de riesgo,
+/// estado de SOS y la interacción del usuario con el mapa.
 class _MapaViewState extends State<MapaView> {
   final LatLng _initialCenter = const LatLng(-5.19449, -80.63282);
   final ReporteService _reporteService = ReporteService();
@@ -51,8 +57,7 @@ class _MapaViewState extends State<MapaView> {
     FlutterBackgroundService().on('update').listen((event) {
       if (!mounted || event == null) return;
       final action = event['action'] as String?;
-      debugPrint(
-          "MAPA_VIEW: Evento recibido del servicio: $action, Data: $event");
+      debugPrint("MAPA_VIEW: Evento recibido del servicio: $action, Data: $event");
 
       if (!mounted) return;
 
@@ -62,8 +67,7 @@ class _MapaViewState extends State<MapaView> {
             _isSosActive = event['isActive'] ?? false;
             _activeAlertId = event['alertId'];
             _sosRemainingSeconds = event['seconds'] ?? 0;
-            debugPrint(
-                "MAPA_VIEW: Estado inicial/actual de SOS recibido -> isActive: $_isSosActive, alertId: $_activeAlertId, remaining: $_sosRemainingSeconds");
+            debugPrint("MAPA_VIEW: Estado inicial/actual de SOS recibido -> isActive: $_isSosActive, alertId: $_activeAlertId, remaining: $_sosRemainingSeconds");
           });
           break;
         case 'updateTimer':
@@ -94,21 +98,18 @@ class _MapaViewState extends State<MapaView> {
         case 'connectionLost':
           if (ScaffoldMessenger.maybeOf(context) != null) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('SOS: Conexión perdida...'),
-              backgroundColor: Colors.orange,
-            ));
+                content: Text('SOS: Conexión perdida...'),
+                backgroundColor: Colors.orange));
           }
           break;
         default:
-          debugPrint(
-              "MAPA_VIEW: Evento desconocido recibido del servicio: $action");
+          debugPrint("MAPA_VIEW: Evento desconocido recibido del servicio: $action");
       }
     });
 
     Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) {
-        debugPrint(
-            "MAPA_VIEW: Solicitando estado inicial de SOS al servicio...");
+        debugPrint("MAPA_VIEW: Solicitando estado inicial de SOS al servicio...");
         FlutterBackgroundService().invoke('getSosStatus');
       }
     });
@@ -122,6 +123,7 @@ class _MapaViewState extends State<MapaView> {
     super.dispose();
   }
 
+  /// Carga los reportes desde [ReporteService] aplicando los filtros actuales.
   void _loadReportes() {
     final String search = _searchQuery;
     final String estado;
@@ -150,6 +152,7 @@ class _MapaViewState extends State<MapaView> {
     });
   }
 
+  /// Obtiene el puntaje de riesgo para el centro actual del mapa.
   Future<void> _fetchRiesgoZona() async {
     if (!mounted) return;
     setState(() => _isLoadingRisk = true);
@@ -178,6 +181,7 @@ class _MapaViewState extends State<MapaView> {
     }
   }
 
+  /// Maneja el cambio de texto en la barra de búsqueda con un debounce.
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) {
       _debounce!.cancel();
@@ -192,6 +196,7 @@ class _MapaViewState extends State<MapaView> {
     });
   }
 
+  /// Muestra el modal [PanelFiltrosAvanzados].
   void _showFilterSheet() {
     showModalBottomSheet(
       context: context,
@@ -209,6 +214,7 @@ class _MapaViewState extends State<MapaView> {
     );
   }
 
+  /// Muestra el modal [ReportSummarySheet] al tocar un reporte.
   void _showReportSummary(BuildContext context, Reporte reporte) {
     showModalBottomSheet(
         context: context,
@@ -217,6 +223,7 @@ class _MapaViewState extends State<MapaView> {
         builder: (context) => ReportSummarySheet(reporte: reporte));
   }
 
+  /// Centra el mapa en la ubicación actual del usuario.
   Future<void> _centerOnUserLocation() async {
     var status = await Permission.locationWhenInUse.status;
     if (!status.isGranted) {
@@ -237,8 +244,8 @@ class _MapaViewState extends State<MapaView> {
       } catch (e) {
         debugPrint("Error obteniendo ubicación: $e");
         if (mounted && ScaffoldMessenger.maybeOf(context) != null) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('No se pudo obtener la ubicación actual.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No se pudo obtener la ubicación actual.')));
         }
       }
     } else {
@@ -250,12 +257,12 @@ class _MapaViewState extends State<MapaView> {
     }
   }
 
+  /// Inicia el flujo de activación de SOS contactando al [BackgroundService].
   Future<void> _activateSos() async {
     if (!mounted) return;
 
     if (_isSosActive) {
-      debugPrint(
-          "MAPA_VIEW: SOS ya está activo. Mostrando diálogo de desactivación.");
+      debugPrint("MAPA_VIEW: SOS ya está activo. Mostrando diálogo de desactivación.");
       _deactivateSosFromUI();
       return;
     }
@@ -283,30 +290,29 @@ class _MapaViewState extends State<MapaView> {
         {'durationInSeconds': durationInSeconds, 'emergencyContact': contact});
   }
 
+  /// Muestra un diálogo para confirmar la desactivación de SOS.
   void _deactivateSosFromUI() {
     if (!mounted) return;
     showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-              title: const Text('Finalizar Alerta SOS'),
-              content:
-                  const Text('¿Estás seguro que deseas finalizar tu alerta?'),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Cancelar')),
-                ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                    onPressed: () {
-                      debugPrint(
-                          "MAPA_VIEW: Solicitando detención de SOS al servicio...");
-                      FlutterBackgroundService().invoke('stopSosFromUI');
-                      Navigator.pop(ctx);
-                    },
-                    child: const Text('Sí, Finalizar')),
-              ],
-            ));
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Finalizar Alerta SOS'),
+        content: const Text('¿Estás seguro que deseas finalizar tu alerta?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar')),
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                debugPrint("MAPA_VIEW: Solicitando detención de SOS al servicio...");
+                FlutterBackgroundService().invoke('stopSosFromUI');
+                Navigator.pop(ctx);
+              },
+              child: const Text('Sí, Finalizar')),
+        ],
+      ),
+    );
   }
 
   @override

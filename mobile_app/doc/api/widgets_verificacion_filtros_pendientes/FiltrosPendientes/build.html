@@ -113,79 +113,83 @@ Widget build(BuildContext context) {
     padding: const EdgeInsets.all(8.0),
     child: Column(
       children: [
+        &#47;&#47;&#47; Fila con el campo de búsqueda y el botón de ordenación.
         Row(
           children: [
             Expanded(
               child: TextField(
                 controller: searchController,
                 decoration: InputDecoration(
-                  hintText: &#39;Buscar por título o código...&#39;,
+                  hintText: &#39;Buscar por código o título...&#39;,
                   prefixIcon: const Icon(Icons.search, size: 20),
                   isDense: true,
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30)),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                    borderRadius: BorderRadius.circular(30),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor:
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
                 ),
               ),
             ),
             IconButton(
-              icon: Icon(sortBy == &#39;fecha_asc&#39;
-                  ? Icons.arrow_upward
-                  : Icons.arrow_downward),
+              icon: Icon(
+                  sortBy == &#39;fecha_asc&#39;
+                      ? Icons.arrow_upward
+                      : Icons.arrow_downward,
+                  size: 20),
               tooltip: sortBy == &#39;fecha_asc&#39;
-                  ? &#39;Ordenar por más reciente&#39;
-                  : &#39;Ordenar por más antiguo&#39;,
+                  ? &#39;Orden: Más antiguos&#39;
+                  : &#39;Orden: Más recientes&#39;,
               onPressed: onSortToggle,
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 35,
+        &#47;&#47;&#47; Fila con los filtros rápidos y el dropdown de categoría.
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
+                &#47;&#47;&#47; Chips para los filtros rápidos.
                 Wrap(
                   spacing: 8.0,
                   children: FiltroPendiente.values.map((filtro) {
                     String label;
-                    Icon? icon;
-                    Color? color;
+                    Color color;
                     switch (filtro) {
                       case FiltroPendiente.prioritarios:
-                        label = &#39;Premium&#39;;
-                        icon = const Icon(Icons.star, size: 14);
+                        label = &#39;Prioritarios&#39;;
                         color = Colors.amber.shade700;
                         break;
                       case FiltroPendiente.conApoyos:
                         label = &#39;Con Apoyos&#39;;
-                        icon =
-                            const Icon(Icons.local_fire_department, size: 14);
-                        color = Colors.red.shade700;
+                        color = Colors.blue.shade700;
                         break;
                       default:
                         label = &#39;Todos&#39;;
-                        icon = null;
                         color = Theme.of(context).colorScheme.primary;
                         break;
                     }
                     return ChoiceChip(
-                      avatar: icon,
-                      label:
-                          Text(label, style: const TextStyle(fontSize: 12)),
+                      label: Text(label, style: const TextStyle(fontSize: 12)),
                       selected: filtroPendiente == filtro,
                       onSelected: (selected) {
-                        if (selected) onFiltroPendienteChanged(filtro);
+                        if (selected) {
+                          onFiltroPendienteChanged(filtro);
+                        }
                       },
                       visualDensity: VisualDensity.compact,
-                      selectedColor: color.withOpacity(0.1),
+                      selectedColor: color.withAlpha(26),
                       labelStyle: TextStyle(
                           color: filtroPendiente == filtro ? color : null),
                     );
                   }).toList(),
                 ),
                 const SizedBox(width: 16),
+                &#47;&#47;&#47; Dropdown para filtrar por categoría.
                 if (isLoadingCategories)
                   const SizedBox(
                       width: 24,
@@ -195,16 +199,18 @@ Widget build(BuildContext context) {
                   DropdownButtonHideUnderline(
                     child: DropdownButton&lt;int?&gt;(
                       value: filtroCategoriaId,
-                      hint: const Text(&#39;Categoría&#39;,
-                          style: TextStyle(fontSize: 12)),
+                      hint:
+                          const Text(&#39;Categoría&#39;, style: TextStyle(fontSize: 12)),
                       isDense: true,
                       items: [
+                        &#47;&#47; Opción para mostrar todas las categorías.
                         const DropdownMenuItem&lt;int?&gt;(
                             value: null,
                             child: Text(&#39;Todas&#39;,
                                 style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold))),
+                        &#47;&#47; Lista de categorías disponibles.
                         ...categoriasDisponibles.map((cat) =&gt;
                             DropdownMenuItem&lt;int?&gt;(
                                 value: cat.id,

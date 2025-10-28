@@ -1,4 +1,3 @@
-// dashboard-web/src/pages/ModerationPage.jsx
 import React, { useState } from 'react';
 import { Box, Paper, Typography, Tabs, Tab, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import {
@@ -15,6 +14,21 @@ import PanelUsuariosReportados from '../components/Moderacion/PanelUsuariosRepor
 import PanelHistorialModeracion from '../components/Moderacion/PanelHistorialModeracion';
 
 // --- Componente de Panel de Pestaña ---
+
+/**
+ * Componente helper estándar para renderizar el contenido de una pestaña (Tab).
+ *
+ * Muestra el contenido (`children`) únicamente si el `value` (la pestaña activa
+ * actualmente) coincide con el `index` (el índice de este panel).
+ * Pasa los atributos ARIA necesarios para la accesibilidad.
+ *
+ * @param {object} props - Propiedades del componente.
+ * @param {React.ReactNode} props.children - El contenido a renderizar dentro del panel.
+ * @param {number} props.value - El índice de la pestaña actualmente activa (controlado por el componente padre).
+ * @param {number} props.index - El índice que este panel representa.
+ * @param {object} [props.other] - Otras propiedades (como IDs y atributos ARIA) pasadas al `div` raíz.
+ * @returns {JSX.Element} Un `div` que contiene los `children` si la pestaña está activa.
+ */
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
   return (
@@ -35,6 +49,23 @@ function TabPanel(props) {
 }
 
 
+/**
+ * Renderiza la página principal del "Panel de Moderación".
+ *
+ * Esta página es el contenedor principal para todas las tareas de moderación.
+ * Presenta una interfaz de pestañas (Tabs) que permite al administrador
+ * cambiar entre tres paneles principales:
+ * 1. PanelComentariosReportados (Pestaña 0)
+ * 2. PanelUsuariosReportados (Pestaña 1)
+ * 3. PanelHistorialModeracion (Pestaña 2)
+ *
+ * También incluye un Acordeón (Accordion) colapsable en la parte superior
+ * que sirve como una "Guía de Procesos de Moderación" rápida.
+ *
+ * Este componente maneja el estado de la pestaña activa (`tabIndex`).
+ *
+ * @returns {JSX.Element} La página de moderación completa.
+ */
 function ModerationPage() {
   const [tabIndex, setTabIndex] = useState(0);
   const handleTabChange = (event, newValue) => setTabIndex(newValue);
@@ -59,7 +90,7 @@ function ModerationPage() {
         </AccordionDetails>
       </Accordion>
 
-      {/* Pestañas con Iconos */}
+      {/* Contenedor de Pestañas y Paneles */}
       <Paper variant="outlined">
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabIndex} onChange={handleTabChange} variant="fullWidth">

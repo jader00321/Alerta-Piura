@@ -4,15 +4,28 @@ import 'package:mobile_app/models/boleta_detalle_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_detalle_boleta.dart';
 import 'package:mobile_app/widgets/boletas/tarjeta_detalle_boleta.dart';
 
+/// {@template pantalla_detalle_boleta}
+/// Pantalla que muestra los detalles completos de una transacción de pago específica (boleta/factura).
+///
+/// Obtiene los datos usando [PerfilService.getDetalleBoleta] basado en el [transactionId].
+/// Utiliza [TarjetaDetalleBoleta] para renderizar la información.
+/// {@endtemplate}
 class PantallaDetalleBoleta extends StatefulWidget {
+  /// El ID único (UUID) de la transacción a mostrar.
   final String transactionId;
+
+  /// {@macro pantalla_detalle_boleta}
   const PantallaDetalleBoleta({super.key, required this.transactionId});
 
   @override
   State<PantallaDetalleBoleta> createState() => _PantallaDetalleBoletaState();
 }
 
+/// Estado para [PantallaDetalleBoleta].
+///
+/// Maneja la carga de los detalles de la boleta.
 class _PantallaDetalleBoletaState extends State<PantallaDetalleBoleta> {
+  /// Futuro que contiene los detalles de la boleta.
   late Future<BoletaDetalle> _boletaFuture;
   final PerfilService _perfilService = PerfilService();
 
@@ -40,8 +53,7 @@ class _PantallaDetalleBoletaState extends State<PantallaDetalleBoleta> {
           }
           if (!snapshot.hasData) {
             return const Center(
-                child:
-                    Text('No se encontraron los detalles de la transacción.'));
+                child: Text('No se encontraron los detalles de la transacción.'));
           }
 
           final boleta = snapshot.data!;

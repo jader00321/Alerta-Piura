@@ -1,25 +1,31 @@
-// lib/widgets/verificacion/cabezal_detalle_verificacion.dart
 import 'package:flutter/material.dart';
-// Ya no necesitamos ReporteDetallado aquí
 
-// Convertimos la clase a una función estática o standalone que devuelve un AppBar
-// para mantener la organización, o puedes mover esta lógica directamente
-// al AppBar de VerificacionDetalleScreen. Usaremos una función estática aquí.
-
+/// {@template cabezal_detalle_verificacion}
+/// Clase de utilidad para construir el [AppBar] de la pantalla [VerificacionDetalleScreen].
+///
+/// Proporciona un método estático [buildAppBar] que configura el título y
+/// muestra condicionalmente los botones de acción (Editar, Chat) si el reporte
+/// está en estado 'pendiente_verificacion'.
+/// {@endtemplate}
 class CabezalDetalleVerificacion {
-  // Mantenemos la clase como contenedor de la función
+  /// Construye y devuelve el [AppBar] configurado para la pantalla de detalle de verificación.
+  ///
+  /// [context]: El [BuildContext] de la pantalla.
+  /// [isLoadingAction]: Si es `true`, deshabilita los botones de acción.
+  /// [onEditar]: Callback para el botón de editar.
+  /// [onChat]: Callback para el botón de chat.
+  /// [reporteEstado]: El estado actual del reporte ('pendiente_verificacion', 'verificado', etc.).
   static AppBar buildAppBar(
     BuildContext context, {
     required bool isLoadingAction,
     required VoidCallback onEditar,
     required VoidCallback onChat,
-    required String?
-        reporteEstado, // Necesitamos el estado para la lógica condicional
+    required String? reporteEstado,
   }) {
     return AppBar(
-      title: const Text('Verificar Reporte'), // Título fijo
+      title: const Text('Verificar Reporte'),
       actions: [
-        // Botones solo visibles si el reporte está pendiente
+        // Muestra botones de Editar y Chat solo si el reporte está pendiente
         if (reporteEstado == 'pendiente_verificacion') ...[
           IconButton(
             icon: const Icon(Icons.edit_note_outlined),

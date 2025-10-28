@@ -53,6 +53,20 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Tarjeta que muestra un resumen de un reporte cercano en la lista
+de <a href="../screens_pantalla_cerca_de_ti/PantallaCercaDeTi-class.html">PantallaCercaDeTi</a>.</p>
+<p>Muestra información clave como imagen, título, categoría, urgencia, distancia,
+autor y estado.</p>
+<p>La característica principal es el <strong>botón de acción dinámico</strong> para reportes
+en estado 'pendiente_verificacion':</p>
+<ul>
+<li>Muestra "Unirme (+X)" si <code>reporte.puedeUnirse</code> es <code>true</code>.</li>
+<li>Muestra "Unido (+X)" si <code>reporte.usuarioActualUnido</code> es <code>true</code>.</li>
+<li>Muestra "Es tu reporte" (deshabilitado) si el usuario es el autor.</li>
+</ul>
+<p>Maneja los estados de carga <a href="../widgets_cerca_de_ti_tarjeta_reporte_cercano/TarjetaReporteCercano/isJoining.html">isJoining</a> y <a href="../widgets_cerca_de_ti_tarjeta_reporte_cercano/TarjetaReporteCercano/isUnjoining.html">isUnjoining</a> para los botones.</p>
+</section>
 
 
     <section>
@@ -88,7 +102,8 @@
           <span class="name"><a href="../widgets_cerca_de_ti_tarjeta_reporte_cercano/TarjetaReporteCercano/TarjetaReporteCercano.html">TarjetaReporteCercano.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-reporte"><span>required</span> <span class="type-annotation"><a href="../models_reporte_cercano_model/ReporteCercano-class.html">ReporteCercano</a></span> <span class="parameter-name">reporte</span>, </span><span class="parameter" id="-param-onCardTap"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onCardTap</span>, </span><span class="parameter" id="-param-onJoinTap"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onJoinTap</span>, </span><span class="parameter" id="-param-onUnjoinTap"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onUnjoinTap</span>, </span><span class="parameter" id="-param-isJoining"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isJoining</span> = <span class="default-value">false</span>, </span><span class="parameter" id="-param-isUnjoining"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isUnjoining</span> = <span class="default-value">false</span></span>})</span>
         </dt>
         <dd>
-          
+          Tarjeta que muestra un resumen de un reporte cercano en la lista
+de <a href="../screens_pantalla_cerca_de_ti/PantallaCercaDeTi-class.html">PantallaCercaDeTi</a>.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -118,7 +133,7 @@
 
 </dt>
 <dd>
-  
+  Indica si se está procesando la acción de "unirse".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -130,7 +145,7 @@
 
 </dt>
 <dd>
-  
+  Indica si se está procesando la acción de "quitar apoyo".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +169,7 @@
 
 </dt>
 <dd>
-  
+  Callback al tocar cualquier parte de la tarjeta.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +181,7 @@
 
 </dt>
 <dd>
-  
+  Callback al presionar el botón "Unirme".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -178,7 +193,7 @@
 
 </dt>
 <dd>
-  
+  Callback al presionar el botón "Unido" (para quitar apoyo).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -190,7 +205,7 @@
 
 </dt>
 <dd>
-  
+  Los datos del reporte cercano a mostrar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

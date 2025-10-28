@@ -176,33 +176,36 @@ prints green, as expected.</p>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
-  super.build(context);
-
-  &#47;&#47; --- RENDERIZACIÓN PRINCIPAL ---
-  if (_isLoading &amp;&amp; _reportes.isEmpty) {
-    return const EsqueletoListaActividad();
-  }
+  super.build(context); &#47;&#47; Necesario para AutomaticKeepAliveClientMixin
 
   Widget listContent;
-  if (_errorMessage != null &amp;&amp; _reportes.isEmpty) {
-    listContent = Center(
-        child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(&#39;Error: $_errorMessage&#39;)));
+
+  if (_isLoading &amp;&amp; _reportes.isEmpty) {
+    listContent = const EsqueletoListaActividad(); &#47;&#47; Usar un esqueleto adecuado
+  } else if (_errorMessage != null) {
+    listContent = ListView(
+        physics: const AlwaysScrollableScrollPhysics(), &#47;&#47; Permite refresh en error
+        children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+          Center(child: Text(&#39;Error: $_errorMessage&#39;)),
+          Center(child: TextButton(onPressed: () =&gt; refreshData(), child: const Text(&#39;Reintentar&#39;)))
+        ]);
   } else if (_reportes.isEmpty) {
-    listContent = Center(
-        child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(widget.isHistory
-                ? &#39;No hay historial con estos filtros.&#39;
-                : &#39;No hay reportes pendientes con estos filtros.&#39;)));
+    listContent = ListView(
+        physics: const AlwaysScrollableScrollPhysics(), &#47;&#47; Permite refresh en vacío
+        children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+          const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text(&#39;No hay reportes que coincidan con los filtros.&#39;, textAlign: TextAlign.center)))
+        ]);
   } else {
+    &#47;&#47; Construye la lista de reportes (pendientes o historial)
     listContent = ListView.builder(
       controller: _scrollController,
-      physics: const AlwaysScrollableScrollPhysics(),
+      &#47;&#47; Añade padding inferior para que el último item no quede pegado al fondo
       padding: const EdgeInsets.only(bottom: 80),
-      itemCount: _reportes.length + (_hasMore ? 1 : 0),
+      itemCount: _reportes.length + (_hasMore ? 1 : 0), &#47;&#47; +1 para el indicador de carga
       itemBuilder: (context, index) {
+        &#47;&#47; Si es el último item y hay más por cargar, muestra el indicador
         if (index == _reportes.length) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -212,32 +215,35 @@ Widget build(BuildContext context) {
                     : const SizedBox.shrink()),
           );
         }
+
+        &#47;&#47; Renderiza la tarjeta correspondiente
         final item = _reportes[index];
-        if (widget.isHistory &amp;&amp; item is ReporteHistorialModerado) {
-          final estadoSolicitudActual = _estadoSolicitudes[item.id];
+        if (widget.isHistory) {
+          final reporteHistorial = item as ReporteHistorialModerado;
           return TarjetaHistorialModerado(
-            reporte: item,
-            estadoSolicitud: estadoSolicitudActual,
-            onTap: () =&gt; _handleNavigation(item),
-            onSolicitarRevision: () =&gt; _handleSolicitarRevision(item),
-            onIrAlOriginal: item.idReporteOriginal != null
-                ? () =&gt; _handleIrAlOriginal(item.idReporteOriginal)
+            reporte: reporteHistorial,
+            estadoSolicitud: _estadoSolicitudes[reporteHistorial.id],
+            onTap: () =&gt; _handleNavigation(reporteHistorial.id),
+            onSolicitarRevision: () =&gt; _handleSolicitarRevision(reporteHistorial),
+            onIrAlOriginal: reporteHistorial.idReporteOriginal != null
+                ? () =&gt; _handleNavigation(reporteHistorial.idReporteOriginal!)
                 : null,
           );
-        } else if (!widget.isHistory &amp;&amp; item is ReportePendiente) {
+        } else {
+          final reportePendiente = item as ReportePendiente;
           return TarjetaVerificacion(
-            reporte: item,
-            onTap: () =&gt; _handleNavigation(item),
+            reporte: reportePendiente,
+            onTap: () =&gt; _handleNavigation(reportePendiente.id),
           );
         }
-        return const SizedBox.shrink();
       },
     );
   }
 
+  &#47;&#47; Estructura final con filtros y lista
   return Column(
     children: [
-      &#47;&#47; --- USAR LOS NUEVOS WIDGETS DE FILTRO ---
+      &#47;&#47; Muestra los filtros correspondientes
       if (!widget.isHistory)
         FiltrosPendientes(
           searchController: _searchController,
@@ -246,19 +252,19 @@ Widget build(BuildContext context) {
             setStateIfMounted(() {
               _sortBy = _sortBy == &#39;fecha_asc&#39; ? &#39;fecha_desc&#39; : &#39;fecha_asc&#39;;
             });
-            refreshData();
+            refreshData(); &#47;&#47; Refresca con el nuevo orden
           },
           filtroPendiente: _filtroPendiente,
           onFiltroPendienteChanged: (filtro) {
             setStateIfMounted(() =&gt; _filtroPendiente = filtro);
-            refreshData();
+            refreshData(); &#47;&#47; Refresca con el nuevo filtro rápido
           },
           isLoadingCategories: _isLoadingCategories,
           categoriasDisponibles: _categoriasDisponibles,
           filtroCategoriaId: _filtroCategoriaId,
           onCategoriaChanged: (value) {
             setStateIfMounted(() =&gt; _filtroCategoriaId = value);
-            refreshData();
+            refreshData(); &#47;&#47; Refresca con la nueva categoría
           },
         )
       else
@@ -266,17 +272,17 @@ Widget build(BuildContext context) {
           filtroHistorialEstado: _filtroHistorialEstado,
           onEstadoChanged: (filtro) {
             setStateIfMounted(() =&gt; _filtroHistorialEstado = filtro);
-            refreshData();
+            refreshData(); &#47;&#47; Refresca con el nuevo estado
           },
           startDate: _startDate,
           endDate: _endDate,
-          onSelectDateRange: _selectDateRange,
+          onSelectDateRange: _selectDateRange, &#47;&#47; Abre el selector de fechas
         ),
-      &#47;&#47; --- FIN ---
 
       const Divider(height: 1, thickness: 1),
       Expanded(
         child: RefreshIndicator(
+          &#47;&#47; Permite refrescar arrastrando hacia abajo
           onRefresh: () async {
             await refreshData();
           },

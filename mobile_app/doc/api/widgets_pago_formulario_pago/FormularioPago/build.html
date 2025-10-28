@@ -113,12 +113,13 @@ Widget build(BuildContext context) {
     elevation: 2,
     child: Padding(
       padding: const EdgeInsets.all(16.0),
+      &#47;&#47; Usa un Column para organizar los campos verticalmente.
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(&#39;Información de Pago&#39;,
-              style: Theme.of(context).textTheme.titleLarge),
+          Text(&#39;Información de Pago&#39;, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 24),
+          &#47;&#47;&#47; Campo Nombre del Titular.
           TextFormField(
             controller: nombreTitularController,
             decoration: const InputDecoration(
@@ -126,11 +127,11 @@ Widget build(BuildContext context) {
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.person_outline),
             ),
-            validator: (value) =&gt; (value?.trim().isEmpty ?? true)
-                ? &#39;El nombre es requerido&#39;
-                : null,
+            validator: (value) =&gt;
+                (value?.trim().isEmpty ?? true) ? &#39;El nombre es requerido&#39; : null,
           ),
           const SizedBox(height: 16),
+          &#47;&#47;&#47; Campo Número de Tarjeta.
           TextFormField(
             controller: numeroTarjetaController,
             decoration: const InputDecoration(
@@ -139,19 +140,23 @@ Widget build(BuildContext context) {
               prefixIcon: Icon(Icons.credit_card_outlined),
             ),
             keyboardType: TextInputType.number,
+            &#47;&#47; Aplica formateadores para dígitos, longitud y espaciado.
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(16),
-              _CardNumberInputFormatter(),
+              _CardNumberInputFormatter(), &#47;&#47; Formateador personalizado
             ],
             validator: (value) =&gt;
+                &#47;&#47; Valida que tenga 16 dígitos después de quitar espacios.
                 (value?.replaceAll(&#39; &#39;, &#39;&#39;).length ?? 0) != 16
                     ? &#39;Número de tarjeta inválido&#39;
                     : null,
           ),
           const SizedBox(height: 16),
+          &#47;&#47;&#47; Fila para Fecha de Expiración y CVC.
           Row(
             children: [
+              &#47;&#47;&#47; Campo Fecha de Expiración (MM&#47;AA).
               Expanded(
                 child: TextFormField(
                   controller: fechaExpController,
@@ -160,12 +165,14 @@ Widget build(BuildContext context) {
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
+                  &#47;&#47; Aplica formateadores para dígitos, longitud y formato MM&#47;AA.
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(4),
-                    _CardExpirationInputFormatter(),
+                    _CardExpirationInputFormatter(), &#47;&#47; Formateador personalizado
                   ],
                   validator: (value) {
+                    &#47;&#47; Validación básica de formato y mes.
                     if ((value?.length ?? 0) != 5) {
                       return &#39;Fecha inválida&#39;;
                     }
@@ -174,11 +181,13 @@ Widget build(BuildContext context) {
                     if (month == null || month &lt; 1 || month &gt; 12) {
                       return &#39;Mes inválido&#39;;
                     }
+                    &#47;&#47; Podría añadirse validación de año futuro aquí.
                     return null;
                   },
                 ),
               ),
               const SizedBox(width: 16),
+              &#47;&#47;&#47; Campo CVC.
               Expanded(
                 child: TextFormField(
                   controller: cvcController,
@@ -187,6 +196,7 @@ Widget build(BuildContext context) {
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.number,
+                  &#47;&#47; Aplica formateadores para dígitos y longitud.
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(3),

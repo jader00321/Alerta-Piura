@@ -55,19 +55,26 @@
     <section class="multi-line-signature">
       const
       <span class="name ">ListaReportesVerificacion</span>(<wbr>{<ol class="parameter-list"> <li><span class="parameter" id="-param-key"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a></span> <span class="parameter-name">key</span>, </span></li>
-<li><span class="parameter" id="-param-isHistory"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isHistory</span> = <span class="default-value">false</span>, </span></li>
+<li><span class="parameter" id="-param-isHistory"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isHistory</span>, </span></li>
 </ol>})
     </section>
     
+<section class="desc markdown">
+  <p>Widget reutilizable con estado que muestra una lista paginada de reportes
+para el panel de verificación del líder.</p>
+<p>Puede mostrar la lista de 'Pendientes' o la de 'Historial' basado en el flag <a href="../../widgets_verificacion_lista_reportes_verificacion/ListaReportesVerificacion/isHistory.html">isHistory</a>.
+Maneja la carga de datos con paginación infinita, aplicación de filtros,
+pull-to-refresh, y estados de carga/error/vacío.
+La <code>key</code> es importante para que <a href="../../screens_verificacion_screen/VerificacionScreen-class.html">VerificacionScreen</a> pueda llamar a <code>refreshData</code>.</p>
+</section>
 
 
     
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
-  <pre class="language-dart"><code class="language-dart">const ListaReportesVerificacion({
-  required Key key,
-  this.isHistory = false,
-}) : super(key: key);</code></pre>
+  <pre class="language-dart"><code class="language-dart">const ListaReportesVerificacion(
+    {required Key key, required this.isHistory})
+    : super(key: key);</code></pre>
 </section>
 
 

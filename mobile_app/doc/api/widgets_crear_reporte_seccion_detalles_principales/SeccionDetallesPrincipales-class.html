@@ -53,6 +53,18 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget reutilizable que agrupa los campos de entrada <em>principales y requeridos</em>
+para el formulario de creación/edición de reportes.</p>
+<p>Incluye campos para:</p>
+<ul>
+<li>Título</li>
+<li>Nivel de Urgencia</li>
+<li>Categoría (con un <a href="https://api.flutter.dev/flutter/material/DropdownButtonFormField-class.html">DropdownButtonFormField</a> poblado desde <a href="../widgets_crear_reporte_seccion_detalles_principales/SeccionDetallesPrincipales/categorias.html">categorias</a>)</li>
+<li>Campo condicional para "Sugerir Categoría" si se selecciona "Otro".</li>
+</ul>
+<p>Usado en <a href="../screens_create_report_screen/CreateReportScreen-class.html">CreateReportScreen</a> y <a href="../screens_pantalla_editar_reporte_autor/PantallaEditarReporteAutor-class.html">PantallaEditarReporteAutor</a>.</p>
+</section>
 
 
     <section>
@@ -88,7 +100,8 @@
           <span class="name"><a href="../widgets_crear_reporte_seccion_detalles_principales/SeccionDetallesPrincipales/SeccionDetallesPrincipales.html">SeccionDetallesPrincipales.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-tituloController"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/TextEditingController-class.html">TextEditingController</a></span> <span class="parameter-name">tituloController</span>, </span><span class="parameter" id="-param-urgenciaSeleccionada"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">urgenciaSeleccionada</span>, </span><span class="parameter" id="-param-onUrgenciaChanged"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onUrgenciaChanged</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span></span>), </span><span class="parameter" id="-param-categoriaSeleccionada"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a>?</span> <span class="parameter-name">categoriaSeleccionada</span>, </span><span class="parameter" id="-param-categorias"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../models_categoria_model/Categoria-class.html">Categoria</a></span>&gt;</span></span> <span class="parameter-name">categorias</span>, </span><span class="parameter" id="-param-isLoadingCategories"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isLoadingCategories</span>, </span><span class="parameter" id="-param-onCategoriaChanged"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onCategoriaChanged</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a>?</span></span>), </span><span class="parameter" id="-param-otroCategoriaId"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">otroCategoriaId</span>, </span><span class="parameter" id="-param-categoriaSugeridaController"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/TextEditingController-class.html">TextEditingController</a></span> <span class="parameter-name">categoriaSugeridaController</span>, </span><span class="parameter" id="-param-isEditing"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isEditing</span> = <span class="default-value">false</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget reutilizable que agrupa los campos de entrada <em>principales y requeridos</em>
+para el formulario de creación/edición de reportes.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +119,7 @@
 
 </dt>
 <dd>
-  
+  Lista de todas las <a href="../models_categoria_model/Categoria-class.html">Categoria</a>s disponibles para el dropdown.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -118,7 +131,7 @@
 
 </dt>
 <dd>
-  
+  ID de la categoría actualmente seleccionada.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -130,7 +143,7 @@
 
 </dt>
 <dd>
-  
+  Controlador para el campo condicional 'Especifica la categoría'.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +167,7 @@
 
 </dt>
 <dd>
-  
+  Flag para ajustar la lógica (actualmente no se usa, pero está disponible).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +179,7 @@
 
 </dt>
 <dd>
-  
+  Indica si la lista de <a href="../widgets_crear_reporte_seccion_detalles_principales/SeccionDetallesPrincipales/categorias.html">categorias</a> aún se está cargando.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -190,7 +203,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al cambiar la categoría.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -202,7 +215,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al cambiar la urgencia.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -214,7 +227,7 @@
 
 </dt>
 <dd>
-  
+  El ID específico de la categoría "Otro".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -238,7 +251,7 @@
 
 </dt>
 <dd>
-  
+  Controlador para el campo 'Título'.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -250,7 +263,7 @@
 
 </dt>
 <dd>
-  
+  Valor actual seleccionado en el dropdown 'Urgencia'.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

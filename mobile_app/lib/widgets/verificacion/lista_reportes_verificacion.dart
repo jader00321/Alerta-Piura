@@ -1,373 +1,345 @@
-// lib/widgets/verificacion/lista_reportes_verificacion.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
-//import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobile_app/api/lider_service.dart';
 import 'package:mobile_app/models/reporte_pendiente_model.dart';
 import 'package:mobile_app/models/reporte_historial_moderado_model.dart';
 import 'package:mobile_app/models/categoria_model.dart';
 import 'package:mobile_app/api/reporte_service.dart';
-import 'package:mobile_app/models/solicitud_revision_model.dart';
-// Importar esqueletos y tarjetas
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
 import 'package:mobile_app/widgets/verificacion/tarjeta_verificacion.dart';
 import 'package:mobile_app/widgets/verificacion/tarjeta_historial_moderado.dart';
-// Importar nuevos widgets de filtros
 import 'package:mobile_app/widgets/verificacion/filtros_pendientes.dart';
 import 'package:mobile_app/widgets/verificacion/filtros_historial.dart';
 import 'package:mobile_app/widgets/verificacion/dialogo_solicitud_revision.dart';
 
-// Enums para filtros (se quedan aquí para que los widgets los usen)
+/// Enum para definir los filtros rápidos de la lista de pendientes.
 enum FiltroPendiente { todos, prioritarios, conApoyos }
 
+/// Enum para definir los filtros de estado de la lista de historial.
 enum FiltroHistorialEstado { todos, verificado, rechazado, fusionado }
 
+/// {@template lista_reportes_verificacion}
+/// Widget reutilizable con estado que muestra una lista paginada de reportes
+/// para el panel de verificación del líder.
+///
+/// Puede mostrar la lista de 'Pendientes' o la de 'Historial' basado en el flag [isHistory].
+/// Maneja la carga de datos con paginación infinita, aplicación de filtros,
+/// pull-to-refresh, y estados de carga/error/vacío.
+/// {@endtemplate}
 class ListaReportesVerificacion extends StatefulWidget {
+  /// Si es `true`, muestra el historial de moderación. Si es `false`, muestra los pendientes.
   final bool isHistory;
 
-  const ListaReportesVerificacion({
-    required Key key,
-    this.isHistory = false,
-  }) : super(key: key);
+  /// {@macro lista_reportes_verificacion}
+  /// La [key] es importante para que [VerificacionScreen] pueda llamar a `refreshData`.
+  const ListaReportesVerificacion(
+      {required Key key, required this.isHistory})
+      : super(key: key);
 
   @override
-  State<ListaReportesVerificacion> createState() =>
+  ListaReportesVerificacionState createState() =>
       ListaReportesVerificacionState();
 }
 
+/// Estado para [ListaReportesVerificacion].
 class ListaReportesVerificacionState extends State<ListaReportesVerificacion>
     with AutomaticKeepAliveClientMixin {
-  // --- ESTADO Y SERVICIOS ---
   final LiderService _liderService = LiderService();
-  final ReporteService _reporteService = ReporteService();
+  final ReporteService _reporteService = ReporteService(); // Para categorías
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _searchController = TextEditingController();
 
+  /// Lista combinada de reportes (pendientes o historial).
   List<dynamic> _reportes = [];
   int _currentPage = 1;
   bool _hasMore = true;
-  bool _isLoading = true;
-  bool _isLoadingMore = false;
+  bool _isLoading = true; // Carga inicial
+  bool _isLoadingMore = false; // Carga de paginación
   String? _errorMessage;
-  Timer? _debounce;
+  /// Contador total de reportes que coinciden con los filtros (devuelto por la API).
   int _totalFiltrado = 0;
 
-  // Filtros Pendientes
+  // --- Estados de Filtro ---
+  /// Controlador para el campo de búsqueda (solo pendientes).
+  final TextEditingController _searchController = TextEditingController();
+  /// Criterio de ordenación (solo pendientes).
+  String _sortBy = 'fecha_desc'; // 'fecha_asc' o 'fecha_desc'
+  /// Filtro rápido seleccionado (solo pendientes).
   FiltroPendiente _filtroPendiente = FiltroPendiente.todos;
-  int? _filtroCategoriaId;
-  String _searchTerm = '';
-  String _sortBy = 'fecha_asc'; // Más antiguo primero
-
-  // Filtros Historial
+  /// Estado de filtro seleccionado (solo historial).
   FiltroHistorialEstado _filtroHistorialEstado = FiltroHistorialEstado.todos;
+  /// ID de categoría seleccionada (solo pendientes).
+  int? _filtroCategoriaId;
+  /// Fecha de inicio para filtro de rango (historial).
   DateTime? _startDate;
+  /// Fecha de fin para filtro de rango (historial).
   DateTime? _endDate;
-  Map<int, String> _estadoSolicitudes = {};
-  bool _isLoadingSolicitudes = false;
-
-  List<Categoria> _categoriasDisponibles = [];
+  /// Indica si se están cargando las categorías para el filtro.
   bool _isLoadingCategories = false;
-
-  final Map<int, bool> _isRequestingReview = {};
-
-  // --- CICLO DE VIDA ---
-  @override
-  bool get wantKeepAlive => true;
+  /// Lista de categorías disponibles para el filtro.
+  List<Categoria> _categoriasDisponibles = [];
+  /// Mapa para almacenar el estado de las solicitudes de revisión (solo historial).
+  Map<int, String?> _estadoSolicitudes = {};
 
   @override
   void initState() {
     super.initState();
-    if (widget.isHistory) {
-      final now = DateTime.now();
-      _startDate = now.subtract(const Duration(days: 7));
-      _endDate = now;
-    }
-    refreshData(); // Carga inicial
-    _scrollController.addListener(_onScroll);
+    _fetchData(isInitialLoad: true); // Carga inicial
+    _scrollController.addListener(_onScroll); // Listener para infinite scroll
     if (!widget.isHistory) {
-      _searchController.addListener(_onSearchChanged);
-      _loadCategories();
+      _loadCategories(); // Carga categorías si es la lista de pendientes
     }
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _searchController.dispose();
-    _debounce?.cancel();
     super.dispose();
   }
 
-  // Helper para setState seguro
+  /// Mantiene el estado de la pestaña aunque se cambie a otra.
+  @override
+  bool get wantKeepAlive => true;
+
+  /// Listener del scroll para cargar más datos al llegar al final.
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 && // Cerca del final
+        !_isLoadingMore && // No está cargando ya
+        _hasMore && // Aún hay más datos por cargar
+        !_isLoading) // No está en carga inicial
+    {
+      _fetchData(); // Carga la siguiente página
+    }
+  }
+
   void setStateIfMounted(VoidCallback fn) {
     if (mounted) {
       setState(fn);
     }
   }
 
-  // --- LÓGICA DE DATOS ---
+  /// Carga las categorías para el filtro de pendientes.
   Future<void> _loadCategories() async {
-    if (mounted) setStateIfMounted(() => _isLoadingCategories = true);
+    setState(() => _isLoadingCategories = true);
     try {
       final cats = await _reporteService.getCategorias();
-      if (mounted) setStateIfMounted(() => _categoriasDisponibles = cats);
-    } catch (e) {
-      print("Error cargando categorías: $e");
-    } finally {
-      if (mounted) setStateIfMounted(() => _isLoadingCategories = false);
-    }
-  }
-
-  Future<void> _cargarEstadosSolicitudes() async {
-    if (!widget.isHistory || !mounted) return;
-    if (_isLoadingSolicitudes) return;
-    setStateIfMounted(() => _isLoadingSolicitudes = true);
-    try {
-      final List<SolicitudRevision> solicitudes =
-          await _liderService.getMisSolicitudesRevision();
-      final Map<int, String> nuevosEstados = {};
-      for (var sol in solicitudes) {
-        nuevosEstados[sol.idReporte] = sol.estado;
-      }
       if (mounted) {
-        setStateIfMounted(() => _estadoSolicitudes = nuevosEstados);
+        setState(() {
+          _categoriasDisponibles = cats;
+          _isLoadingCategories = false;
+        });
       }
     } catch (e) {
-      print("Error cargando estados de solicitudes: $e");
-      if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Error al cargar estado de solicitudes: $e'),
-          backgroundColor: Colors.orange,
-        ));
-    } finally {
-      if (mounted) setStateIfMounted(() => _isLoadingSolicitudes = false);
+      debugPrint("Error cargando categorías para filtros: $e");
+      if (mounted) {
+        setState(() => _isLoadingCategories = false);
+      }
     }
   }
 
-  Future<int> refreshData() async {
-    _currentPage = 1;
-    _hasMore = true;
-    _reportes = [];
-    if (mounted) setStateIfMounted(() => _isLoading = true);
-
-    if (widget.isHistory) {
-      await Future.wait([
-        _fetchData(isRefresh: true),
-        _cargarEstadosSolicitudes(),
-      ]);
-    } else {
-      await _fetchData(isRefresh: true);
+  /// Carga los datos de reportes (pendientes o historial) desde la API.
+  ///
+  /// [isInitialLoad]: Si es `true`, limpia la lista actual y resetea la página a 1.
+  /// Retorna el número total de reportes filtrados devuelto por la API.
+  Future<int> _fetchData({bool isInitialLoad = false}) async {
+    if (isInitialLoad) {
+      _currentPage = 1;
+      _hasMore = true;
+      _reportes = [];
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+          _errorMessage = null;
+          _totalFiltrado = 0;
+        });
+      }
+    } else if (_isLoading || !_hasMore) {
+      return _totalFiltrado; // Evita cargas múltiples o innecesarias
     }
 
-    if (mounted) setStateIfMounted(() => _isLoading = false);
-    return _totalFiltrado;
-  }
-
-  Future<void> _fetchData({bool isRefresh = false}) async {
-    if (!mounted || (_isLoading && !isRefresh) || _isLoadingMore) return;
-
-    if (!isRefresh) {
-      setStateIfMounted(() => _isLoadingMore = true);
-    } else {
-      _errorMessage = null; // Limpiar error en refresh
+    if (mounted) {
+      setState(() => _isLoadingMore = true);
     }
 
     try {
-      PagedResult<dynamic> result;
+      dynamic result;
+      // Llama al servicio correspondiente según si es historial o pendientes
       if (widget.isHistory) {
-        String? estadoFilterApi;
-        if (_filtroHistorialEstado != FiltroHistorialEstado.todos) {
-          estadoFilterApi = _filtroHistorialEstado.name;
-        }
         result = await _liderService.getReportesModerados(
           page: _currentPage,
-          estado: estadoFilterApi,
+          estado: _filtroHistorialEstado == FiltroHistorialEstado.todos
+              ? null
+              : _filtroHistorialEstado.name, // Envía el nombre del enum
           startDate: _startDate,
           endDate: _endDate,
         );
+        // Si es historial, carga también el estado de las solicitudes de revisión
+        if (_currentPage == 1) {
+          await _cargarEstadosSolicitudes();
+        }
       } else {
-        bool? prioritarioFilterApi =
-            _filtroPendiente == FiltroPendiente.prioritarios ? true : null;
-        bool? conApoyosFilterApi =
-            _filtroPendiente == FiltroPendiente.conApoyos ? true : null;
-        String? searchFilterApi = _searchTerm.isNotEmpty ? _searchTerm : null;
         result = await _liderService.getReportesPendientes(
-            page: _currentPage,
-            categoriaId: _filtroCategoriaId,
-            prioritario: prioritarioFilterApi,
-            conApoyos: conApoyosFilterApi,
-            search: searchFilterApi,
-            sortBy: _sortBy);
+          page: _currentPage,
+          categoriaId: _filtroCategoriaId,
+          prioritario: _filtroPendiente == FiltroPendiente.prioritarios,
+          conApoyos: _filtroPendiente == FiltroPendiente.conApoyos,
+          search: _searchController.text.trim(),
+          sortBy: _sortBy,
+        );
       }
 
-      if (!mounted) return;
-      setStateIfMounted(() {
-        if (isRefresh) {
-          _reportes = result.items;
-        } else {
-          _reportes.addAll(result.items);
-        }
-        _currentPage++;
-        _hasMore = result.hasMore;
-        _totalFiltrado = result.totalFiltrado;
-        _isLoadingMore = false;
-        _errorMessage = null;
-      });
-    } catch (e) {
-      print(
-          "Error fetching data (${widget.isHistory ? 'Hist' : 'Pend'} - Pág $_currentPage): $e");
       if (mounted) {
-        setStateIfMounted(() {
+        setState(() {
+          // Añade los nuevos items a la lista existente
+          _reportes.addAll(result.items);
+          _hasMore = result.hasMore;
+          _currentPage++;
+          _totalFiltrado = result.totalFiltrado; // Actualiza el total filtrado
+          _isLoading = false;
           _isLoadingMore = false;
-          _totalFiltrado = 0;
-          if (isRefresh) {
-            _errorMessage = e.toString().replaceFirst('Exception: ', '');
-            _reportes = [];
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Error al cargar más: $e'),
-                backgroundColor: Colors.orange));
-            _hasMore = false;
-          }
+          _errorMessage = null;
         });
       }
-    }
-  }
-
-  // --- HANDLERS (CALLBACKS) ---
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent * 0.9 &&
-        _hasMore &&
-        !_isLoading &&
-        !_isLoadingMore) {
-      _fetchData();
-    }
-  }
-
-  void _onSearchChanged() {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 600), () {
-      if (mounted && _searchController.text != _searchTerm) {
-        _searchTerm = _searchController.text;
-        refreshData(); // Reiniciar búsqueda
+      return _totalFiltrado; // Devuelve el total
+    } catch (e) {
+      debugPrint("Error fetching data (${widget.isHistory ? 'History' : 'Pending'}): $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        });
       }
-    });
+      return 0; // Devuelve 0 en caso de error
+    }
   }
 
+  /// Carga el estado de las solicitudes de revisión para los reportes del historial.
+  Future<void> _cargarEstadosSolicitudes() async {
+    if (!widget.isHistory) return;
+    try {
+      final solicitudes = await _liderService.getMisSolicitudesRevision();
+      if (mounted) {
+        final Map<int, String?> nuevosEstados = {};
+        for (var sol in solicitudes) {
+          nuevosEstados[sol.idReporte] = sol.estado;
+        }
+        setState(() => _estadoSolicitudes = nuevosEstados);
+      }
+    } catch (e) {
+      debugPrint("Error cargando estados de solicitudes: $e");
+      // No mostrar error al usuario, simplemente no se verá el estado
+    }
+  }
+
+  /// Método público llamado por el widget padre ([VerificacionScreen]) para refrescar.
+  /// Retorna el nuevo total de elementos filtrados.
+  Future<int> refreshData() {
+    return _fetchData(isInitialLoad: true);
+  }
+
+  /// Muestra el selector de rango de fechas y refresca los datos si se selecciona un rango.
   Future<void> _selectDateRange() async {
-    final picked = await showDateRangePicker(
+    final DateTimeRange? picked = await showDateRangePicker(
       context: context,
+      firstDate: DateTime(2024), // Ajusta la fecha inicial según sea necesario
+      lastDate: DateTime.now(),
       initialDateRange: _startDate != null && _endDate != null
           ? DateTimeRange(start: _startDate!, end: _endDate!)
           : null,
-      firstDate: DateTime(2023),
-      lastDate: DateTime.now(),
-      locale: const Locale('es', 'ES'),
     );
     if (picked != null) {
-      setStateIfMounted(() {
+      setState(() {
         _startDate = picked.start;
-        _endDate = picked.end;
+        // Ajusta endDate para incluir todo el día
+        _endDate = picked.end; //.add(const Duration(days: 1)).subtract(const Duration(seconds: 1));
       });
       refreshData();
     }
   }
 
-  Future<void> _handleSolicitarRevision(
-      ReporteHistorialModerado reporte) async {
-    if (_isRequestingReview[reporte.id] == true || _isLoadingSolicitudes)
-      return;
-
-    final motivo = await showDialog<String>(
-      context: context,
-      builder: (ctx) => DialogoSolicitudRevision(reporte: reporte),
+  /// Maneja la navegación a la pantalla de detalle correspondiente.
+  /// Si se regresa con `true`, refresca la lista actual.
+  Future<void> _handleNavigation(int reporteId) async {
+    final result = await Navigator.pushNamed(
+      context,
+      // Navega a la pantalla de verificación si es pendiente, si no, a la de detalle normal
+      widget.isHistory ? '/reporte_detalle' : '/verificacion_detalle',
+      arguments: reporteId,
     );
-
-    if (motivo == null || motivo.isEmpty || !mounted) return;
-    setStateIfMounted(() => _isRequestingReview[reporte.id] = true);
-    try {
-      final response =
-          await _liderService.solicitarRevision(reporte.id, motivo);
-      if (!mounted) return;
-      final message = response['message'] ?? 'Error desconocido';
-      final success = response['statusCode'] == 201;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(message),
-        backgroundColor: success
-            ? Colors.green
-            : (response['statusCode'] == 409 ? Colors.orange : Colors.red),
-      ));
-      if (success) {
-        await _cargarEstadosSolicitudes();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-      }
-    } finally {
-      if (mounted)
-        setStateIfMounted(() => _isRequestingReview.remove(reporte.id));
-    }
-  }
-
-  Future<void> _handleNavigation(dynamic item) async {
-    String routeName;
-    int idToNavigate;
-    if (widget.isHistory && item is ReporteHistorialModerado) {
-      routeName = '/reporte_detalle';
-      idToNavigate = item.id;
-    } else if (!widget.isHistory && item is ReportePendiente) {
-      routeName = '/verificacion_detalle';
-      idToNavigate = item.id;
-    } else {
-      return;
-    }
-    final result =
-        await Navigator.pushNamed(context, routeName, arguments: idToNavigate);
+    // Si la pantalla de detalle/verificación devuelve true, refrescar lista
     if (result == true && mounted) {
       refreshData();
     }
   }
 
-  void _handleIrAlOriginal(int? originalId) {
-    if (originalId != null) {
-      Navigator.pushNamed(context, '/reporte_detalle', arguments: originalId);
+  /// Muestra el diálogo para solicitar revisión y envía la solicitud si se confirma.
+  Future<void> _handleSolicitarRevision(ReporteHistorialModerado reporte) async {
+    final motivo = await showDialog<String>(
+      context: context,
+      builder: (ctx) => DialogoSolicitudRevision(reporte: reporte),
+    );
+
+    if (motivo != null && motivo.isNotEmpty) {
+      // Mostrar indicador de carga temporalmente
+      setState(() => _estadoSolicitudes[reporte.id] = 'enviando');
+
+      final response = await _liderService.solicitarRevision(reporte.id, motivo);
+
+      if (!mounted) return;
+
+      final message = response['message'] ?? 'Error desconocido';
+      final success = response['statusCode'] == 201;
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message),
+        backgroundColor: success ? Colors.green : Colors.red,
+      ));
+
+      if (success) {
+        // Actualiza el estado localmente para reflejar el cambio inmediatamente
+        setState(() => _estadoSolicitudes[reporte.id] = 'pendiente');
+      } else {
+        // Revierte el estado si falló
+        setState(() => _estadoSolicitudes.remove(reporte.id));
+      }
     }
   }
 
-  // --- BUILD METHOD ---
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    // --- RENDERIZACIÓN PRINCIPAL ---
-    if (_isLoading && _reportes.isEmpty) {
-      return const EsqueletoListaActividad();
-    }
+    super.build(context); // Necesario para AutomaticKeepAliveClientMixin
 
     Widget listContent;
-    if (_errorMessage != null && _reportes.isEmpty) {
-      listContent = Center(
-          child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Error: $_errorMessage')));
+
+    if (_isLoading && _reportes.isEmpty) {
+      listContent = const EsqueletoListaActividad(); // Usar un esqueleto adecuado
+    } else if (_errorMessage != null) {
+      listContent = ListView(
+          physics: const AlwaysScrollableScrollPhysics(), // Permite refresh en error
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+            Center(child: Text('Error: $_errorMessage')),
+            Center(child: TextButton(onPressed: () => refreshData(), child: const Text('Reintentar')))
+          ]);
     } else if (_reportes.isEmpty) {
-      listContent = Center(
-          child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(widget.isHistory
-                  ? 'No hay historial con estos filtros.'
-                  : 'No hay reportes pendientes con estos filtros.')));
+      listContent = ListView(
+          physics: const AlwaysScrollableScrollPhysics(), // Permite refresh en vacío
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+            const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('No hay reportes que coincidan con los filtros.', textAlign: TextAlign.center)))
+          ]);
     } else {
+      // Construye la lista de reportes (pendientes o historial)
       listContent = ListView.builder(
         controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
+        // Añade padding inferior para que el último item no quede pegado al fondo
         padding: const EdgeInsets.only(bottom: 80),
-        itemCount: _reportes.length + (_hasMore ? 1 : 0),
+        itemCount: _reportes.length + (_hasMore ? 1 : 0), // +1 para el indicador de carga
         itemBuilder: (context, index) {
+          // Si es el último item y hay más por cargar, muestra el indicador
           if (index == _reportes.length) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -377,32 +349,35 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion>
                       : const SizedBox.shrink()),
             );
           }
+
+          // Renderiza la tarjeta correspondiente
           final item = _reportes[index];
-          if (widget.isHistory && item is ReporteHistorialModerado) {
-            final estadoSolicitudActual = _estadoSolicitudes[item.id];
+          if (widget.isHistory) {
+            final reporteHistorial = item as ReporteHistorialModerado;
             return TarjetaHistorialModerado(
-              reporte: item,
-              estadoSolicitud: estadoSolicitudActual,
-              onTap: () => _handleNavigation(item),
-              onSolicitarRevision: () => _handleSolicitarRevision(item),
-              onIrAlOriginal: item.idReporteOriginal != null
-                  ? () => _handleIrAlOriginal(item.idReporteOriginal)
+              reporte: reporteHistorial,
+              estadoSolicitud: _estadoSolicitudes[reporteHistorial.id],
+              onTap: () => _handleNavigation(reporteHistorial.id),
+              onSolicitarRevision: () => _handleSolicitarRevision(reporteHistorial),
+              onIrAlOriginal: reporteHistorial.idReporteOriginal != null
+                  ? () => _handleNavigation(reporteHistorial.idReporteOriginal!)
                   : null,
             );
-          } else if (!widget.isHistory && item is ReportePendiente) {
+          } else {
+            final reportePendiente = item as ReportePendiente;
             return TarjetaVerificacion(
-              reporte: item,
-              onTap: () => _handleNavigation(item),
+              reporte: reportePendiente,
+              onTap: () => _handleNavigation(reportePendiente.id),
             );
           }
-          return const SizedBox.shrink();
         },
       );
     }
 
+    // Estructura final con filtros y lista
     return Column(
       children: [
-        // --- USAR LOS NUEVOS WIDGETS DE FILTRO ---
+        // Muestra los filtros correspondientes
         if (!widget.isHistory)
           FiltrosPendientes(
             searchController: _searchController,
@@ -411,19 +386,19 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion>
               setStateIfMounted(() {
                 _sortBy = _sortBy == 'fecha_asc' ? 'fecha_desc' : 'fecha_asc';
               });
-              refreshData();
+              refreshData(); // Refresca con el nuevo orden
             },
             filtroPendiente: _filtroPendiente,
             onFiltroPendienteChanged: (filtro) {
               setStateIfMounted(() => _filtroPendiente = filtro);
-              refreshData();
+              refreshData(); // Refresca con el nuevo filtro rápido
             },
             isLoadingCategories: _isLoadingCategories,
             categoriasDisponibles: _categoriasDisponibles,
             filtroCategoriaId: _filtroCategoriaId,
             onCategoriaChanged: (value) {
               setStateIfMounted(() => _filtroCategoriaId = value);
-              refreshData();
+              refreshData(); // Refresca con la nueva categoría
             },
           )
         else
@@ -431,17 +406,17 @@ class ListaReportesVerificacionState extends State<ListaReportesVerificacion>
             filtroHistorialEstado: _filtroHistorialEstado,
             onEstadoChanged: (filtro) {
               setStateIfMounted(() => _filtroHistorialEstado = filtro);
-              refreshData();
+              refreshData(); // Refresca con el nuevo estado
             },
             startDate: _startDate,
             endDate: _endDate,
-            onSelectDateRange: _selectDateRange,
+            onSelectDateRange: _selectDateRange, // Abre el selector de fechas
           ),
-        // --- FIN ---
 
         const Divider(height: 1, thickness: 1),
         Expanded(
           child: RefreshIndicator(
+            // Permite refrescar arrastrando hacia abajo
             onRefresh: () async {
               await refreshData();
             },

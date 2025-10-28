@@ -53,6 +53,14 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget <strong>sin estado</strong> que muestra la lista de solicitudes de revisión
+enviadas por el líder vecinal a los administradores.</p>
+<p>Se utiliza como una de las pestañas en <a href="../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a> para líderes.
+Recibe la lista de <a href="../models_solicitud_revision_model/SolicitudRevision-class.html">SolicitudRevision</a> ya cargada desde el padre.
+Maneja los estados de carga inicial y lista vacía, y permite refrescar.
+Tocar un elemento navega al detalle del reporte asociado.</p>
+</section>
 
 
     <section>
@@ -88,7 +96,8 @@
           <span class="name"><a href="../widgets_mi_actividad_solicitudes_revision_view/SolicitudesRevisionView/SolicitudesRevisionView.html">SolicitudesRevisionView.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-solicitudes"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../models_solicitud_revision_model/SolicitudRevision-class.html">SolicitudRevision</a></span>&gt;</span></span> <span class="parameter-name">solicitudes</span>, </span><span class="parameter" id="-param-isLoading"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isLoading</span>, </span><span class="parameter" id="-param-onRefresh"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span> <span class="parameter-name">onRefresh</span>()</span>})</span>
         </dt>
         <dd>
-          
+          Widget <strong>sin estado</strong> que muestra la lista de solicitudes de revisión
+enviadas por el líder vecinal a los administradores.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -118,7 +127,7 @@
 
 </dt>
 <dd>
-  
+  Indica si el widget padre (<a href="../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a>) está cargando datos.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +151,7 @@
 
 </dt>
 <dd>
-  
+  Callback ejecutado cuando el usuario hace "pull-to-refresh".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +175,7 @@
 
 </dt>
 <dd>
-  
+  La lista de <a href="../models_solicitud_revision_model/SolicitudRevision-class.html">SolicitudRevision</a> a mostrar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

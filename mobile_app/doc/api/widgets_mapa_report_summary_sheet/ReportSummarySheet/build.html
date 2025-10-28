@@ -112,12 +112,13 @@ Widget build(BuildContext context) {
   final theme = Theme.of(context);
 
   return Container(
+    &#47;&#47; Padding interno para el contenido.
     padding: const EdgeInsets.all(16.0),
     child: Column(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.min, &#47;&#47; Ajusta la altura al contenido.
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        &#47;&#47; &quot;Handle&quot; para indicar que el panel es deslizable
+        &#47;&#47;&#47; &quot;Handle&quot; visual para indicar que el panel es deslizable.
         Center(
           child: Container(
             width: 40,
@@ -130,7 +131,7 @@ Widget build(BuildContext context) {
         ),
         const SizedBox(height: 16),
 
-        &#47;&#47; Información del Reporte
+        &#47;&#47;&#47; Título del reporte.
         Text(
           reporte.titulo,
           style: theme.textTheme.headlineSmall
@@ -139,6 +140,8 @@ Widget build(BuildContext context) {
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 8),
+
+        &#47;&#47;&#47; Chip de Categoría.
         Chip(
           label: Text(reporte.categoria),
           backgroundColor: theme.colorScheme.secondaryContainer,
@@ -147,27 +150,29 @@ Widget build(BuildContext context) {
         ),
         const SizedBox(height: 16),
 
+        &#47;&#47;&#47; Extracto de la descripción (si existe).
         if (reporte.descripcion != null &amp;&amp; reporte.descripcion!.isNotEmpty)
           Text(
             reporte.descripcion!,
             style: theme.textTheme.bodyMedium,
-            maxLines: 3,
+            maxLines: 3, &#47;&#47; Limita a 3 líneas.
             overflow: TextOverflow.ellipsis,
           ),
 
         const Divider(height: 32),
 
-        &#47;&#47; Botón de Acción Principal
+        &#47;&#47;&#47; Botón de acción principal para ver detalles.
         ElevatedButton(
           onPressed: () {
-            &#47;&#47; Cierra el BottomSheet primero
+            &#47;&#47; Cierra el BottomSheet primero.
             Navigator.pop(context);
-            &#47;&#47; Luego navega a la pantalla de detalles completos
+            &#47;&#47; Luego navega a la pantalla de detalles completos.
             Navigator.pushNamed(context, &#39;&#47;reporte_detalle&#39;,
                 arguments: reporte.id);
           },
           style: ElevatedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 50),
+            minimumSize:
+                const Size(double.infinity, 50), &#47;&#47; Botón de ancho completo.
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),

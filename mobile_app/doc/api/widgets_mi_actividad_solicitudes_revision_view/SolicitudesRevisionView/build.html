@@ -109,51 +109,82 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47; Muestra esqueleto durante la carga inicial si la lista está vacía.
   if (isLoading &amp;&amp; solicitudes.isEmpty) {
     return const EsqueletoListaActividad();
   }
 
+  &#47;&#47; Muestra mensaje si la lista está vacía después de cargar.
   if (solicitudes.isEmpty) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(24.0),
-        child: Text(
-          &#39;No has enviado solicitudes de revisión.&#39;,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+    return RefreshIndicator( &#47;&#47; Permite refrescar aunque esté vacío
+      onRefresh: onRefresh,
+      child: LayoutBuilder(
+        builder: (context, constraints) =&gt; SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Text(
+                  &#39;No has enviado solicitudes de revisión.&#39;,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
+  &#47;&#47; Muestra la lista de solicitudes si hay datos.
   return RefreshIndicator(
-    onRefresh: onRefresh,
+    onRefresh: onRefresh, &#47;&#47; Habilita pull-to-refresh.
     child: ListView.builder(
       padding: const EdgeInsets.all(8.0),
       itemCount: solicitudes.length,
       itemBuilder: (context, index) {
         final solicitud = solicitudes[index];
+        &#47;&#47; Determina el color y el icono del chip de estado.
+        MaterialColor statusColor;
+        IconData statusIcon;
+        switch (solicitud.estado) {
+          case &#39;pendiente&#39;:
+            statusColor = Colors.orange;
+            statusIcon = Icons.hourglass_empty_outlined;
+            break;
+          case &#39;aprobada&#39;:
+            statusColor = Colors.green;
+            statusIcon = Icons.check_circle_outline;
+            break;
+          case &#39;desestimada&#39;:
+            statusColor = Colors.grey;
+            statusIcon = Icons.cancel_outlined;
+            break;
+          default:
+            statusColor = Colors.grey;
+            statusIcon = Icons.help_outline;
+            break;
+        }
+
+        &#47;&#47; Renderiza cada solicitud en un ListTile dentro de un Card.
         return Card(
           child: ListTile(
-            title: Text(solicitud.titulo),
+            title: Text(solicitud.titulo), &#47;&#47; Título del reporte asociado.
             subtitle: Text(&#39;Solicitado el: ${solicitud.fecha}&#39;),
             trailing: Chip(
-              label: Text(solicitud.estado,
-                  style: const TextStyle(fontSize: 12)),
-              backgroundColor: solicitud.estado == &#39;pendiente&#39;
-                  ? Colors.orange.shade100
-                  : (solicitud.estado == &#39;aprobada&#39;
-                      ? Colors.green.shade100
-                      : Colors.grey.shade300),
+              avatar: Icon(statusIcon, size: 14, color: statusColor.shade900),
+              label: Text(solicitud.estado, style: const TextStyle(fontSize: 12)),
+              backgroundColor: statusColor.shade100,
               labelStyle: TextStyle(
-                color: solicitud.estado == &#39;pendiente&#39;
-                    ? Colors.orange.shade900
-                    : (solicitud.estado == &#39;aprobada&#39;
-                        ? Colors.green.shade900
-                        : Colors.grey.shade800),
+                color: statusColor.shade900,
               ),
+              visualDensity: VisualDensity.compact,
             ),
             onTap: () {
+              &#47;&#47; Navega al detalle del reporte asociado a la solicitud.
               Navigator.pushNamed(context, &#39;&#47;reporte_detalle&#39;,
                   arguments: solicitud.idReporte);
             },

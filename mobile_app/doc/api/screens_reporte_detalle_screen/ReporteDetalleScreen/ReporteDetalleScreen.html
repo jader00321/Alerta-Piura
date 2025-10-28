@@ -59,6 +59,21 @@
 </ol>})
     </section>
     
+<section class="desc markdown">
+  <p>Pantalla que muestra los detalles completos de un reporte ciudadano.</p>
+<p>Carga los datos usando <a href="../../api_reporte_service/ReporteService/getReporteById.html">ReporteService.getReporteById</a>.
+Permite al usuario interactuar con el reporte:</p>
+<ul>
+<li>Dar/Quitar Apoyo (<code>_onSupportReport</code>)</li>
+<li>Seguir/Dejar de seguir (<code>_toggleFollow</code>)</li>
+<li>Añadir/Editar/Eliminar/Reportar comentarios (<a href="../../widgets_reporte_detalle_comments_section/CommentsSection-class.html">CommentsSection</a> callbacks)</li>
+<li>Reportar al autor del comentario (<code>_showReportUserDialog</code>)</li>
+<li>Editar el reporte si es el autor y está pendiente (<code>_handleEditReportAuthor</code>)</li>
+<li>Abrir el chat si es el autor y está pendiente (<code>_handleChatAuthor</code>)</li>
+</ul>
+<p>Utiliza <a href="../../widgets_reporte_detalle_layout_detalle_reporte/LayoutDetalleReporte-class.html">LayoutDetalleReporte</a> para estructurar el contenido.
+Maneja los diferentes estados del reporte (verificado, pendiente, fusionado, oculto).</p>
+</section>
 
 
     

@@ -113,9 +113,11 @@ Widget build(BuildContext context) {
     baseColor: Colors.grey[300]!,
     highlightColor: Colors.grey[100]!,
     child: SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(), &#47;&#47; Deshabilita scroll
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          &#47;&#47;&#47; Placeholder para la imagen del reporte.
           Container(
             height: 250,
             width: double.infinity,
@@ -126,6 +128,7 @@ Widget build(BuildContext context) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                &#47;&#47;&#47; Placeholder para los chips (Categoría, Urgencia).
                 Row(
                   children: [
                     Container(
@@ -144,11 +147,14 @@ Widget build(BuildContext context) {
                   ],
                 ),
                 const SizedBox(height: 12),
+                &#47;&#47;&#47; Placeholder para el título.
                 Container(
                     width: double.infinity, height: 28, color: Colors.white),
                 const SizedBox(height: 8),
-                Container(width: 200, height: 14, color: Colors.white),
-                const Divider(height: 32),
+                Container(width: 200, height: 16, color: Colors.white),
+                const SizedBox(height: 16),
+
+                &#47;&#47;&#47; Placeholder para la [ReporteActionsBar].
                 Row(
                   children: [
                     Container(width: 100, height: 20, color: Colors.white),
@@ -157,6 +163,8 @@ Widget build(BuildContext context) {
                   ],
                 ),
                 const Divider(height: 32),
+
+                &#47;&#47;&#47; Placeholder para la sección de comentarios.
                 Container(width: 150, height: 24, color: Colors.white),
                 const SizedBox(height: 16),
                 _buildCommentPlaceholder(),

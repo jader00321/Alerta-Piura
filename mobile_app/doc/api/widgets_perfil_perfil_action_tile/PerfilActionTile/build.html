@@ -109,19 +109,15 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
-  &#47;&#47; --- CORRECCIÓN: Quitar Card y usar ListTile directamente ---
+  &#47;&#47; Usa ListTile directamente para integrarse mejor en las Card de PerfilScreen.
   return ListTile(
-    leading:
-        Icon(icon, color: color ?? Theme.of(context).colorScheme.primary),
-    title: Text(title,
-        style: TextStyle(color: color, fontWeight: FontWeight.w500)),
-    subtitle:
-        subtitle != null ? Text(subtitle!) : null, &#47;&#47; &lt;-- Mostrar subtítulo
+    leading: Icon(icon, color: color ?? Theme.of(context).colorScheme.primary),
+    title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+    subtitle: subtitle != null ? Text(subtitle!) : null, &#47;&#47; Muestra subtítulo si existe.
     trailing: Icon(Icons.chevron_right, color: color ?? Colors.grey.shade400),
-    onTap: onTap,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    onTap: onTap, &#47;&#47; Ejecuta la acción al tocar.
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), &#47;&#47; Bordes redondeados sutiles.
   );
-  &#47;&#47; --- FIN CORRECCIÓN ---
 }</code></pre>
 </section>
 

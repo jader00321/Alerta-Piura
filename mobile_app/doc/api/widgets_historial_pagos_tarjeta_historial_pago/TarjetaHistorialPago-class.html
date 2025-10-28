@@ -53,6 +53,13 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget de tarjeta que muestra un resumen de una transacción de pago
+en la lista de <a href="../screens_pantalla_historial_pagos/PantallaHistorialPagos-class.html">PantallaHistorialPagos</a>.</p>
+<p>Muestra el estado de la transacción (Aprobado/Fallido) con un icono,
+el nombre del plan, la fecha y el monto pagado.
+Es tappable (<a href="../widgets_historial_pagos_tarjeta_historial_pago/TarjetaHistorialPago/onTap.html">onTap</a>) para navegar a la <a href="../screens_pantalla_detalle_boleta/PantallaDetalleBoleta-class.html">PantallaDetalleBoleta</a>.</p>
+</section>
 
 
     <section>
@@ -88,7 +95,8 @@
           <span class="name"><a href="../widgets_historial_pagos_tarjeta_historial_pago/TarjetaHistorialPago/TarjetaHistorialPago.html">TarjetaHistorialPago.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-pago"><span>required</span> <span class="type-annotation"><a href="../models_historial_pago_model/HistorialPago-class.html">HistorialPago</a></span> <span class="parameter-name">pago</span>, </span><span class="parameter" id="-param-onTap"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onTap</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget de tarjeta que muestra un resumen de una transacción de pago
+en la lista de <a href="../screens_pantalla_historial_pagos/PantallaHistorialPagos-class.html">PantallaHistorialPagos</a>.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -130,7 +138,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al tocar la tarjeta.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +150,7 @@
 
 </dt>
 <dd>
-  
+  Los datos del historial de pago a mostrar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

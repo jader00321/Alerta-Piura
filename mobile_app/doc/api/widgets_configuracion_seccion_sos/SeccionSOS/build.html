@@ -121,6 +121,8 @@ Widget build(BuildContext context) {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const Divider(height: 24),
+
+          &#47;&#47;&#47; Sección de Duración
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text(&#39;Duración del seguimiento en vivo&#39;),
@@ -130,15 +132,17 @@ Widget build(BuildContext context) {
           ),
           Slider(
             value: sosDurationInMinutes,
-            min: 5,
-            max: 30,
-            divisions: 5,
+            min: 5, &#47;&#47; Duración mínima de 5 min.
+            max: 30, &#47;&#47; Duración máxima de 30 min.
+            divisions: 5, &#47;&#47; Pasos de 5 min (5, 10, 15, 20, 25, 30).
             label: &#39;${sosDurationInMinutes.toInt()} min&#39;,
-            onChanged: onDurationChanged,
-            onChangeEnd: onDurationChangeEnd,
+            onChanged: onDurationChanged, &#47;&#47; Actualiza la UI del padre
+            onChangeEnd: onDurationChangeEnd, &#47;&#47; Guarda el valor en el padre
           ),
           const SizedBox(height: 16),
           const Divider(),
+
+          &#47;&#47;&#47; Sección de Contacto de Emergencia
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.contact_emergency_outlined),
@@ -146,6 +150,7 @@ Widget build(BuildContext context) {
             subtitle: const Text(&#39;Añadir o editar el número a notificar.&#39;),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
+              &#47;&#47;&#47; Navega a la pantalla de edición de contacto.
               Navigator.pushNamed(context, &#39;&#47;editar-contacto&#39;);
             },
           ),

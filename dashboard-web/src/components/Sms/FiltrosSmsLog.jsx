@@ -12,15 +12,37 @@ import { Search as SearchIcon, FilterListOff as FilterListOffIcon } from '@mui/i
 import SelectorUsuarioNotificaciones from '../Notificaciones/SelectorUsuarioNotificaciones';
 import { startOfDay, endOfDay, subDays, startOfMonth, endOfMonth } from 'date-fns';
 
+/**
+ * FiltrosSmsLog - Componente de filtros para el log de mensajes SMS
+ * @param {Object} props - Propiedades del componente
+ * @param {Object} props.filters - Objeto con los filtros actuales
+ * @param {function} props.onFilterChange - Callback cuando cambian los filtros
+ * @param {boolean} props.loading - Estado de carga para deshabilitar controles
+ * @returns {JSX.Element}
+ */
 function FiltrosSmsLog({ filters, onFilterChange, loading }) {
 
-  // Handlers (sin cambios)
+  /**
+   * Maneja el cambio en el campo de búsqueda
+   * @param {Object} e - Evento del input
+   */
   const handleInputChange = (e) => {
     onFilterChange({ ...filters, search: e.target.value });
   };
+
+  /**
+   * Maneja el cambio de usuario seleccionado
+   * @param {string} userId - ID del usuario seleccionado
+   */
   const handleUserChange = (userId) => {
     onFilterChange({ ...filters, userId: userId });
   };
+
+  /**
+   * Maneja el cambio de fecha en los date pickers
+   * @param {string} field - Campo de fecha ('startDate' o 'endDate')
+   * @param {Object} date - Objeto dayjs con la fecha
+   */
   const handleDateChange = (field, date) => {
     const newDate = date ? date.toDate() : null;
     let newFilters = { ...filters, [field]: newDate };
@@ -32,6 +54,11 @@ function FiltrosSmsLog({ filters, onFilterChange, loading }) {
     }
     onFilterChange(newFilters);
   };
+
+  /**
+   * Establece un preset de fecha predefinido
+   * @param {string} preset - Tipo de preset ('today', 'last7', 'month')
+   */
   const setDatePreset = (preset) => {
     let start = null, end = null;
     const now = new Date();
@@ -42,6 +69,10 @@ function FiltrosSmsLog({ filters, onFilterChange, loading }) {
     }
     onFilterChange({ ...filters, startDate: start, endDate: end });
   };
+
+  /**
+   * Limpia todos los filtros
+   */
   const handleClear = () => {
     onFilterChange({ search: '', userId: null, startDate: null, endDate: null });
   };

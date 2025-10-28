@@ -43,18 +43,325 @@
   <div id="dartdoc-main-content" class="main-content">
       
 <section class="desc markdown">
-  <h1 id="mobile_app">mobile_app</h1>
-<p>A new Flutter project.</p>
-<h2 id="getting-started">Getting Started</h2>
-<p>This project is a starting point for a Flutter application.</p>
-<p>A few resources to get you started if this is your first Flutter project:</p>
+  <h1 id="reporta-piura-aplicacin-mvil">Reporta Piura (Aplicación Móvil)</h1>
+<p>Aplicación móvil desarrollada en Flutter que sirve como plataforma de reportes ciudadanos y alertas de seguridad para la región de Piura. Permite a los usuarios reportar incidentes, verlos en un mapa, interactuar con otros reportes y solicitar ayuda de emergencia a través de una función SOS.</p>
+<h2 id="-caractersticas-principales">🚀 Características Principales</h2>
+<p>La aplicación se divide en varias funcionalidades clave para distintos roles de usuario:</p>
+<h3 id="para-ciudadanos">Para Ciudadanos</h3>
 <ul>
-<li><a href="https://docs.flutter.dev/get-started/codelab">Lab: Write your first Flutter app</a></li>
-<li><a href="https://docs.flutter.dev/cookbook">Cookbook: Useful Flutter samples</a></li>
+<li><strong>Mapa Interactivo:</strong> Visualización de reportes (verificados y pendientes) en un mapa de la ciudad, con agrupación de marcadores (<code>flutter_map_marker_cluster</code>).</li>
+<li><strong>Creación de Reportes:</strong> Formulario completo para crear nuevos reportes, incluyendo título, descripción, categoría, urgencia, geolocalización y carga de imágenes a Cloudinary.</li>
+<li><strong>Reportes Cercanos:</strong> Una vista de lista que muestra los reportes más cercanos a la ubicación actual del usuario.</li>
+<li><strong>Interacción Social:</strong> Capacidad de "apoyar" reportes, "unirse" a reportes pendientes (para darles prioridad) y "seguir" reportes para recibir actualizaciones.</li>
+<li><strong>Sistema de Comentarios:</strong> Sección de comentarios en cada reporte verificado.</li>
+<li><strong>Autenticación:</strong> Flujo completo de registro e inicio de sesión con JWT.</li>
+<li><strong>Perfil de Usuario:</strong> Visualización de puntos, insignias y gestión de datos personales.</li>
 </ul>
-<p>For help getting started with Flutter development, view the
-<a href="https://docs.flutter.dev/">online documentation</a>, which offers tutorials,
-samples, guidance on mobile development, and a full API reference.</p>
+<h3 id="para-usuarios-premium">Para Usuarios Premium</h3>
+<ul>
+<li><strong>Alerta SOS:</strong> Botón de pánico que activa un seguimiento en segundo plano (<code>flutter_background_service</code>), envía la ubicación en tiempo real al backend y simula notificaciones a contactos de emergencia.</li>
+<li><strong>Zonas Seguras:</strong> Creación de zonas geográficas personalizadas (ej. "Casa", "Trabajo") para recibir notificaciones proactivas si un reporte peligroso es verificado dentro de esa área.</li>
+<li><strong>Panel Analítico:</strong> Visualización de gráficos estadísticos sobre la incidencia de reportes en la ciudad.</li>
+<li><strong>Reportes Prioritarios:</strong> Los reportes creados por usuarios premium se marcan visualmente como prioritarios.</li>
+</ul>
+<h3 id="para-lderes-vecinales-moderadores">Para Líderes Vecinales (Moderadores)</h3>
+<ul>
+<li><strong>Panel de Verificación:</strong> Vistas separadas para reportes pendientes, historial de moderación y reportes de contenido (comentarios/usuarios) generados por el líder.</li>
+<li><strong>Gestión de Reportes:</strong> Acciones para aprobar, rechazar, editar y fusionar reportes duplicados.</li>
+<li><strong>Chat en Tiempo Real:</strong> Capacidad de chatear (<code>socket_io_client</code>) con los autores de reportes pendientes para solicitar más información.</li>
+<li><strong>Solicitud de Revisión:</strong> Opción para escalar un caso a un administrador.</li>
+</ul>
+<h2 id="-stack-tecnolgico-frontend">🛠️ Stack Tecnológico (Frontend)</h2>
+<ul>
+<li><strong>Framework:</strong> Flutter (Dart)</li>
+<li><strong>Gestión de Estado:</strong> Provider</li>
+<li><strong>Cliente HTTP:</strong> <code>http</code></li>
+<li><strong>Comunicación Real-Time:</strong> <code>socket_io_client</code></li>
+<li><strong>Mapas:</strong> <code>flutter_map</code>, <code>flutter_map_marker_cluster</code>, <code>latlong2</code></li>
+<li><strong>Geolocalización y Permisos:</strong> <code>geolocator</code>, <code>permission_handler</code></li>
+<li><strong>Tareas en Segundo Plano:</strong> <code>flutter_background_service</code></li>
+<li><strong>Notificaciones Locales:</strong> <code>flutter_local_notifications</code></li>
+<li><strong>UI y Componentes:</strong> <code>intl</code> (internacionalización), <code>shimmer</code> (esqueletos de carga), <code>image_picker</code>, <code>fl_chart</code> (gráficos), <code>pdf</code> (generación de PDFs).</li>
+</ul>
+<hr>
+<h2 id="-cmo-empezar-gua-de-instalacin-completa">🚀 Cómo Empezar: Guía de Instalación Completa</h2>
+<p>Para ejecutar el proyecto completo, necesitas tener el Backend y la Aplicación Móvil corriendo simultáneamente.</p>
+<h3 id="parte-1-configurar-el-backend-servidor">Parte 1: Configurar el Backend (Servidor)</h3>
+<ol>
+<li>
+<p><strong>Navegar al Backend:</strong></p>
+<pre class="language-bash"><code class="language-bash">cd backend
+</code></pre>
+</li>
+<li>
+<p><strong>Instalar Dependencias:</strong></p>
+<pre class="language-bash"><code class="language-bash">npm install
+</code></pre>
+</li>
+<li>
+<p><strong>Configurar Base de Datos (PostgreSQL):</strong></p>
+<ul>
+<li>Asegúrate de tener PostgreSQL instalado y corriendo.</li>
+<li>Crea una base de datos (ej. <code>alerta_piura_db</code>).</li>
+<li><strong>Importante:</strong> Restaura la estructura y datos de la base de datos usando el archivo <code>reporte_alerta.sql</code> que me proporcionaste.
+<pre class="language-bash"><code class="language-bash">psql -U tu_usuario -d alerta_piura_db &lt; ruta/al/archivo/reporte_alerta.sql
+</code></pre>
+</li>
+<li>Asegúrate de que la extensión <code>postgis</code> esté habilitada en tu base de datos: <code>CREATE EXTENSION postgis;</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Configurar Variables de Entorno:</strong></p>
+<ul>
+<li>Crea un archivo <code>.env</code> en la carpeta <code>backend/</code>.</li>
+<li>Copia y pega el siguiente contenido (basado en tu archivo <code>.env</code>) y <strong>ajusta tus credenciales</strong>:</li>
+</ul>
+<pre class="language-env"><code class="language-env"># Variables del Servidor
+PORT=3000
+
+# Credenciales de tu Base de Datos PostgreSQL
+DB_USER=postgres
+DB_PASSWORD=tu_password_de_postgres
+DB_HOST=localhost
+DB_PORT=5432
+DB_DATABASE=alerta_piura_db
+
+# Secreto para firmar los JSON Web Tokens (JWT)
+JWT_SECRET=tu-secreto-jwt-super-seguro-aqui
+
+# Credenciales de Cloudinary (para subida de imágenes)
+CLOUDINARY_CLOUD_NAME=tu_cloud_name
+CLOUDINARY_API_KEY=tu_api_key
+CLOUDINARY_API_SECRET=tu_api_secret
+</code></pre>
+</li>
+<li>
+<p><strong>Iniciar el Servidor Backend:</strong></p>
+<pre class="language-bash"><code class="language-bash">npm run dev
+</code></pre>
+<ul>
+<li>El servidor ahora debería estar corriendo en <code>http://localhost:3000</code>.</li>
+</ul>
+</li>
+</ol>
+<h3 id="parte-2-configurar-la-aplicacin-mvil-flutter">Parte 2: Configurar la Aplicación Móvil (Flutter)</h3>
+<ol>
+<li>
+<p><strong>Navegar a la App Móvil (en otra terminal):</strong></p>
+<pre class="language-bash"><code class="language-bash">cd mobile_app
+</code></pre>
+</li>
+<li>
+<p><strong>Instalar Dependencias:</strong></p>
+<pre class="language-bash"><code class="language-bash">flutter pub get
+</code></pre>
+</li>
+<li>
+<p><strong>Configurar la Conexión a la API:</strong></p>
+<ul>
+<li>Abre el archivo <code>lib/utils/api_constants.dart</code>.</li>
+<li><strong>¡ESTE ES EL PASO MÁS IMPORTANTE!</strong> Debes cambiar la IP.</li>
+<li>Si estás usando un <strong>Emulador de Android</strong>, la IP <code>10.0.2.2</code> suele funcionar para conectarse al <code>localhost</code> de tu PC:
+<pre class="language-dart"><code class="language-dart">static String baseUrl = Platform.isAndroid ? '[http://10.0.2.2:3000](http://10.0.2.2:3000)' : 'http://localhost:3000';
+</code></pre>
+</li>
+<li>Si estás usando un <strong>Dispositivo Físico (Android o iOS)</strong>, debes usar la IP de tu computadora en la red Wi-Fi (ej. <code>192.168.1.100</code>). Encuentra tu IP (con <code>ipconfig</code> o <code>ifconfig</code>) y ponla:
+<pre class="language-dart"><code class="language-dart">// Ejemplo con tu IP proporcionada
+static String baseUrl = '[http://192.168.100.5:3000](http://192.168.100.5:3000)';
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Ejecutar la Aplicación:</strong></p>
+<pre class="language-bash"><code class="language-bash">flutter run
+</code></pre>
+</li>
+</ol>
+<p>¡Si ambos servicios están corriendo, ahora deberías poder registrarte, iniciar sesión y usar la aplicación completa!</p>
+<hr>
+<h2 id="-estructura-del-proyecto-app-movil">📁 Estructura del Proyecto: app movil.</h2>
+<p>mobile_app/
+├── .flutter-plugins-dependencies  – (Archivo autogenerado) Registra las dependencias nativas.
+├── pubspec.lock                     – (Archivo autogenerado) Fija las versiones exactas de todos los paquetes.
+├── pubspec.yaml                     – (Archivo clave) Define las dependencias, assets y fuentes de la app.
+│
+└── lib/
+├── main.dart                    – (Punto de Entrada) Inicializa la app, servicios (SOS, Notif.), providers y define las rutas.
+├── navigator_key.dart           – (Utilidad Clave) Clave global para permitir la navegación desde servicios (ej. Notificaciones).
+│
+├── 📁 api/                       – (Capa de Red) Clases que realizan llamadas HTTP directas al backend.
+│   ├── 📄 analiticas_service.dart    – Obtiene los datos para los gráficos del panel analítico (Premium).
+│   ├── 📄 auth_service.dart         – Maneja las llamadas de /login y /register.
+│   ├── 📄 gamificacion_service.dart – Obtiene los datos de insignias y puntos del usuario.
+│   ├── 📄 lider_service.dart        – Endpoints para el rol de Líder (aprobar, rechazar, fusionar, listas).
+│   ├── 📄 metodo_pago_service.dart  – Maneja el CRUD (Crear, Leer, Eliminar) de las tarjetas de pago.
+│   ├── 📄 perfil_service.dart       – Endpoints para el perfil (mis reportes, mis zonas, postular).
+│   ├── 📄 reporte_service.dart      – El servicio más grande; maneja CRUD de reportes y comentarios.
+│   ├── 📄 seguimiento_service.dart  – Maneja la lógica de "seguir" y "dejar de seguir" un reporte.
+│   ├── 📄 servicio_suscripcion.dart – Obtiene planes, procesa suscripciones y cancelaciones.
+│   └── 📄 sos_service.dart          – Endpoints para activar, actualizar ubicación y desactivar el SOS.
+│
+├── 📁 dialogs/                   – Widgets que se muestran como diálogos emergentes.
+│   └── 📄 dialogo_detalle_pendiente.dart – (Archivo eliminado/comentado) Solía mostrar un pop-up para reportes pendientes.
+│
+├── 📁 models/                    – (Capa de Datos) Clases que definen la estructura de los datos.
+│   ├── 📄 boleta_detalle_model.dart     – Define la estructura de una factura/recibo detallado.
+│   ├── 📄 categoria_model.dart        – Define la estructura simple de una Categoría (ID, Nombre).
+│   ├── 📄 chat_message_model.dart   – Define la estructura de un mensaje del chat en tiempo real.
+│   ├── 📄 comentario_model.dart       – Define la estructura de un comentario de usuario en un reporte.
+│   ├── 📄 conversacion_model.dart     – Define el item para la lista "Mis Conversaciones" (Líder).
+│   ├── 📄 estadisticas_model.dart     – Define las estructuras <code>EstadisticasResumen</code> y <code>DatoGrafico</code>.
+    │   ├── 📄 historial_pago_model.dart   – Define el item para la lista "Historial de Pagos".
+    │   ├── 📄 insignia_detalle_model.dart – Define la estructura de una insignia y su progreso (<code>ProgresoInsignias</code>).
+    │   ├── 📄 insignia_model.dart         – Define la estructura de una insignia básica (usado en <code>Perfil</code>).
+    │   ├── 📄 metodo_pago_model.dart      – Define la estructura de una tarjeta de pago guardada.
+    │   ├── 📄 notificacion_model.dart     – Define el item para la lista "Mis Notificaciones".
+    │   ├── 📄 perfil_model.dart           – Define la estructura del perfil de usuario (puntos, plan, etc.).
+    │   ├── 📄 plan_suscripcion_model.dart – Define la estructura de un plan de suscripción.
+    │   ├── 📄 reporte_cercano_model.dart  – Modelo para "Cerca de Ti", incluye <code>distanciaMetros</code> y <code>usuarioActualUnido</code>.
+    │   ├── 📄 reporte_detallado_model.dart – El modelo más grande; para la vista de detalle de un reporte.
+    │   ├── 📄 reporte_historial_moderado_model.dart – Modelo para la lista "Historial" del Líder.
+    │   ├── 📄 reporte_model.dart          – Modelo básico de reporte para los pines del mapa.
+    │   ├── 📄 reporte_moderacion_model.dart – Modelo para reportes <em>sobre</em> comentarios o usuarios.
+    │   ├── 📄 reporte_pendiente_model.dart – Modelo para la lista "Pendientes" del Líder.
+    │   ├── 📄 reporte_resumen_model.dart  – Modelo flexible usado en las listas de "Mi Actividad".
+    │   ├── 📄 solicitud_revision_model.dart – Modelo para la lista "Solicitudes de Revisión" del Líder.
+    │   └── 📄 zona_segura_model.dart      – Define la estructura de una Zona Segura (Premium).
+    │
+    ├── 📁 screens/                    – (Capa de Vistas) Pantallas completas, 1 por cada ruta principal.
+    │   ├── 📄 chat_screen.dart            – Pantalla del chat en tiempo real (Líder &lt;-&gt; Usuario).
+    │   ├── 📄 conversaciones_screen.dart   – Lista de todos los chats de un Líder.
+    │   ├── 📄 create_report_screen.dart   – Formulario para crear un nuevo reporte.
+    │   ├── 📄 editar_contacto_screen.dart – Formulario para editar el contacto de emergencia del SOS (usa SharedPreferences).
+    │   ├── 📄 editar_perfil_screen.dart   – Pantalla que combina <code>SeccionDatosPersonales</code> y <code>SeccionSeguridad</code>.
+    │   ├── 📄 home_screen.dart            – Pantalla principal que contiene la <code>BottomNavigationBar</code> y el <code>PageView</code> de las 4 pestañas.
+    │   ├── 📄 login_screen.dart           – Pantalla de inicio de sesión.
+    │   ├── 📄 mapa_view.dart              – La pantalla del mapa interactivo (Pestaña 1).
+    │   ├── 📄 mi_actividad_screen.dart    – Pantalla con pestañas de la actividad del usuario (Pestaña 3 - Ciudadano).
+    │   ├── 📄 pantalla_agregar_metodo_pago.dart – Formulario para añadir una nueva tarjeta.
+    │   ├── 📄 pantalla_alertas.dart       – Muestra la lista de notificaciones (historial).
+    │   ├── 📄 pantalla_alertas_personalizadas.dart – (Premium) Muestra la lista de Zonas Seguras.
+    │   ├── 📄 pantalla_buscar_reporte_original.dart – (Líder) Buscador de reportes para fusionar.
+    │   ├── 📄 pantalla_cerca_de_ti.dart   – Muestra la lista de reportes cercanos (Pestaña 2).
+    │   ├── 📄 pantalla_crear_zona.dart    – (Premium) Pantalla con mapa para definir una Zona Segura.
+    │   ├── 📄 pantalla_detalle_boleta.dart – Muestra el detalle de una transacción (recibo).
+    │   ├── 📄 pantalla_detalle_pendiente_vista.dart – Vista rápida de un reporte pendiente (desde "Cerca de Ti").
+    │   ├── 📄 pantalla_editar_reporte_autor.dart – Formulario para que el autor edite un reporte <em>pendiente</em>.
+    │   ├── 📄 pantalla_editar_reporte_lider.dart – (Líder) Formulario para que el líder edite un reporte <em>pendiente</em>.
+    │   ├── 📄 pantalla_estadisticas_personales.dart – (Premium) Muestra gráficos de la actividad <em>propia</em> del usuario.
+    │   ├── 📄 pantalla_gestionar_suscripcion.dart – (Premium) Permite ver el plan actual y cancelar.
+    │   ├── 📄 pantalla_historial_pagos.dart – Muestra la lista de transacciones de pago.
+    │   ├── 📄 pantalla_informes_guardados.dart – (Premium/Reportero) Muestra los PDFs generados y guardados localmente.
+    │   ├── 📄 pantalla_insignias.dart     – Muestra el progreso de puntos e insignias del usuario.
+    │   ├── 📄 pantalla_metodos_pago.dart  – Muestra, edita y elimina las tarjetas guardadas.
+    │   ├── 📄 pantalla_pago.dart          – Pantalla de checkout para seleccionar/ingresar tarjeta y pagar.
+    │   ├── 📄 pantalla_panel_analitico.dart – (Premium/Reportero) Muestra gráficos de analíticas <em>globales</em>.
+    │   ├── 📄 pantalla_planes_suscripcion.dart – Muestra la lista de planes de suscripción para comprar.
+    │   ├── 📄 perfil_screen.dart          – Pantalla de perfil del usuario (Pestaña 4).
+    │   ├── 📄 register_screen.dart        – Pantalla de registro de nuevo usuario.
+    │   ├── 📄 reporte_detalle_screen.dart – Pantalla de detalle de un reporte (con comentarios, apoyo, etc.).
+    │   ├── 📄 settings_screen.dart        – Pantalla de Configuración (Tema, SOS, Notificaciones).
+    │   ├── 📄 splash_screen.dart          – Pantalla de carga inicial, verifica el token de sesión.
+    │   ├── 📄 verificacion_detalle_screen.dart – (Líder) Pantalla para moderar un reporte (Aprobar, Rechazar, Fusionar).
+    │   └── 📄 verificacion_screen.dart    – (Líder) Panel principal con pestañas "Pendientes", "Historial", etc. (Pestaña 3 - Líder).
+    │
+    ├── 📁 services/                    – (Capa de Lógica) Servicios complejos, de fondo o en tiempo real.
+    │   ├── 📄 background_service.dart     – Maneja el Isolate de fondo para el seguimiento GPS del SOS (timers, geolocator).
+    │   ├── 📄 notification_service.dart   – Maneja la creación y el "tap" en notificaciones locales (usa <code>navigator_key</code>).
+    │   ├── 📄 servicio_pdf.dart         – Lógica para generar el archivo PDF de analíticas en el cliente.
+    │   └── 📄 socket_service.dart         – Maneja la conexión WebSocket (Socket.IO) para chat y notificaciones.
+    │
+    ├── 📁 utils/                      – Clases de utilidad y constantes.
+    │   └── 📄 api_constants.dart          – Define la <code>baseUrl</code> del backend (ej. <code>http://192...</code>).
+    │
+    └── 📁 widgets/                     – (Capa de Componentes) Componentes de UI reutilizables.
+        ├── 📁 alertas_personalizadas/    – Widgets para la pantalla de Zonas Seguras.
+        │   └── 📄 tarjeta_zona_segura.dart    – Muestra el mini-mapa y nombre de una zona.
+        ├── 📁 boletas/                   – Widgets para la pantalla de Detalle de Boleta.
+        │   └── 📄 tarjeta_detalle_boleta.dart – Muestra el recibo de pago detallado.
+        ├── 📁 cerca_de_ti/               – Widgets para la pantalla "Cerca de Ti".
+        │   ├── 📄 panel_filtros_cercanos.dart – El panel deslizable de filtros.
+        │   └── 📄 tarjeta_reporte_cercano.dart  – La tarjeta de item de reporte, con lógica de "Unirse".
+        ├── 📁 configuracion/             – Widgets para la pantalla de Configuración.
+        │   ├── 📄 seccion_apariencia.dart   – Contiene el switch de Modo Oscuro.
+        │   ├── 📄 seccion_notificaciones.dart – Contiene el enlace al historial de notificaciones.
+        │   └── 📄 seccion_sos.dart          – Contiene el slider de duración y el enlace a "Editar Contacto".
+        ├── 📁 crear_reporte/             – Secciones del formulario de creación de reportes.
+        │   ├── 📄 seccion_acciones_finales.dart – Contiene los botones de "Anónimo", "Ubicación" y "Enviar".
+        │   ├── 📄 seccion_detalles_adicionales.dart – Campos opcionales (descripción, tags, impacto, etc.).
+        │   ├── 📄 seccion_detalles_principales.dart – Campos principales (título, categoría, urgencia).
+        │   └── 📄 seccion_evidencia.dart    – Contiene el widget para seleccionar/ver la imagen.
+        ├── 📁 editar_perfil/             – Secciones del formulario de edición de perfil.
+        │   ├── 📄 seccion_datos_personales.dart – Formulario para nombre, alias, email (requiere contraseña).
+        │   └── 📄 seccion_seguridad.dart    – Formulario para cambiar la contraseña.
+        ├── 📁 esqueletos/                – (UX) Placeholders de carga con efecto "shimmer".
+        │   ├── 📄 esqueleto_detalle_boleta.dart  – Placeholder para el detalle de la boleta.
+        │   ├── 📄 esqueleto_historial_pagos.dart – Placeholder para la lista de historial de pagos.
+        │   ├── 📄 esqueleto_lista_actividad.dart – Placeholder genérico para listas (usado en Mi Actividad, Verificación).
+        │   ├── 📄 esqueleto_lista_notificaciones.dart – Placeholder para listas simples (Notificaciones, Métodos de Pago).
+        │   ├── 📄 esqueleto_lista_planes.dart  – Placeholder para la lista de planes de suscripción.
+        │   ├── 📄 esqueleto_lista_reportes.dart  – Placeholder para la lista "Cerca de Ti".
+        │   ├── 📄 esqueleto_mapa.dart         – Placeholder para la pantalla principal del mapa.
+        │   ├── 📄 esqueleto_perfil.dart       – Placeholder para la pantalla de perfil.
+        │   └── 📄 esqueleto_reporte_detalle.dart – Placeholder para la pantalla de detalle de reporte.
+        ├── 📁 historial_pagos/           – Widgets para la lista de historial de pagos.
+        │   └── 📄 tarjeta_historial_pago.dart – La tarjeta de item para un pago en la lista.
+        ├── 📁 home/                      – Widgets para la <code>HomeScreen</code> o <code>MapaView</code>.
+        │   ├── 📄 bottom_nav_bar.dart       – (Archivo eliminado/sin usar) Un diseño alternativo de la barra de navegación.
+        │   └── 📄 top_search_bar.dart       – La barra de búsqueda y el avatar de perfil en el mapa.
+        ├── 📁 login/                     – Componentes de la pantalla de Login.
+        │   ├── 📄 login_actions.dart        – Contiene el botón "Iniciar Sesión" y el enlace a "Registrarse".
+        │   ├── 📄 login_form_fields.dart    – Contiene los campos de Email y Contraseña.
+        │   └── 📄 login_header.dart         – Muestra el logo y título en la pantalla de login.
+        ├── 📁 mapa/                      – Widgets principales para <code>MapaView</code>.
+        │   ├── 📄 acciones_mapa.dart        – Agrupa los FABs (Filtro, Ubicación, Reportar, SOS).
+        │   ├── 📄 capa_mapa_base.dart       – Renderiza el <code>FlutterMap</code> y la capa de marcadores clusterizados.
+        │   ├── 📄 indicador_riesgo.dart     – El chip que muestra el nivel de riesgo de la zona.
+        │   ├── 📄 panel_filtros_avanzados.dart – El panel deslizable de filtros para el mapa.
+        │   ├── 📄 pin_pulsante.dart         – La animación de pin en el centro del mapa.
+        │   └── 📄 report_summary_sheet.dart – El modal que se muestra al tocar un pin del mapa.
+        ├── 📁 mi_actividad/              – Widgets para la pantalla "Mi Actividad".
+        │   ├── 📄 activity_list_view.dart     – Widget reutilizable que renderiza las listas de las pestañas.
+        │   ├── 📄 dialogo_postulacion_lider.dart – El diálogo emergente para postular a líder.
+        │   ├── 📄 solicitudes_revision_view.dart – La vista de lista para la pestaña "Revisiones" del Líder.
+        │   ├── 📄 tarjeta_actividad.dart      – La tarjeta <em>unificada</em> y dinámica que se adapta a cada pestaña (Mis Reportes, Apoyos, etc.).
+        │   └── 📄 tarjeta_mi_reporte.dart   – (Archivo eliminado/redundante) Versión anterior de <code>tarjeta_actividad</code>.
+        ├── 📁 pago/                      – Widgets para el flujo de pago.
+        │   ├── 📄 formulario_pago.dart      – Componente reutilizable con los campos de tarjeta (sin <code>Form</code>).
+        │   └── 📄 resumen_pago.dart         – Muestra el resumen del plan seleccionado en el checkout.
+        ├── 📁 perfil/                    – Widgets para la pantalla de Perfil.
+        │   ├── 📄 insignia_estatus_widget.dart – Muestra el estatus/rol principal (Ej. "Líder Vecinal", "Premium").
+        │   ├── 📄 perfil_action_tile.dart   – El <code>ListTile</code> reutilizable para las acciones/enlaces del perfil.
+        │   └── 📄 perfil_header_card.dart   – La tarjeta superior con el avatar, nombre y puntos.
+        ├── 📁 planes/                    – Widgets para la pantalla de Planes.
+        │   └── 📄 tarjeta_plan.dart         – Muestra un plan de suscripción, sus características y el botón de "Seleccionar".
+        ├── 📁 registro/                  – Componentes de la pantalla de Registro.
+        │   ├── 📄 register_actions.dart     – Contiene el botón "Registrarse".
+        │   ├── 📄 register_form_fields.dart – Contiene todos los campos del formulario de registro.
+        │   └── 📄 register_header.dart      – Muestra el título en la pantalla de registro.
+        ├── 📁 reporte_detalle/           – Widgets para la pantalla de Detalle de Reporte.
+        │   ├── 📄 campo_comentario.dart     – El campo de texto y botón para enviar un comentario.
+        │   ├── 📄 comments_section.dart     – Renderiza la lista de comentarios, con lógica de menú (editar, eliminar, reportar).
+        │   ├── 📄 layout_detalle_reporte.dart – El widget de maquetación principal que organiza el detalle.
+        │   ├── 📄 merge_notification_card.dart – Tarjeta especial para mostrar comentarios de fusión.
+        │   ├── 📄 reporte_actions_bar.dart  – La barra con los botones de "Apoyar" y el contador de comentarios.
+        │   ├── 📄 reporte_header.dart       – Muestra la información principal (imagen, título, descripción, etc.).
+        │   └── 📄 vistas_estado_reporte.dart – Muestra vistas especiales (ej. "Reporte Fusionado", "Reporte Oculto").
+        └── 📁 verificacion/              – Widgets para el panel de moderación del Líder.
+            ├── 📄 acciones_moderacion.dart        – La barra inferior con botones (Aprobar, Rechazar, Fusionar).
+            ├── 📄 cabezal_detalle_verificacion.dart – (Helper) Construye el AppBar de la pantalla de detalle.
+            ├── 📄 cuerpo_detalle_verificacion.dart – (Obsoleto/Redundante) Antigua maquetación, reemplazada por <code>layout_detalle_verificacion</code>.
+            ├── 📄 dialogo_solicitud_revision.dart – Diálogo para que el líder pida revisión a un admin.
+            ├── 📄 filtros_historial.dart      – Los chips de filtro para la pestaña "Historial".
+            ├── 📄 filtros_pendientes.dart     – La barra de búsqueda y filtros para la pestaña "Pendientes".
+            ├── 📄 layout_detalle_verificacion.dart – La maquetación de la pantalla de detalle (usa <code>ReporteHeader</code> y <code>MapaVerificacion</code>).
+            ├── 📄 lista_reportes_verificacion.dart – Widget con estado clave que maneja la paginación y filtros de "Pendientes" e "Historial".
+            ├── 📄 mapa_verificacion.dart      – El mini-mapa (no interactivo) para la pantalla de detalle.
+            ├── 📄 mis_reportes_moderacion_view.dart – Widget con estado que maneja la lista de "Mis Reportes" (de contenido).
+            ├── 📄 tarjeta_historial_moderado.dart – La tarjeta de item para la lista "Historial".
+            ├── 📄 tarjeta_moderacion_reporte.dart – La tarjeta de item para la lista "Mis Reportes" (de contenido).
+            └── 📄 tarjeta_verificacion.dart   – La tarjeta de item para la lista "Pendientes".</p>
 </section>
 
 

@@ -5,7 +5,15 @@ import {
     DragIndicator as DragIndicatorIcon, Delete as DeleteIcon,
     CheckCircleOutline as CheckIcon, HourglassEmpty as PendingIcon, CancelOutlined as RejectIcon
 } from '@mui/icons-material';
-
+/**
+ * Componente para mostrar estadísticas de una categoría.
+ * @param {Object} param0 - Props del componente.
+ * @param {ReactNode} param0.icon - Icono a mostrar en el chip.
+ * @param {number} param0.count - Cantidad a mostrar en el chip.
+ * @param {string} param0.color - Color del chip.
+ * @param {string} param0.tooltip - Texto del tooltip.
+ * @returns {JSX.Element} Componente de chip con estadísticas.
+ */
 // StatChip reutilizado (podría moverse a Comunes)
 const StatChip = ({ icon, count = 0, color, tooltip }) => ( // Default count a 0
     <Tooltip title={`${count} ${tooltip}`}>
@@ -25,7 +33,12 @@ const StatChip = ({ icon, count = 0, color, tooltip }) => ( // Default count a 0
     </Tooltip>
 );
 
-
+/**
+ *
+ *
+ * @param {*} { category, provided, snapshot, onDelete }
+ * @return {*} 
+ */
 function ItemCategoriaOficial({ category, provided, snapshot, onDelete }) {
   const isOtro = category.nombre.toLowerCase() === 'otro';
 

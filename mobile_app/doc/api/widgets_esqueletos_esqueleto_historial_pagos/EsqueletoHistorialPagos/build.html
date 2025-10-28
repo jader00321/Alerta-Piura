@@ -112,10 +112,13 @@ Widget build(BuildContext context) {
   return Shimmer.fromColors(
     baseColor: Colors.grey[300]!,
     highlightColor: Colors.grey[100]!,
+    &#47;&#47; Deshabilita el scroll del ListView para que el RefreshIndicator padre funcione.
     child: ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(8.0),
-      itemCount: 7, &#47;&#47; Muestra 7 placeholders
+      itemCount: 7, &#47;&#47; Muestra 7 placeholders para llenar la pantalla.
       itemBuilder: (context, index) {
+        &#47;&#47;&#47; Simulación de una [TarjetaHistorialPago] individual.
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
           child: ListTile(

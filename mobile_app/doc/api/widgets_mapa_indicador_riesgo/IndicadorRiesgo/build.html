@@ -109,28 +109,31 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47; Obtiene el nivel de riesgo actual.
   final riskLevel = _getRiskLevel(riesgoScore);
 
+  &#47;&#47;&#47; [AnimatedSwitcher] anima el cambio entre widgets (basado en la Key).
   return AnimatedSwitcher(
-    duration: const Duration(milliseconds: 500),
+    duration: const Duration(milliseconds: 500), &#47;&#47; Duración de la transición
     child: Container(
+      &#47;&#47; La Key (basada en la etiqueta) le dice al AnimatedSwitcher
+      &#47;&#47; que el widget ha cambiado y debe animar.
       key: ValueKey&lt;String&gt;(riskLevel.label),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: riskLevel.color,
+        color: riskLevel.color, &#47;&#47; Color de fondo dinámico
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(64), &#47;&#47; CORREGIDO
+            color: Colors.black.withAlpha(64), &#47;&#47; Sombra sutil
             blurRadius: 5,
             offset: const Offset(0, 3),
           )
         ],
       ),
       child: Text(
-        riskLevel.label,
-        style:
-            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        riskLevel.label, &#47;&#47; Etiqueta de texto dinámica
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       ),
     ),
   );

@@ -128,16 +128,19 @@ Widget build(BuildContext context) {
           ),
           const SizedBox(height: 16),
           Text(
+            &#47;&#47; Mensaje explicando la fusión y mostrando el ID del reporte actual.
             &#39;Este reporte (ID: ${reporte.id}) se marcó como duplicado. Puedes ver la información original o seguir al reporte principal.&#39;,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 24),
+          &#47;&#47; Botón para navegar al reporte original (si existe el ID).
           if (reporte.idReporteOriginal != null)
             ElevatedButton.icon(
               icon: const Icon(Icons.link),
               label: const Text(&#39;Ver Reporte Original&#39;),
               onPressed: () {
+                &#47;&#47; Reemplaza la pantalla actual con el detalle del reporte original.
                 Navigator.pushReplacementNamed(
                   context,
                   &#39;&#47;reporte_detalle&#39;,

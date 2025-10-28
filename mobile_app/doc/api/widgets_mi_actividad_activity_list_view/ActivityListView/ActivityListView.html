@@ -66,6 +66,18 @@
 </ol>})
     </section>
     
+<section class="desc markdown">
+  <p>Widget reutilizable <strong>sin estado</strong> que muestra una lista de reportes
+resumidos (<a href="../../models_reporte_resumen_model/ReporteResumen-class.html">ReporteResumen</a>) para las diferentes pestañas de la pantalla
+<a href="../../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a>.</p>
+<p>Recibe la lista de reportes ya cargada, el estado de carga y los callbacks
+necesarios desde su widget padre (<a href="../../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a>), que es el
+encargado de gestionar el estado y la lógica de carga de datos.
+Utiliza <a href="../../widgets_mi_actividad_tarjeta_actividad/TarjetaActividad-class.html">TarjetaActividad</a> para renderizar cada elemento, pasándole el <a href="../../widgets_mi_actividad_activity_list_view/ActivityListView/fetcher.html">fetcher</a>
+para adaptar la UI.
+Maneja los estados de carga inicial, lista vacía y permite refrescar
+mediante <code>RefreshIndicator</code>.</p>
+</section>
 
 
     

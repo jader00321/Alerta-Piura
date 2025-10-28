@@ -109,20 +109,24 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47;&#47; Consumer para que [MaterialApp] se reconstruya si cambia el tema.
   return Consumer&lt;ThemeProvider&gt;(
     builder: (context, themeProvider, child) {
       return MaterialApp(
         title: &#39;Reporta Piura&#39;,
+        &#47;&#47;&#47; Asigna la clave global para navegación desde fuera del BuildContext.
         navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
-        themeMode:
-            themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+        themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+
+        &#47;&#47;&#47; Definición del Tema Claro
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.teal, brightness: Brightness.light),
           useMaterial3: true,
           brightness: Brightness.light,
         ),
+        &#47;&#47;&#47; Definición del Tema Oscuro
         darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.teal,
@@ -131,6 +135,8 @@ Widget build(BuildContext context) {
           useMaterial3: true,
           brightness: Brightness.dark,
         ),
+
+        &#47;&#47;&#47; Configuración de Localización
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
@@ -140,8 +146,11 @@ Widget build(BuildContext context) {
           Locale(&#39;es&#39;, &#39;ES&#39;),
         ],
         locale: const Locale(&#39;es&#39;, &#39;ES&#39;),
+
+        &#47;&#47;&#47; Rutas de Navegación
         initialRoute: &#39;&#47;&#39;,
         routes: {
+          &#47;&#47;&#47; Rutas Estáticas (sin argumentos)
           &#39;&#47;&#39;: (context) =&gt; const SplashScreen(),
           &#39;&#47;home&#39;: (context) =&gt; const HomeScreen(),
           &#39;&#47;login&#39;: (context) =&gt; const LoginScreen(),
@@ -175,6 +184,7 @@ Widget build(BuildContext context) {
               const PantallaBuscarReporteOriginal(),
           &#39;&#47;insignias&#39;: (context) =&gt; const PantallaInsignias(),
         },
+        &#47;&#47;&#47; Rutas Dinámicas (con argumentos)
         onGenerateRoute: (settings) {
           if (settings.name == &#39;&#47;reporte_detalle&#39;) {
             final args = settings.arguments as int;
@@ -211,7 +221,7 @@ Widget build(BuildContext context) {
             return MaterialPageRoute(
                 builder: (context) =&gt; PantallaPago(plan: args));
           }
-          return null;
+          return null; &#47;&#47; Ruta no encontrada
         },
       );
     },

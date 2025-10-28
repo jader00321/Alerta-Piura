@@ -2,14 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/api/metodo_pago_service.dart';
 import 'package:mobile_app/widgets/pago/formulario_pago.dart';
 
+/// {@template pantalla_agregar_metodo_pago}
+/// Pantalla de formulario para añadir un nuevo método de pago (tarjeta).
+///
+/// Utiliza el widget reutilizable [FormularioPago] para los campos de la tarjeta.
+/// {@endtemplate}
 class PantallaAgregarMetodoPago extends StatefulWidget {
+  /// {@macro pantalla_agregar_metodo_pago}
   const PantallaAgregarMetodoPago({super.key});
   @override
   State<PantallaAgregarMetodoPago> createState() =>
       _PantallaAgregarMetodoPagoState();
 }
 
-class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
+/// Estado para [PantallaAgregarMetodoPago].
+class _PantallaAgregarMetodoPagoState
+    extends State<PantallaAgregarMetodoPago> {
   final _formKey = GlobalKey<FormState>();
   final _numeroTarjetaController = TextEditingController();
   final _fechaExpController = TextEditingController();
@@ -27,6 +35,8 @@ class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
     super.dispose();
   }
 
+  /// Valida el formulario y envía los datos de la nueva tarjeta a
+  /// [MetodoPagoService.crearMetodo].
   Future<void> _guardarMetodo() async {
     if (!_formKey.currentState!.validate() || _isLoading) {
       return;
@@ -45,9 +55,8 @@ class _PantallaAgregarMetodoPagoState extends State<PantallaAgregarMetodoPago> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(success
-            ? 'Tarjeta guardada con éxito.'
-            : 'Error al guardar la tarjeta.'),
+        content: Text(
+            success ? 'Tarjeta guardada con éxito.' : 'Error al guardar la tarjeta.'),
         backgroundColor: success ? Colors.green : Colors.red,
       ));
       if (success) {

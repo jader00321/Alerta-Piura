@@ -53,6 +53,13 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget reutilizable con estado que muestra una lista paginada de reportes
+para el panel de verificación del líder.</p>
+<p>Puede mostrar la lista de 'Pendientes' o la de 'Historial' basado en el flag <a href="../widgets_verificacion_lista_reportes_verificacion/ListaReportesVerificacion/isHistory.html">isHistory</a>.
+Maneja la carga de datos con paginación infinita, aplicación de filtros,
+pull-to-refresh, y estados de carga/error/vacío.</p>
+</section>
 
 
     <section>
@@ -85,10 +92,11 @@
     <h2>Constructors</h2>
     <dl class="constructor-summary-list">
         <dt id="ListaReportesVerificacion.new" class="callable">
-          <span class="name"><a href="../widgets_verificacion_lista_reportes_verificacion/ListaReportesVerificacion/ListaReportesVerificacion.html">ListaReportesVerificacion.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a></span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-isHistory"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isHistory</span> = <span class="default-value">false</span></span>})</span>
+          <span class="name"><a href="../widgets_verificacion_lista_reportes_verificacion/ListaReportesVerificacion/ListaReportesVerificacion.html">ListaReportesVerificacion.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a></span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-isHistory"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isHistory</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget reutilizable con estado que muestra una lista paginada de reportes
+para el panel de verificación del líder.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -118,7 +126,7 @@
 
 </dt>
 <dd>
-  
+  Si es <code>true</code>, muestra el historial de moderación. Si es <code>false</code>, muestra los pendientes.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -171,7 +179,7 @@
 
         <dt id="createState" class="callable">
   <span class="name"><a href="../widgets_verificacion_lista_reportes_verificacion/ListaReportesVerificacion/createState.html">createState</a></span><span class="signature">(<wbr>)
-    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/widgets/State-class.html">State</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../widgets_verificacion_lista_reportes_verificacion/ListaReportesVerificacion-class.html">ListaReportesVerificacion</a></span>&gt;</span></span>
+    <span class="returntype parameter">&#8594; <a href="../widgets_verificacion_lista_reportes_verificacion/ListaReportesVerificacionState-class.html">ListaReportesVerificacionState</a></span>
   </span>
   
 

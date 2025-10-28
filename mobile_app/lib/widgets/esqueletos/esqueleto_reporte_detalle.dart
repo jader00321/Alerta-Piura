@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+/// {@template esqueleto_reporte_detalle}
+/// Widget de esqueleto (placeholder) con efecto [Shimmer] que imita la
+/// apariencia de la pantalla de detalle de reporte ([ReporteDetalleScreen] o
+/// [VerificacionDetalleScreen]).
+///
+/// Simula la imagen, los chips de categoría, el título, la barra de acciones
+/// y una lista de comentarios.
+/// {@endtemplate}
 class EsqueletoReporteDetalle extends StatelessWidget {
+  /// {@macro esqueleto_reporte_detalle}
   const EsqueletoReporteDetalle({super.key});
 
   @override
@@ -10,9 +19,11 @@ class EsqueletoReporteDetalle extends StatelessWidget {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(), // Deshabilita scroll
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// Placeholder para la imagen del reporte.
             Container(
               height: 250,
               width: double.infinity,
@@ -23,6 +34,7 @@ class EsqueletoReporteDetalle extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  /// Placeholder para los chips (Categoría, Urgencia).
                   Row(
                     children: [
                       Container(
@@ -41,11 +53,14 @@ class EsqueletoReporteDetalle extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  /// Placeholder para el título.
                   Container(
                       width: double.infinity, height: 28, color: Colors.white),
                   const SizedBox(height: 8),
-                  Container(width: 200, height: 14, color: Colors.white),
-                  const Divider(height: 32),
+                  Container(width: 200, height: 16, color: Colors.white),
+                  const SizedBox(height: 16),
+
+                  /// Placeholder para la [ReporteActionsBar].
                   Row(
                     children: [
                       Container(width: 100, height: 20, color: Colors.white),
@@ -54,6 +69,8 @@ class EsqueletoReporteDetalle extends StatelessWidget {
                     ],
                   ),
                   const Divider(height: 32),
+
+                  /// Placeholder para la sección de comentarios.
                   Container(width: 150, height: 24, color: Colors.white),
                   const SizedBox(height: 16),
                   _buildCommentPlaceholder(),
@@ -68,6 +85,7 @@ class EsqueletoReporteDetalle extends StatelessWidget {
     );
   }
 
+  /// Construye un placeholder que simula un [ListTile] de comentario.
   Widget _buildCommentPlaceholder() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

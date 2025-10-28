@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// {@template editar_contacto_screen}
+/// Pantalla de formulario para editar los detalles del contacto de emergencia
+/// que se utilizará en la función SOS.
+///
+/// Los datos se guardan localmente usando [SharedPreferences].
+/// {@endtemplate}
 class EditarContactoScreen extends StatefulWidget {
+  /// {@macro editar_contacto_screen}
   const EditarContactoScreen({super.key});
   @override
   State<EditarContactoScreen> createState() => _EditarContactoScreenState();
 }
 
+/// Estado para [EditarContactoScreen].
+///
+/// Maneja la carga y guardado de los datos del contacto.
 class _EditarContactoScreenState extends State<EditarContactoScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nombreController = TextEditingController();
@@ -28,14 +38,16 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
     super.dispose();
   }
 
+  /// Carga los detalles del contacto desde [SharedPreferences].
   Future<void> _loadContact() async {
     final prefs = await SharedPreferences.getInstance();
     _nombreController.text = prefs.getString('contactNombre') ?? '';
     _telefonoController.text = prefs.getString('contactTelefono') ?? '';
-    _mensajeController.text = prefs.getString('contactMensaje') ??
-        '¡Necesito ayuda urgente! Mi ubicación es:';
+    _mensajeController.text =
+        prefs.getString('contactMensaje') ?? '¡Necesito ayuda urgente! Mi ubicación es:';
   }
 
+  /// Valida y guarda los detalles del contacto en [SharedPreferences].
   Future<void> _saveContact() async {
     if (_formKey.currentState!.validate() && !_isLoading) {
       setState(() => _isLoading = true);
@@ -96,7 +108,7 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.person_outline),
                         ),
-                        validator: (value) => value!.trim().isEmpty
+                        validator: (value) => (value?.trim().isEmpty ?? true)
                             ? 'El nombre es requerido'
                             : null,
                       ),
@@ -109,7 +121,7 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
                           prefixIcon: Icon(Icons.phone_outlined),
                         ),
                         keyboardType: TextInputType.phone,
-                        validator: (value) => value!.trim().isEmpty
+                        validator: (value) => (value?.trim().isEmpty ?? true)
                             ? 'El número es requerido'
                             : null,
                       ),
@@ -145,7 +157,7 @@ class _EditarContactoScreenState extends State<EditarContactoScreen> {
                           border: OutlineInputBorder(),
                         ),
                         maxLines: 4,
-                        validator: (value) => value!.trim().isEmpty
+                        validator: (value) => (value?.trim().isEmpty ?? true)
                             ? 'El mensaje no puede estar vacío'
                             : null,
                       ),

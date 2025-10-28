@@ -111,6 +111,7 @@ and</li>
 Widget build(BuildContext context) {
   final theme = Theme.of(context);
   final bool esPendiente = reporte.estado == &#39;pendiente_verificacion&#39;;
+  &#47;&#47;&#47; Flag para deshabilitar botones si cualquier acción está en progreso.
   final bool isLoadingAction = isJoining || isUnjoining;
 
   return Card(
@@ -123,16 +124,17 @@ Widget build(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          &#47;&#47;&#47; Sección de Imagen y Chips superpuestos.
           Stack(
             children: [
+              &#47;&#47;&#47; Imagen del reporte (o placeholder).
               if (reporte.fotoUrl != null)
                 Image.network(
                   reporte.fotoUrl!,
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  loadingBuilder: (context, child, progress) =&gt; progress ==
-                          null
+                  loadingBuilder: (context, child, progress) =&gt; progress == null
                       ? child
                       : const SizedBox(
                           height: 160,
@@ -151,6 +153,8 @@ Widget build(BuildContext context) {
                     child: Center(
                         child: Icon(Icons.image_not_supported,
                             size: 40, color: Colors.grey.shade400))),
+
+              &#47;&#47;&#47; Chips de Categoría y Urgencia (arriba a la izquierda).
               Positioned(
                 top: 8,
                 left: 8,
@@ -163,9 +167,8 @@ Widget build(BuildContext context) {
                       visualDensity: VisualDensity.compact,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 4, vertical: 0),
-                      backgroundColor: theme.colorScheme.secondaryContainer
-                          .withAlpha(
-                              230), &#47;&#47; CORREGIDO: withOpacity -&gt; withAlpha
+                      backgroundColor:
+                          theme.colorScheme.secondaryContainer.withAlpha(230),
                     ),
                     if (reporte.urgencia != null)
                       Chip(
@@ -180,13 +183,14 @@ Widget build(BuildContext context) {
                         visualDensity: VisualDensity.compact,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 4, vertical: 0),
-                        backgroundColor: _getUrgencyColor(reporte.urgencia)
-                            .withAlpha(
-                                38), &#47;&#47; CORREGIDO: withOpacity -&gt; withAlpha
+                        backgroundColor:
+                            _getUrgencyColor(reporte.urgencia).withAlpha(38),
                       ),
                   ],
                 ),
               ),
+
+              &#47;&#47;&#47; Chip de Distancia (arriba a la derecha).
               Positioned(
                 top: 8,
                 right: 8,
@@ -198,10 +202,11 @@ Widget build(BuildContext context) {
                   visualDensity: VisualDensity.compact,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                  backgroundColor: Colors.black
-                      .withAlpha(153), &#47;&#47; CORREGIDO: withOpacity -&gt; withAlpha
+                  backgroundColor: Colors.black.withAlpha(153),
                 ),
               ),
+
+              &#47;&#47;&#47; Icono de Prioridad (abajo a la derecha).
               if (reporte.esPrioritario)
                 Positioned(
                   bottom: 8,
@@ -209,8 +214,7 @@ Widget build(BuildContext context) {
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.black.withAlpha(
-                          128), &#47;&#47; CORREGIDO: withOpacity -&gt; withAlpha
+                      color: Colors.black.withAlpha(128),
                       shape: BoxShape.circle,
                     ),
                     child:
@@ -219,6 +223,8 @@ Widget build(BuildContext context) {
                 ),
             ],
           ),
+
+          &#47;&#47;&#47; Sección de Detalles Textuales.
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Column(
@@ -232,6 +238,7 @@ Widget build(BuildContext context) {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
+                &#47;&#47;&#47; Fila de Autor&#47;Fecha y Estado.
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -271,11 +278,13 @@ Widget build(BuildContext context) {
                     ),
                   ],
                 ),
+                &#47;&#47;&#47; Botón de Acción Dinámico (solo para reportes pendientes).
                 if (esPendiente) ...[
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     child: reporte.usuarioActualUnido
+                        &#47;&#47;&#47; Caso 1: El usuario ya se unió. Muestra botón &quot;Unido&quot;.
                         ? ElevatedButton.icon(
                             icon: isUnjoining
                                 ? const SizedBox(
@@ -300,6 +309,7 @@ Widget build(BuildContext context) {
                             ),
                           )
                         : reporte.puedeUnirse
+                            &#47;&#47;&#47; Caso 2: El usuario puede unirse. Muestra botón &quot;Unirme&quot;.
                             ? OutlinedButton.icon(
                                 icon: isJoining
                                     ? const SizedBox(
@@ -325,6 +335,7 @@ Widget build(BuildContext context) {
                                       const EdgeInsets.symmetric(vertical: 8),
                                 ),
                               )
+                            &#47;&#47;&#47; Caso 3: El usuario es el autor. Muestra botón deshabilitado.
                             : ElevatedButton.icon(
                                 icon: const Icon(Icons.person_outline,
                                     size: 18, color: Colors.white70),
@@ -332,13 +343,13 @@ Widget build(BuildContext context) {
                                     reporte.apoyosPendientes &gt; 0
                                         ? &#39;Es tu reporte (+${reporte.apoyosPendientes})&#39;
                                         : &#39;Es tu reporte&#39;,
-                                    style: const TextStyle(
-                                        color: Colors.white70)),
-                                onPressed: null,
+                                    style:
+                                        const TextStyle(color: Colors.white70)),
+                                onPressed: null, &#47;&#47; Deshabilitado
                                 style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.blueGrey.shade400,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 8)),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 8)),
                               ),
                   ),
                 ],

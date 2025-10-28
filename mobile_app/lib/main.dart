@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart'; // Para debugPrint
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:mobile_app/providers/theme_provider.dart';
 import 'package:mobile_app/services/background_service.dart';
@@ -10,6 +10,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
+// Importación de todas las pantallas
 import 'package:mobile_app/screens/splash_screen.dart';
 import 'package:mobile_app/screens/home_screen.dart';
 import 'package:mobile_app/screens/login_screen.dart';
@@ -44,25 +45,51 @@ import 'package:mobile_app/screens/pantalla_buscar_reporte_original.dart';
 import 'package:mobile_app/screens/pantalla_insignias.dart';
 import 'package:mobile_app/navigator_key.dart';
 
+/// {@template main}
+/// Punto de entrada principal de la aplicación Reporta Piura.
+///
+/// Esta función `main` es responsable de:
+/// 1. Inicializar los bindings de Flutter.
+/// 2. Configurar la localización de fechas a español (`es_ES`).
+/// 3. Inicializar los servicios globales:
+///    - [NotificationService]: Para notificaciones locales (y le pasa la [navigatorKey]).
+///    - [BackgroundService]: Para el servicio en segundo plano del SOS.
+/// 4. Inicializar los proveedores de estado globales:
+///    - [ThemeProvider]: Carga la preferencia de tema (claro/oscuro).
+///    - [AuthNotifier]: Carga el token de autenticación guardado (`checkAuthStatus`).
+/// 5. Configurar el listener global de [SocketService] para `onStopSos`.
+/// 6. Ejecutar la aplicación (`runApp`) envolviéndola en un [MultiProvider].
+/// {@endtemplate}
 void main() async {
+  // 1. Inicialización de Bindings
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // 2. Configuración de Localización
   await initializeDateFormatting('es_ES', null);
+
+  // 3. Inicialización de Servicios
   await NotificationService().initialize(navigatorKey);
   await initializeBackgroundService();
 
+  // 4. Inicialización de Providers
   final themeProvider = ThemeProvider();
   final authProvider = AuthNotifier();
   await themeProvider.loadTheme();
+  /// Carga el token desde SharedPreferences ANTES de construir la UI.
   await authProvider.checkAuthStatus();
 
+  // 5. Configuración de Listeners Globales
+  /// Si el usuario ya está autenticado al abrir la app, conectar el listener
+  /// que escucha si un admin detiene su SOS remotamente.
   if (authProvider.isAuthenticated) {
     SocketService().onStopSos.listen((data) {
-      debugPrint(
-          "MAIN.DART: Evento stopSos recibido. Invocando al servicio de fondo.");
+      debugPrint("MAIN.DART: Evento stopSos recibido. Invocando al servicio de fondo.");
+      /// Invoca al servicio en segundo plano (Isolate) para que se detenga.
       FlutterBackgroundService().invoke('serverForceStop', data);
     });
   }
 
+  // 6. Ejecución de la App
   runApp(
     MultiProvider(
       providers: [
@@ -74,25 +101,40 @@ void main() async {
   );
 }
 
+/// {@template alerta_piura_app}
+/// El widget raíz [MaterialApp] de la aplicación.
+///
+/// Construye la aplicación con:
+/// - Gestión de Temas (Claro/Oscuro) consumiendo [ThemeProvider].
+/// - Asignación de la [navigatorKey] global.
+/// - Configuración de Localización (delegados para `es_ES`).
+/// - Definición de todas las rutas de navegación nombradas (`routes`) y
+///   rutas con argumentos (`onGenerateRoute`).
+/// {@endtemplate}
 class AlertaPiuraApp extends StatelessWidget {
+  /// {@macro alerta_piura_app}
   const AlertaPiuraApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    /// Consumer para que [MaterialApp] se reconstruya si cambia el tema.
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
           title: 'Reporta Piura',
+          /// Asigna la clave global para navegación desde fuera del BuildContext.
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
-          themeMode:
-              themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          
+          /// Definición del Tema Claro
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
                 seedColor: Colors.teal, brightness: Brightness.light),
             useMaterial3: true,
             brightness: Brightness.light,
           ),
+          /// Definición del Tema Oscuro
           darkTheme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.teal,
@@ -101,6 +143,8 @@ class AlertaPiuraApp extends StatelessWidget {
             useMaterial3: true,
             brightness: Brightness.dark,
           ),
+
+          /// Configuración de Localización
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -110,8 +154,11 @@ class AlertaPiuraApp extends StatelessWidget {
             Locale('es', 'ES'),
           ],
           locale: const Locale('es', 'ES'),
+
+          /// Rutas de Navegación
           initialRoute: '/',
           routes: {
+            /// Rutas Estáticas (sin argumentos)
             '/': (context) => const SplashScreen(),
             '/home': (context) => const HomeScreen(),
             '/login': (context) => const LoginScreen(),
@@ -145,6 +192,7 @@ class AlertaPiuraApp extends StatelessWidget {
                 const PantallaBuscarReporteOriginal(),
             '/insignias': (context) => const PantallaInsignias(),
           },
+          /// Rutas Dinámicas (con argumentos)
           onGenerateRoute: (settings) {
             if (settings.name == '/reporte_detalle') {
               final args = settings.arguments as int;
@@ -181,7 +229,7 @@ class AlertaPiuraApp extends StatelessWidget {
               return MaterialPageRoute(
                   builder: (context) => PantallaPago(plan: args));
             }
-            return null;
+            return null; // Ruta no encontrada
           },
         );
       },

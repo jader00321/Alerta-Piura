@@ -109,24 +109,29 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47; Necesitamos el AuthNotifier para saber si redirigir a login.
   final authNotifier = context.read&lt;AuthNotifier&gt;();
 
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
     child: Row(
       children: [
+        &#47;&#47;&#47; Botón y contador de apoyos.
         TextButton.icon(
           icon: const Icon(Icons.thumb_up_alt_outlined, size: 20),
           label: Text(&#39;$apoyosCount Apoyos&#39;),
           onPressed: () {
+            &#47;&#47; Si no está autenticado, ir a login.
             if (!authNotifier.isAuthenticated) {
               Navigator.pushNamed(context, &#39;&#47;login&#39;);
               return;
             }
+            &#47;&#47; Si está autenticado, ejecutar la acción de apoyo.
             onSupportPressed();
           },
         ),
         const SizedBox(width: 16),
+        &#47;&#47;&#47; Contador de comentarios (solo visual).
         Row(
           children: [
             const Icon(Icons.comment_outlined, size: 20, color: Colors.grey),

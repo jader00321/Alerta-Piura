@@ -109,13 +109,17 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47; Muestra el esqueleto solo durante la carga inicial si la lista está vacía.
   if (isLoading &amp;&amp; reportes.isEmpty) {
     return const EsqueletoListaActividad();
   }
 
+  &#47;&#47; Muestra un mensaje si la lista está vacía después de cargar.
   if (reportes.isEmpty) {
     return RefreshIndicator(
       onRefresh: onRefresh,
+      &#47;&#47; LayoutBuilder y ConstrainedBox aseguran que el mensaje de &quot;vacío&quot;
+      &#47;&#47; ocupe toda la pantalla y permita el &quot;pull-to-refresh&quot;.
       child: LayoutBuilder(
         builder: (context, constraints) =&gt; SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -137,15 +141,18 @@ Widget build(BuildContext context) {
     );
   }
 
+  &#47;&#47; Muestra la lista de reportes si hay datos.
   return RefreshIndicator(
-    onRefresh: onRefresh,
+    onRefresh: onRefresh, &#47;&#47; Habilita pull-to-refresh.
     child: ListView.builder(
+      &#47;&#47; Asegura que el RefreshIndicator funcione incluso si la lista es corta.
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(8.0),
       itemCount: reportes.length,
       itemBuilder: (context, index) {
         final reporte = reportes[index];
 
+        &#47;&#47; Construye el botón &quot;Cancelar&quot; solo si es aplicable.
         Widget? trailingAction;
         if (fetcher == Fetcher.misReportes &amp;&amp;
             reporte.estado == &#39;pendiente_verificacion&#39;) {
@@ -153,18 +160,22 @@ Widget build(BuildContext context) {
             style: TextButton.styleFrom(
               padding: EdgeInsets.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
+              visualDensity: VisualDensity.compact, &#47;&#47; Botón más compacto.
             ),
             child: const Text(&#39;Cancelar&#39;,
                 style: TextStyle(color: Colors.red, fontSize: 12)),
+            &#47;&#47; Llama al callback del padre pasando el ID del reporte.
             onPressed: () =&gt; onCancelarReporte(reporte.id),
           );
         }
 
+        &#47;&#47; Usa la tarjeta unificada, pasando el contexto y la acción trailing.
         return TarjetaActividad(
           reporte: reporte,
-          fetcher: fetcher,
+          fetcher: fetcher, &#47;&#47; Pasa el contexto de la pestaña.
+          &#47;&#47; Llama al callback del padre para la navegación.
           onTap: () =&gt; onNavigateToDetail(reporte.id),
+          &#47;&#47; Pasa el botón &quot;Cancelar&quot; (o null si no aplica).
           trailingAction: trailingAction,
         );
       },

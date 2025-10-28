@@ -62,6 +62,13 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Inicializa el servicio de notificaciones.</p>
+<p>Debe llamarse en <code>main.dart</code>.
+Crea los canales de Android y configura los settings de inicialización
+para Android e iOS, incluyendo el callback <code>onDidReceiveNotificationResponse</code>.</p>
+<p><code>navigatorKey</code>: La <a href="https://api.flutter.dev/flutter/widgets/GlobalKey-class.html">GlobalKey&lt;NavigatorState&gt;</a> de <a href="https://api.flutter.dev/flutter/material/MaterialApp-class.html">MaterialApp</a>.</p>
+</section>
 
 
     
@@ -70,10 +77,11 @@
   <pre class="language-dart"><code class="language-dart">Future&lt;void&gt; initialize(GlobalKey&lt;NavigatorState&gt; navigatorKey) async {
   _navigatorKey = navigatorKey;
 
-  final androidPlugin =
-      _flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation&lt;
+  final androidPlugin = _flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation&lt;
           AndroidFlutterLocalNotificationsPlugin&gt;();
 
+  &#47;&#47;&#47; Crea los tres canales de notificación en Android.
   await androidPlugin?.createNotificationChannel(_generalChannel);
   await androidPlugin?.createNotificationChannel(_reportChannel);
   await androidPlugin?.createNotificationChannel(_sosChannel);
@@ -87,14 +95,14 @@
     requestSoundPermission: true,
   );
 
-  const InitializationSettings initializationSettings =
-      InitializationSettings(
+  const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
     iOS: initializationSettingsIOS,
   );
 
   await _flutterLocalNotificationsPlugin.initialize(
     initializationSettings,
+    &#47;&#47;&#47; Define el callback que se ejecuta al tocar la notificación.
     onDidReceiveNotificationResponse: _onNotificationTapped,
   );
 }</code></pre>

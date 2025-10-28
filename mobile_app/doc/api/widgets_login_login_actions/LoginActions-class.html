@@ -53,6 +53,11 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget que contiene los botones de acción principales para la pantalla de login <a href="../screens_login_screen/LoginScreen-class.html">LoginScreen</a>.</p>
+<p>Incluye el botón "Iniciar Sesión" (con estado de carga) y un <a href="https://api.flutter.dev/flutter/material/TextButton-class.html">TextButton</a>
+que navega a la pantalla de registro (<code>/register</code>).</p>
+</section>
 
 
     <section>
@@ -88,7 +93,7 @@
           <span class="name"><a href="../widgets_login_login_actions/LoginActions/LoginActions.html">LoginActions.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-isLoading"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isLoading</span>, </span><span class="parameter" id="-param-onSubmit"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onSubmit</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget que contiene los botones de acción principales para la pantalla de login <a href="../screens_login_screen/LoginScreen-class.html">LoginScreen</a>.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -118,7 +123,8 @@
 
 </dt>
 <dd>
-  
+  Indica si se está procesando el inicio de sesión.
+Cuando es <code>true</code>, el botón "Iniciar Sesión" se deshabilita y muestra un spinner.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +148,8 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al presionar el botón "Iniciar Sesión".
+Típicamente, inicia la validación del formulario y la llamada a la API.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

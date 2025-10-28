@@ -111,11 +111,12 @@ and</li>
 Widget build(BuildContext context) {
   return Card(
     margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-    color: Colors.blueGrey.shade50,
-    elevation: 0,
+    color: Colors.blueGrey.shade50, &#47;&#47; Fondo diferenciado.
+    elevation: 0, &#47;&#47; Sin sombra.
     shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Colors.blueGrey.shade200)),
+        side: BorderSide(color: Colors.blueGrey.shade200) &#47;&#47; Borde sutil.
+        ),
     child: Padding(
       padding: const EdgeInsets.all(12.0),
       child: Row(
@@ -127,16 +128,16 @@ Widget build(BuildContext context) {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                &#47;&#47;&#47; Texto del mensaje de fusión.
                 Text(
                   comentario.comentario,
-                  style: TextStyle(
-                      color: Colors.blueGrey.shade800, fontSize: 13),
+                  style: TextStyle(color: Colors.blueGrey.shade800, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
+                &#47;&#47;&#47; Autor (sistema&#47;líder) y fecha del mensaje.
                 Text(
                   &#39;Por ${comentario.autor} • ${comentario.fechaCreacion}&#39;,
-                  style: TextStyle(
-                      color: Colors.blueGrey.shade600, fontSize: 11),
+                  style: TextStyle(color: Colors.blueGrey.shade600, fontSize: 11),
                 ),
               ],
             ),

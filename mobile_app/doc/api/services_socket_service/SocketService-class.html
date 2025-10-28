@@ -53,6 +53,13 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Servicio Singleton para gestionar la conexión WebSocket (Socket.IO).</p>
+<p>Maneja la conexión, autenticación, y la escucha de eventos en tiempo real
+desde el servidor. Proporciona métodos <code>emit</code> para enviar eventos
+y <code>Streams</code> públicos para que la UI reaccione a eventos específicos
+(como <a href="../services_socket_service/SocketService/onStopSos.html">onStopSos</a>).</p>
+</section>
 
 
 
@@ -94,7 +101,7 @@
 
 </dt>
 <dd>
-  
+  Stream público para que la UI (u otros servicios) escuche el evento 'stopSos'.
   <div class="features"><span class="feature">no setter</span></div>
 
 </dd>
@@ -128,7 +135,7 @@
 
 </dt>
 <dd>
-  
+  Inicia la conexión con el servidor Socket.IO.
   
 
 </dd>
@@ -141,7 +148,7 @@
 
 </dt>
 <dd>
-  
+  Desconecta manualmente el socket del servidor.
   
 
 </dd>
@@ -154,7 +161,7 @@
 
 </dt>
 <dd>
-  
+  Libera los recursos (cierra los <a href="https://api.flutter.dev/flutter/dart-async/StreamController-class.html">StreamController</a>s).
   
 
 </dd>
@@ -167,7 +174,7 @@
 
 </dt>
 <dd>
-  
+  Emite un evento <code>event</code> con <code>data</code> al servidor.
   
 
 </dd>
@@ -193,7 +200,7 @@
 
 </dt>
 <dd>
-  
+  Deja de escuchar un <code>event</code> específico del servidor.
   
 
 </dd>
@@ -206,7 +213,8 @@
 
 </dt>
 <dd>
-  
+  Registra un <code>handler</code> para escuchar un <code>event</code> del servidor.
+(Usado por <a href="../screens_chat_screen/ChatScreen-class.html">ChatScreen</a> para <code>receive-message</code>).
   
 
 </dd>

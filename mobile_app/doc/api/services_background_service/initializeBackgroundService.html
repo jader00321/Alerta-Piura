@@ -61,6 +61,10 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Configura e inicializa el <a href="https://pub.dev/documentation/flutter_background_service/5.1.0/flutter_background_service/FlutterBackgroundService-class.html">FlutterBackgroundService</a>.
+Define la configuración de Android (para modo 'foreground') y de iOS.</p>
+</section>
 
 
     
@@ -70,7 +74,9 @@
   final service = FlutterBackgroundService();
   await service.configure(
     androidConfiguration: AndroidConfiguration(
+      &#47;&#47;&#47; Punto de entrada del Isolate.
       onStart: onStart,
+      &#47;&#47;&#47; Mantiene el servicio vivo.
       isForegroundMode: true,
       autoStart: false,
       notificationChannelId: NotificationService.sosChannelId,
@@ -80,7 +86,7 @@
     ),
     iosConfiguration: IosConfiguration(
       autoStart: false,
-      onForeground: onStart,
+      onForeground: onStart, &#47;&#47; Punto de entrada para iOS en foreground.
     ),
   );
 }</code></pre>

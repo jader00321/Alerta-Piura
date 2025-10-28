@@ -1,4 +1,3 @@
-// src/components/Sms/ItemSmsLog.jsx
 import React from 'react';
 import { Paper, Typography, Box, Stack, Divider, Avatar, Link as MuiLink, Chip } from '@mui/material';
 import {
@@ -13,7 +12,10 @@ import {
  * Parses an SMS message string robustly for Google Maps URL and personalized message.
  * Tries multiple URL patterns and flexible message extraction.
  * @param {string} message - The full SMS text.
- * @returns {{locationUrl: string|null, messageText: string|null, fullText: string}}
+ * @returns {{locationUrl: string|null, messageText: string|null, fullText: string}} Un objeto con las partes parseadas:
+ * - `locationUrl`: La URL de Google Maps extraída (limpia) o null.
+ * - `messageText`: El mensaje personalizado extraído o null.
+ * - `fullText`: El texto original completo del SMS.
  */
 const parseSmsMessage = (message) => {
     const fullText = message || '';
@@ -63,13 +65,13 @@ const parseSmsMessage = (message) => {
             .trim(); // Trim whitespace
 
         if (cleanedText) {
-             messageText = cleanedText;
+            messageText = cleanedText;
         }
     }
 
     // Final check: Ensure we don't just have empty quotes or punctuation
      if (messageText && messageText.match(/^[".,:\s]*$/)) {
-         messageText = null;
+        messageText = null;
      }
 
     // If parsing failed completely, use the original text as the message fallback
@@ -82,7 +84,12 @@ const parseSmsMessage = (message) => {
 };
 
 
-// Helper para el icono de Rol (sin cambios)
+/**
+ * Componente helper que devuelve un ícono de MUI basado en el rol del usuario.
+ * @param {object} props - Propiedades del componente.
+ * @param {string} props.rol - El rol del usuario (ej: 'admin', 'lider_vecinal', 'reportero').
+ * @returns {JSX.Element} El ícono de MUI correspondiente.
+ */
 const RolIcon = ({ rol }) => {
     switch (rol) {
         case 'admin': return <AdminIcon fontSize="small" />;
@@ -93,6 +100,29 @@ const RolIcon = ({ rol }) => {
 };
 
 // --- Componente ItemSmsLog ---
+
+/**
+ * Renderiza una tarjeta (Paper) individual para un registro (log) de SMS SOS.
+ *
+ * Muestra una cabecera con la información del "Usuario SOS" (quien envía)
+ * y el "Contacto de Emergencia" (quien recibe), junto con la fecha.
+ *
+ * En el cuerpo, utiliza la función `parseSmsMessage` para mostrar
+ * de forma separada la URL de ubicación (si existe) y el mensaje
+ * personalizado (si existe) del contenido del SMS.
+ *
+ * @param {object} props - Propiedades del componente.
+ * @param {object} props.log - El objeto de datos del registro de log.
+ * @param {string} props.log.mensaje - El contenido crudo del SMS.
+ * @param {string} [props.log.usuario_sos_alias] - Alias del usuario SOS.
+ * @param {string} [props.log.usuario_sos_rol] - Rol del usuario SOS.
+ * @param {string} [props.log.telefono_usuario_sos] - Teléfono del usuario SOS.
+ * @param {string} [props.log.usuario_sos_email] - Email del usuario SOS.
+ * @param {string} [props.log.contacto_nombre] - Nombre del contacto de emergencia.
+ * @param {string} props.log.contacto_telefono - Teléfono del contacto de emergencia.
+ * @param {string} props.log.fecha_envio - Fecha de envío (string ISO 8601 o compatible con `new Date()`).
+ * @returns {JSX.Element} Un componente Paper que representa el item del log.
+ */
 function ItemSmsLog({ log }) {
   // Parse the message using the most robust function
   const parts = parseSmsMessage(log.mensaje);
@@ -100,7 +130,7 @@ function ItemSmsLog({ log }) {
   return (
     <Paper variant="outlined" sx={{ p: 2.5, mb: 2 }}>
       <Stack spacing={2}>
-        {/* Cabecera (sin cambios estructurales) */}
+        {/* Cabecera (Usuario SOS, Contacto, Fecha) */}
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           justifyContent="space-between"
@@ -149,7 +179,7 @@ function ItemSmsLog({ log }) {
 
         <Divider />
 
-        {/* Cuerpo del Mensaje Rediseñado */}
+        {/* Cuerpo del Mensaje (Parseado) */}
         <Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <MessageIcon fontSize="small"/> Contenido del Mensaje
@@ -172,7 +202,7 @@ function ItemSmsLog({ log }) {
                 </Box>
               ) : (
                  <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                     <LocationIcon fontSize="small" /> Ubicación no incluida en el mensaje.
+                    <LocationIcon fontSize="small" /> Ubicación no incluida en el mensaje.
                  </Typography>
               )}
 
@@ -184,7 +214,7 @@ function ItemSmsLog({ log }) {
                  <Box>
                    <Typography variant="body2" sx={{ fontWeight: 500 }}>Mensaje:</Typography>
                    <Typography variant="body2" sx={{ fontStyle: 'italic', fontSize: '1rem', pl: 1, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                       "{parts.messageText}"
+                      "{parts.messageText}"
                    </Typography>
                  </Box>
               ) : (
@@ -195,14 +225,14 @@ function ItemSmsLog({ log }) {
                     <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', color: 'text.secondary' }}>
                         (Mensaje original: {parts.fullText})
                     </Typography>
-                 ) : (
-                     // If there's a URL but truly no message text could be extracted
-                     parts.locationUrl && !parts.messageText ?
-                     <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                         (Sin mensaje adicional)
-                    </Typography>
-                     : null
-                 )
+                  ) : (
+                      // If there's a URL but truly no message text could be extracted
+                      parts.locationUrl && !parts.messageText ?
+                      <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                           (Sin mensaje adicional)
+                      </Typography>
+                      : null
+                  )
               )}
 
             </Stack>

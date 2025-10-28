@@ -63,6 +63,15 @@
 </ol>})
     </section>
     
+<section class="desc markdown">
+  <p>Widget <a href="https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html">StatefulWidget</a> que encapsula el formulario para editar
+la información personal del usuario: nombre, alias, teléfono y correo electrónico.</p>
+<p>Se utiliza dentro de <a href="../../screens_editar_perfil_screen/EditarPerfilScreen-class.html">EditarPerfilScreen</a>.
+Este widget maneja sus propios <a href="https://api.flutter.dev/flutter/widgets/TextEditingController-class.html">TextEditingController</a>s y el estado de carga (<code>_isSaving</code>).</p>
+<p>Por seguridad, para guardar los cambios (especialmente el email),
+muestra un diálogo de confirmación (<code>_showConfirmationDialog</code>) que
+solicita la contraseña actual del usuario antes de enviar los cambios a la API.</p>
+</section>
 
 
     

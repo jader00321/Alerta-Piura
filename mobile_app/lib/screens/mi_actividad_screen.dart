@@ -12,15 +12,34 @@ import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_actividad.dart';
 import 'package:mobile_app/widgets/mi_actividad/activity_list_view.dart';
 import 'package:mobile_app/widgets/mi_actividad/solicitudes_revision_view.dart';
 
+/// {@template mi_actividad_screen}
+/// Pantalla que muestra la actividad del usuario en varias pestañas.
+///
+/// Muestra pestañas para:
+/// - Mis Reportes
+/// - Mis Apoyos
+/// - Seguimientos
+/// - Mis Comentarios
+/// - Solicitudes de Revisión (solo si el usuario es [AuthNotifier.isLider]).
+///
+/// También maneja la lógica de swipe para navegar entre las
+/// pantallas principales de [HomeScreen].
+/// {@endtemplate}
 class MiActividadScreen extends StatefulWidget {
+  /// El [PageController] de la [HomeScreen] principal, usado para
+  /// controlar la navegación por swipe entre pantallas principales.
   final PageController mainPageController;
 
+  /// {@macro mi_actividad_screen}
   const MiActividadScreen({super.key, required this.mainPageController});
 
   @override
   State<MiActividadScreen> createState() => _MiActividadScreenState();
 }
 
+/// Estado para [MiActividadScreen].
+///
+/// Maneja el [TabController] y la carga de datos para todas las pestañas.
 class _MiActividadScreenState extends State<MiActividadScreen>
     with TickerProviderStateMixin {
   final PerfilService _perfilService = PerfilService();
@@ -63,6 +82,7 @@ class _MiActividadScreenState extends State<MiActividadScreen>
     super.dispose();
   }
 
+  /// Carga los datos para todas las pestañas de actividad simultáneamente.
   Future<void> _fetchAllData() async {
     if (mounted) {
       setState(() => _isLoading = true);
@@ -101,6 +121,8 @@ class _MiActividadScreenState extends State<MiActividadScreen>
     }
   }
 
+  /// Muestra un diálogo de confirmación y elimina un reporte pendiente
+  /// si el usuario confirma.
   Future<void> _handleCancelarReporte(int reporteId) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -109,8 +131,7 @@ class _MiActividadScreenState extends State<MiActividadScreen>
         content: const Text('¿Estás seguro? Esta acción no se puede deshacer.'),
         actions: [
           TextButton(
-              child: const Text('No'),
-              onPressed: () => Navigator.pop(ctx, false)),
+              child: const Text('No'), onPressed: () => Navigator.pop(ctx, false)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Sí, Cancelar'),
@@ -149,14 +170,18 @@ class _MiActividadScreenState extends State<MiActividadScreen>
     }
   }
 
+  /// Navega a la pantalla de detalle de un reporte.
+  /// Refresca los datos si la pantalla de detalle devuelve `true`.
   Future<void> _handleNavigateToDetail(int reporteId) async {
-    final result = await Navigator.pushNamed(context, '/reporte_detalle',
-        arguments: reporteId);
+    final result =
+        await Navigator.pushNamed(context, '/reporte_detalle', arguments: reporteId);
     if (result == true && mounted) {
       _fetchAllData();
     }
   }
 
+  /// Detecta el overscroll al inicio o fin del [TabBarView] para
+  /// navegar el [PageController] de [HomeScreen].
   bool _handleScrollNotification(ScrollNotification notification) {
     if (notification is OverscrollNotification) {
       if (_isSwipingScreens) {

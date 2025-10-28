@@ -110,17 +110,19 @@ and</li>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
   final theme = Theme.of(context);
-  &#47;&#47; LÓGICA CORREGIDA: Usamos una expresión regular para dividir por \n o \\n
+  &#47;&#47; Parsea la descripción para obtener la lista de características.
+  &#47;&#47; Maneja saltos de línea `\n` y `\\n` y elimina líneas vacías.
   final features = plan.descripcion
-          ?.split(RegExp(r&#39;\\n|\n&#39;))
-          .where((s) =&gt; s.trim().isNotEmpty)
+          ?.split(RegExp(r&#39;\\n|\n&#39;)) &#47;&#47; Divide por \n o \\n
+          .where((s) =&gt; s.trim().isNotEmpty) &#47;&#47; Elimina líneas vacías
           .toList() ??
-      [];
+      []; &#47;&#47; Lista vacía si la descripción es null
 
   return Card(
     elevation: 4.0,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16.0),
+      &#47;&#47; Añade un borde resaltado si es el plan recomendado.
       side: BorderSide(
         color: isRecommended ? theme.colorScheme.primary : Colors.transparent,
         width: 2,
@@ -131,31 +133,42 @@ Widget build(BuildContext context) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          &#47;&#47;&#47; Chip &quot;Recomendado&quot; (opcional).
           if (isRecommended)
             Chip(
               label: const Text(&#39;Recomendado&#39;),
               backgroundColor: theme.colorScheme.primary,
-              labelStyle: TextStyle(color: theme.colorScheme.onPrimary),
+              labelStyle: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontWeight: FontWeight.bold),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             ),
           if (isRecommended) const SizedBox(height: 8),
+
+          &#47;&#47;&#47; Nombre del Plan.
           Text(
             plan.nombrePublico,
             style: theme.textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
+
+          &#47;&#47;&#47; Precio Mensual.
           Text(
             &#39;S&#47; ${plan.precioMensual} &#47; mes&#39;,
             style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.secondary,
+              color: theme.colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
           const Divider(height: 32),
-          &#47;&#47; CÓDIGO CORREGIDO PARA RENDERIZAR LA LISTA
+
+          &#47;&#47;&#47; Lista de Características.
           if (features.isEmpty)
             const Text(&#39;No hay beneficios detallados.&#39;)
           else
+            &#47;&#47; Construye la lista de características con iconos.
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: features
@@ -167,7 +180,7 @@ Widget build(BuildContext context) {
                             Icon(Icons.check_circle_outline,
                                 color: Colors.green.shade600, size: 20),
                             const SizedBox(width: 12),
-                            &#47;&#47; Limpiamos guiones y espacios extra
+                            &#47;&#47; Limpia guiones y espacios extra al inicio de la característica.
                             Expanded(
                                 child: Text(
                                     feature.trim().replaceFirst(&#39;- &#39;, &#39;&#39;))),
@@ -177,10 +190,12 @@ Widget build(BuildContext context) {
                   .toList(),
             ),
           const SizedBox(height: 16),
+
+          &#47;&#47;&#47; Botón para seleccionar el plan.
           ElevatedButton(
-            onPressed: onSelected,
+            onPressed: onSelected, &#47;&#47; Llama al callback del padre.
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
+              minimumSize: const Size(double.infinity, 50), &#47;&#47; Botón ancho.
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

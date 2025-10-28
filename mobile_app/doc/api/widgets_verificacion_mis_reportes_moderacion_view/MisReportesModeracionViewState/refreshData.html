@@ -61,19 +61,17 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Método público para refrescar los datos desde cero.
+Retorna el nuevo total de elementos.</p>
+</section>
 
 
     
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
-  <pre class="language-dart"><code class="language-dart">Future&lt;int&gt; refreshData() async {
-  _currentPageComentarios = 1;
-  _currentPageUsuarios = 1;
-  _hasMoreComentarios = true;
-  _hasMoreUsuarios = true;
-  &#47;&#47; No limpiar _reportes aquí para evitar parpadeo
-  await _fetchCombinedReports(isRefresh: true);
-  return _totalFiltrado; &#47;&#47; Devolver el total
+  <pre class="language-dart"><code class="language-dart">Future&lt;int&gt; refreshData() {
+  return _fetchCombinedReports(isInitialLoad: true);
 }</code></pre>
 </section>
 

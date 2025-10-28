@@ -8,8 +8,19 @@ import 'package:mobile_app/widgets/verificacion/mapa_verificacion.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 
+/// {@template pantalla_detalle_pendiente_vista}
+/// Pantalla que muestra una vista detallada pero *simplificada* de un reporte
+/// que aún está pendiente de verificación.
+///
+/// Está orientada a usuarios que ven un reporte pendiente en la lista
+/// "Cerca de Ti" y quieren más contexto antes de decidir si "unirse".
+/// Muestra [ReporteHeader], [MapaVerificacion] y un botón "Unirme".
+/// {@endtemplate}
 class PantallaDetallePendienteVista extends StatefulWidget {
+  /// El ID del reporte pendiente a mostrar.
   final int reporteId;
+
+  /// {@macro pantalla_detalle_pendiente_vista}
   const PantallaDetallePendienteVista({super.key, required this.reporteId});
 
   @override
@@ -17,10 +28,16 @@ class PantallaDetallePendienteVista extends StatefulWidget {
       _PantallaDetallePendienteVistaState();
 }
 
+/// Estado para [PantallaDetallePendienteVista].
+///
+/// Maneja la carga de los detalles del reporte pendiente y la acción de "unirse".
 class _PantallaDetallePendienteVistaState
     extends State<PantallaDetallePendienteVista> {
   final ReporteService _reporteService = ReporteService();
+  
+  /// Futuro que contiene los detalles completos del reporte.
   late Future<ReporteDetallado> _reporteFuture;
+  /// Indica si se está procesando la acción de unirse.
   bool _isJoining = false;
 
   @override
@@ -29,6 +46,11 @@ class _PantallaDetallePendienteVistaState
     _reporteFuture = _reporteService.getReporteById(widget.reporteId);
   }
 
+  /// Maneja la acción de unirse al reporte pendiente.
+  ///
+  /// Llama a [ReporteService.unirseReportePendiente] y, si tiene éxito,
+  /// cierra la pantalla devolviendo `true` para indicar a la pantalla anterior
+  /// (`PantallaCercaDeTi`) que debe refrescar su lista.
   Future<void> _handleJoinReport(int reporteId) async {
     if (_isJoining) {
       return;
@@ -52,7 +74,7 @@ class _PantallaDetallePendienteVistaState
     final message = response['message'] ?? 'Ocurrió un error.';
     final success = response['statusCode'] == 201 ||
         (response['statusCode'] == 200 &&
-            message == 'Ya te has unido a este reporte.');
+            message.contains('Ya te has unido')); // Ajuste para posible mensaje de éxito existente
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(message),
@@ -62,7 +84,7 @@ class _PantallaDetallePendienteVistaState
     ));
 
     if (success) {
-      Navigator.pop(context, true);
+      Navigator.pop(context, true); // Devuelve true al éxito
     } else {
       setState(() => _isJoining = false);
     }
@@ -87,6 +109,7 @@ class _PantallaDetallePendienteVistaState
           }
 
           final reporte = snapshot.data!;
+          // El usuario puede unirse si el reporte está pendiente Y no es el autor.
           final bool puedeUnirse = reporte.estado == 'pendiente_verificacion' &&
               reporte.idAutor != authNotifier.userId;
 
@@ -109,7 +132,7 @@ class _PantallaDetallePendienteVistaState
                         ],
                       ),
                     ),
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 80), // Espacio para el botón
                   ],
                 ),
               ),
@@ -128,9 +151,7 @@ class _PantallaDetallePendienteVistaState
                                     strokeWidth: 2, color: Colors.white))
                             : const Icon(Icons.add, size: 20),
                         label: const Text('¡Yo también! Unirme'),
-                        onPressed: _isJoining
-                            ? null
-                            : () => _handleJoinReport(reporte.id),
+                        onPressed: _isJoining ? null : () => _handleJoinReport(reporte.id),
                         style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             textStyle: const TextStyle(

@@ -110,96 +110,87 @@ and</li>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
   final authNotifier = context.watch&lt;AuthNotifier&gt;();
-  final bool canActivateSos =
-      authNotifier.isAuthenticated &amp;&amp; authNotifier.isPremium;
+  &#47;&#47;&#47; Determina si el usuario tiene permiso para usar SOS (Premium o Reportero).
+  final bool canActivateSos = authNotifier.isAuthenticated &amp;&amp; authNotifier.isPremium;
 
   return Padding(
-    padding: const EdgeInsets.only(bottom: 80.0),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.end,
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Padding(
-            padding: const EdgeInsets.only(left: 32.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FloatingActionButton(
-                  heroTag: &#39;filter_btn&#39;,
-                  onPressed: onShowFilterSheet,
-                  tooltip: &#39;Filtros&#39;,
-                  child: const Icon(Icons.filter_list),
-                ),
-              ],
-            )),
-        Column(
-          mainAxisSize: MainAxisSize.min,
+        &#47;&#47;&#47; Fila superior de botones (Filtros, Ubicación)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            &#47;&#47; Botón de Mi Ubicación
-            FloatingActionButton(
-              heroTag: &#39;my_location_btn&#39;,
+            FloatingActionButton.small(
+              heroTag: &#39;filter_btn&#39;,
+              onPressed: onShowFilterSheet,
+              child: const Icon(Icons.filter_list),
+            ),
+            FloatingActionButton.small(
+              heroTag: &#39;location_btn&#39;,
               onPressed: onCenterOnUser,
-              tooltip: &#39;Mi Ubicación&#39;,
               child: const Icon(Icons.my_location),
             ),
-            const SizedBox(height: 16),
-            &#47;&#47; Botón Extendido de Reportar
+          ],
+        ),
+        const SizedBox(height: 16),
+        &#47;&#47;&#47; Fila inferior de botones (Crear Reporte, SOS)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
             FloatingActionButton.extended(
               heroTag: &#39;create_report_btn&#39;,
               onPressed: onCreateReport,
-              label: const Text(&#39;Reportar&#39;),
               icon: const Icon(Icons.add),
+              label: const Text(&#39;Reportar&#39;),
             ),
-            const SizedBox(height: 16),
-
-            if (authNotifier.isAuthenticated)
-              GestureDetector(
-                onTap: () {
-                  &#47;&#47; Caso 1: SOS está activo. Tocar desactiva.
-                  if (isSosActive) {
-                    if (canActivateSos) {
-                      &#47;&#47; Si es premium (debería serlo si está activo)
-                      onDeactivateSos();
-                    }
-                  }
-                  &#47;&#47; Caso 2: SOS está inactivo. Tocar activa (si es premium) o muestra planes.
-                  else {
-                    if (canActivateSos) {
-                      &#47;&#47; Es premium -&gt; Activar SOS
-                      onActivateSos();
-                    } else if (authNotifier.isAuthenticated) {
-                      &#47;&#47; No es premium -&gt; Ir a planes
-                      Navigator.pushNamed(context, &#39;&#47;subscription_plans&#39;);
-                    }
-                  }
-                },
-                child: FloatingActionButton(
-                  heroTag: &#39;sos_btn&#39;,
-                  onPressed: null,
-
-                  backgroundColor: isSosActive
-                      ? Colors.red
-                      : canActivateSos
-                          ? Colors.red
-                              .shade300 &#47;&#47; Rojo claro si es premium y listo
-                          : Colors.grey, &#47;&#47; Gris si no es premium
-
-                  tooltip: canActivateSos
-                      ? (isSosActive
-                          ? &#39;Finalizar Alerta&#39;
-                          : &#39;Presiona para SOS&#39;) &#47;&#47; Tooltip actualizado
-                      : &#39;Activa Premium para usar SOS&#39;,
-                  child: isSosActive
-                      ? Text(
-                          &#47;&#47; Mostrar contador
-                          &#39;${(sosRemainingSeconds ~&#47; 60).toString().padLeft(2, &#39;0&#39;)}:${(sosRemainingSeconds % 60).toString().padLeft(2, &#39;0&#39;)}&#39;,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 16))
-                      : const Icon(Icons.sos, color: Colors.white, size: 28),
-                ),
+            &#47;&#47;&#47; Widget dinámico del botón SOS
+            GestureDetector(
+              &#47;&#47;&#47; Usa un solo tap para activar o desactivar.
+              onTap: canActivateSos ? (isSosActive ? onDeactivateSos : onActivateSos) : () {
+                &#47;&#47; Si no puede activar, muestra diálogo para ir a planes.
+                showDialog(
+                  context: context,
+                  builder: (ctx) =&gt; AlertDialog(
+                    title: const Text(&#39;Función Premium&#39;),
+                    content: const Text(&#39;La Alerta SOS es una función premium. ¿Deseas ver los planes?&#39;),
+                    actions: [
+                      TextButton(onPressed: () =&gt; Navigator.pop(ctx), child: const Text(&#39;Cancelar&#39;)),
+                      ElevatedButton(onPressed: () {
+                        Navigator.pop(ctx);
+                        Navigator.pushNamed(context, &#39;&#47;subscription_plans&#39;);
+                      }, child: const Text(&#39;Ver Planes&#39;)),
+                    ],
+                  ),
+                );
+              },
+              child: FloatingActionButton(
+                heroTag: &#39;sos_btn&#39;,
+                onPressed: null, &#47;&#47; El GestureDetector maneja el tap.
+                &#47;&#47;&#47; Color dinámico basado en el estado.
+                backgroundColor: isSosActive
+                    ? Colors.red &#47;&#47; Activo
+                    : canActivateSos
+                        ? Colors.red.shade300 &#47;&#47; Listo para activar
+                        : Colors.grey, &#47;&#47; Deshabilitado (no premium)
+                tooltip: canActivateSos
+                    ? (isSosActive ? &#39;Finalizar Alerta&#39; : &#39;Presiona para SOS&#39;)
+                    : &#39;Activa Premium para usar SOS&#39;,
+                &#47;&#47;&#47; Contenido dinámico (Icono o Temporizador).
+                child: isSosActive
+                    ? Text(
+                        &#47;&#47;&#47; Formatea los segundos restantes a MM:SS
+                        &#39;${(sosRemainingSeconds ~&#47; 60).toString().padLeft(2, &#39;0&#39;)}:${(sosRemainingSeconds % 60).toString().padLeft(2, &#39;0&#39;)}&#39;,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 16),
+                      )
+                    : const Icon(Icons.sos, color: Colors.white, size: 28),
               ),
+            ),
           ],
         ),
       ],

@@ -53,6 +53,13 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget de tarjeta que muestra una Zona Segura definida por el usuario.</p>
+<p>Contiene un mini-mapa (<a href="https://pub.dev/documentation/flutter_map/8.2.2/flutter_map/FlutterMap-class.html">FlutterMap</a>) que muestra la ubicación (<a href="../widgets_alertas_personalizadas_tarjeta_zona_segura/TarjetaZonaSegura/centro.html">centro</a>)
+y el <a href="../widgets_alertas_personalizadas_tarjeta_zona_segura/TarjetaZonaSegura/radio.html">radio</a> de la zona como un <a href="https://pub.dev/documentation/flutter_map/8.2.2/flutter_map/CircleLayer-class.html">CircleLayer</a>.
+También muestra el <a href="../widgets_alertas_personalizadas_tarjeta_zona_segura/TarjetaZonaSegura/nombreZona.html">nombreZona</a> y un botón para eliminar (<a href="../widgets_alertas_personalizadas_tarjeta_zona_segura/TarjetaZonaSegura/onDelete.html">onDelete</a>).
+Utilizado en <a href="../screens_pantalla_alertas_personalizadas/PantallaAlertasPersonalizadas-class.html">PantallaAlertasPersonalizadas</a>.</p>
+</section>
 
 
     <section>
@@ -88,7 +95,7 @@
           <span class="name"><a href="../widgets_alertas_personalizadas_tarjeta_zona_segura/TarjetaZonaSegura/TarjetaZonaSegura.html">TarjetaZonaSegura.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-nombreZona"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">nombreZona</span>, </span><span class="parameter" id="-param-centro"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a></span> <span class="parameter-name">centro</span>, </span><span class="parameter" id="-param-radio"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">radio</span>, </span><span class="parameter" id="-param-onDelete"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onDelete</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget de tarjeta que muestra una Zona Segura definida por el usuario.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +113,7 @@
 
 </dt>
 <dd>
-  
+  Las coordenadas <a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a> del centro de la zona.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +149,7 @@
 
 </dt>
 <dd>
-  
+  El nombre personalizado de la zona (ej. "Casa", "Oficina").
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +161,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al presionar el botón de eliminar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +173,7 @@
 
 </dt>
 <dd>
-  
+  El radio en metros de la zona segura.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

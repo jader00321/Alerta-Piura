@@ -4,8 +4,15 @@ import 'package:mobile_app/widgets/registro/register_header.dart';
 import 'package:mobile_app/widgets/registro/register_form_fields.dart';
 import 'package:mobile_app/widgets/registro/register_actions.dart';
 
+/// {@template register_screen}
 /// Pantalla de registro para nuevos usuarios.
+///
+/// Permite al usuario ingresar sus datos (nombre, alias, email, teléfono, contraseña)
+/// y enviarlos a la API para crear una nueva cuenta.
+/// Utiliza widgets reutilizables como [RegisterHeader], [RegisterFormFields] y [RegisterActions].
+/// {@endtemplate}
 class RegisterScreen extends StatefulWidget {
+  /// {@macro register_screen}
   const RegisterScreen({super.key});
 
   @override
@@ -22,6 +29,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  /// Indica si se está procesando la solicitud de registro.
   bool _isLoading = false;
   final AuthService _authService = AuthService();
 
@@ -37,6 +45,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   /// Valida el formulario y envía la solicitud de registro a la API.
+  ///
+  /// Si tiene éxito, muestra un [SnackBar] y cierra la pantalla.
+  /// Si falla, muestra un [SnackBar] con el error.
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate() && !_isLoading) {
       setState(() => _isLoading = true);
@@ -44,10 +55,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       try {
         final response = await _authService.register(
           nombre: _nombreController.text.trim(),
-          alias: _aliasController.text.trim(),
+          alias: _aliasController.text.trim().isEmpty
+              ? null
+              : _aliasController.text.trim(), // Enviar null si está vacío
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
-          telefono: _telefonoController.text.trim(),
+          telefono: _telefonoController.text.trim().isEmpty
+              ? null
+              : _telefonoController.text.trim(), // Enviar null si está vacío
         );
 
         if (!mounted) return;
@@ -59,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pop(context);
+          Navigator.pop(context); // Cierra la pantalla de registro
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

@@ -7,7 +7,15 @@ import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_perfil.dart';
 
+/// {@template pantalla_gestionar_suscripcion}
+/// Pantalla para que un usuario suscrito (Premium o Reportero) gestione su plan.
+///
+/// Muestra el plan actual y la fecha de expiración.
+/// Permite navegar para cambiar de plan, gestionar métodos de pago o cancelar
+/// la suscripción activa.
+/// {@endtemplate}
 class PantallaGestionarSuscripcion extends StatefulWidget {
+  /// {@macro pantalla_gestionar_suscripcion}
   const PantallaGestionarSuscripcion({super.key});
 
   @override
@@ -15,11 +23,17 @@ class PantallaGestionarSuscripcion extends StatefulWidget {
       _PantallaGestionarSuscripcionState();
 }
 
+/// Estado para [PantallaGestionarSuscripcion].
+///
+/// Maneja la carga de los datos del perfil y la lógica de cancelación.
 class _PantallaGestionarSuscripcionState
     extends State<PantallaGestionarSuscripcion> {
   final PerfilService _perfilService = PerfilService();
   final ServicioSuscripcion _suscripcionService = ServicioSuscripcion();
+  
+  /// Futuro que contiene los datos del perfil actual del usuario.
   late Future<Perfil> _perfilFuture;
+  /// Indica si se está procesando la cancelación de la suscripción.
   bool _isCancelling = false;
 
   @override
@@ -28,6 +42,9 @@ class _PantallaGestionarSuscripcionState
     _perfilFuture = _perfilService.getMiPerfil();
   }
 
+  /// Muestra un diálogo de confirmación y llama a [ServicioSuscripcion.cancelarSuscripcion].
+  ///
+  /// Si tiene éxito, refresca el estado de autenticación global y cierra la pantalla.
   Future<void> _handleCancelarSuscripcion() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -65,8 +82,10 @@ class _PantallaGestionarSuscripcionState
         ),
       );
 
+      // Refresca el estado global del usuario (rol puede cambiar)
       await context.read<AuthNotifier>().refreshUserStatus();
 
+      // Cierra la pantalla y devuelve true para indicar que hubo un cambio
       Navigator.pop(context, true);
 
       if (mounted) {
@@ -106,7 +125,8 @@ class _PantallaGestionarSuscripcionState
                       ListTile(
                         leading: const Icon(Icons.workspace_premium,
                             color: Colors.amber, size: 40),
-                        title: Text(perfil.nombrePlan ?? 'Plan Gratuito',
+                        title: Text(
+                            perfil.nombrePlan ?? 'Plan Gratuito',
                             style: theme.textTheme.headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.bold)),
                         subtitle: Text(
@@ -129,10 +149,10 @@ class _PantallaGestionarSuscripcionState
                       ListTile(
                         leading: const Icon(Icons.swap_horiz_outlined),
                         title: const Text('Cambiar de Plan'),
-                        subtitle:
-                            const Text('Explora otros planes disponibles.'),
+                        subtitle: const Text('Explora otros planes disponibles.'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () {
+                          // Reemplaza la pantalla actual para evitar volver aquí
                           Navigator.pushReplacementNamed(
                               context, '/subscription_plans');
                         },

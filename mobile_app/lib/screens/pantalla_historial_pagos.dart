@@ -4,14 +4,27 @@ import 'package:mobile_app/models/historial_pago_model.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_historial_pagos.dart';
 import 'package:mobile_app/widgets/historial_pagos/tarjeta_historial_pago.dart';
 
+/// {@template pantalla_historial_pagos}
+/// Pantalla que muestra el historial de transacciones de pago del usuario.
+///
+/// Utiliza [PerfilService.getHistorialPagos] para obtener la lista de [HistorialPago].
+/// Cada elemento de la lista es renderizado por [TarjetaHistorialPago] y es
+/// tappable para navegar a [PantallaDetalleBoleta].
+/// {@endtemplate}
 class PantallaHistorialPagos extends StatefulWidget {
+  /// {@macro pantalla_historial_pagos}
   const PantallaHistorialPagos({super.key});
 
   @override
-  State<PantallaHistorialPagos> createState() => _PantallaHistorialPagosState();
+  State<PantallaHistorialPagos> createState() =>
+      _PantallaHistorialPagosState();
 }
 
+/// Estado para [PantallaHistorialPagos].
+///
+/// Maneja la carga y actualización del historial de pagos.
 class _PantallaHistorialPagosState extends State<PantallaHistorialPagos> {
+  /// Futuro que contiene la lista del historial de pagos.
   late Future<List<HistorialPago>> _historialFuture;
   final PerfilService _perfilService = PerfilService();
 
@@ -21,6 +34,7 @@ class _PantallaHistorialPagosState extends State<PantallaHistorialPagos> {
     _historialFuture = _perfilService.getHistorialPagos();
   }
 
+  /// Recarga el historial de pagos desde la API.
   Future<void> _refreshHistorial() async {
     setState(() {
       _historialFuture = _perfilService.getHistorialPagos();
@@ -43,8 +57,7 @@ class _PantallaHistorialPagosState extends State<PantallaHistorialPagos> {
             }
             if (snapshot.hasError) {
               return Center(
-                  child:
-                      Text('Error al cargar el historial: ${snapshot.error}'));
+                  child: Text('Error al cargar el historial: ${snapshot.error}'));
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return const Center(

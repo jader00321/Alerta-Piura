@@ -62,6 +62,18 @@
 </ol>})
     </section>
     
+<section class="desc markdown">
+  <p>Tarjeta <strong>reutilizable y unificada</strong> que muestra un resumen de reporte
+adaptado al contexto de las diferentes pestañas de la pantalla <a href="../../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a>.</p>
+<p>Adapta su apariencia basándose en el <a href="../../widgets_mi_actividad_tarjeta_actividad/TarjetaActividad/fetcher.html">fetcher</a> (contexto de la pestaña) para mostrar:</p>
+<ul>
+<li>Imagen, estado, título.</li>
+<li>Categoría, Urgencia, Distrito (principalmente para <a href="../../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher.misReportes</a>).</li>
+<li>Autor del reporte (para <a href="../../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher.misApoyos</a>, <a href="../../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher.misSeguimientos</a>, <a href="../../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher.misComentarios</a>).</li>
+<li>Una "fila contextual" que indica la acción del usuario (Apoyaste, Siguiendo, Tu comentario).</li>
+<li>Acepta un <a href="../../widgets_mi_actividad_tarjeta_actividad/TarjetaActividad/trailingAction.html">trailingAction</a> opcional (ej. botón "Cancelar" para reportes pendientes).</li>
+</ul>
+</section>
 
 
     
@@ -72,7 +84,7 @@
   required this.reporte,
   required this.fetcher,
   required this.onTap,
-  this.trailingAction,
+  this.trailingAction, &#47;&#47; Acepta la acción del trailing
 });</code></pre>
 </section>
 

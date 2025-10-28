@@ -53,6 +53,13 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget tipo "Chip" que muestra un indicador visual del nivel de riesgo
+de la zona que se está visualizando en el mapa.</p>
+<p>Cambia de color y texto (ej. 'Zona Peligrosa', 'Zona Tranquila')
+basándose en un <a href="../widgets_mapa_indicador_riesgo/IndicadorRiesgo/riesgoScore.html">riesgoScore</a> numérico.
+Utiliza <a href="https://api.flutter.dev/flutter/widgets/AnimatedSwitcher-class.html">AnimatedSwitcher</a> para una transición suave al cambiar el nivel.</p>
+</section>
 
 
     <section>
@@ -88,7 +95,8 @@
           <span class="name"><a href="../widgets_mapa_indicador_riesgo/IndicadorRiesgo/IndicadorRiesgo.html">IndicadorRiesgo.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-riesgoScore"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">riesgoScore</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget tipo "Chip" que muestra un indicador visual del nivel de riesgo
+de la zona que se está visualizando en el mapa.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -130,7 +138,7 @@
 
 </dt>
 <dd>
-  
+  El puntaje numérico (calculado por el backend) que representa el riesgo.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

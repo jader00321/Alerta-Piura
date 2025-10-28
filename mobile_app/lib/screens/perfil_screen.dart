@@ -9,15 +9,29 @@ import 'package:mobile_app/widgets/perfil/dialogo_postulacion_lider.dart';
 import 'package:mobile_app/widgets/perfil/insignia_estatus_widget.dart';
 import 'package:provider/provider.dart';
 
+/// {@template perfil_screen}
+/// Pantalla principal del perfil del usuario.
+///
+/// Muestra la información del usuario ([PerfilHeaderCard], [InsigniaEstatusWidget])
+/// y proporciona acceso a varias secciones de gestión de cuenta y actividad
+/// a través de [PerfilActionTile] agrupados en tarjetas.
+/// Permite refrescar los datos y cerrar sesión.
+/// {@endtemplate}
 class PerfilScreen extends StatefulWidget {
+  /// {@macro perfil_screen}
   const PerfilScreen({super.key});
 
   @override
   State<PerfilScreen> createState() => _PerfilScreenState();
 }
 
+/// Estado para [PerfilScreen].
+///
+/// Maneja la carga inicial y el refresco de los datos del perfil.
+/// Gestiona la acción de cerrar sesión y postular a líder.
 class _PerfilScreenState extends State<PerfilScreen> {
   final PerfilService _perfilService = PerfilService();
+  /// Futuro que contiene los datos del perfil del usuario.
   late Future<Perfil> _perfilFuture;
 
   @override
@@ -26,6 +40,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     _perfilFuture = _perfilService.getMiPerfil();
   }
 
+  /// Refresca el estado de autenticación global y recarga los datos del perfil.
   Future<void> _refreshProfile() async {
     if (mounted) {
       await context.read<AuthNotifier>().refreshUserStatus();
@@ -37,6 +52,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
+  /// Muestra un diálogo de confirmación y cierra la sesión del usuario.
   Future<void> _handleLogout() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -56,23 +72,25 @@ class _PerfilScreenState extends State<PerfilScreen> {
       ),
     );
 
-    if (confirm == true) {
-      if (!mounted) return;
+    if (confirm == true && mounted) {
       await context.read<AuthNotifier>().logout();
       if (mounted) {
+        // Navega a la raíz y elimina todo el historial
         Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       }
     }
   }
 
+  /// Muestra el diálogo [DialogoPostulacionLider] para que el usuario postule.
+  /// Si la postulación es exitosa, refresca el perfil.
   Future<void> _handlePostularLider() async {
     final result = await showDialog<bool>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: false, // Evita cerrar tocando fuera
       builder: (ctx) => const DialogoPostulacionLider(),
     );
     if (result == true && mounted) {
-      _refreshProfile();
+      _refreshProfile(); // Refrescar para potencialmente mostrar estado de postulación
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Tu postulación ha sido enviada.'),
         backgroundColor: Colors.green,
@@ -110,13 +128,15 @@ class _PerfilScreenState extends State<PerfilScreen> {
             final perfil = snapshot.data!;
 
             return ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(), // Permite el refresh
               padding: const EdgeInsets.all(16.0),
               children: [
                 PerfilHeaderCard(perfil: perfil),
                 const SizedBox(height: 24),
                 InsigniaEstatusWidget(perfil: perfil),
                 const SizedBox(height: 24),
+
+                /// Sección de Actividad y Beneficios
                 _buildSectionCard(
                     theme: theme,
                     title: 'Actividad y Beneficios',
@@ -190,32 +210,38 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         ),
                     ]),
                 const SizedBox(height: 24),
-                _buildSectionCard(theme: theme, title: 'Mi Cuenta', children: [
-                  PerfilActionTile(
-                      icon: Icons.credit_card_outlined,
-                      title: 'Historial de Pagos',
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/historial_pagos')),
-                  PerfilActionTile(
-                      icon: Icons.edit_outlined,
-                      title: 'Editar Perfil',
-                      onTap: () async {
-                        final result = await Navigator.pushNamed(
-                            context, '/editar-perfil');
-                        if (result == true && mounted) {
-                          _refreshProfile();
-                        }
-                      }),
-                  PerfilActionTile(
-                      icon: Icons.settings_outlined,
-                      title: 'Configuración',
-                      onTap: () => Navigator.pushNamed(context, '/settings')),
-                  PerfilActionTile(
-                      icon: Icons.logout,
-                      title: 'Cerrar Sesión',
-                      color: Colors.red,
-                      onTap: _handleLogout),
-                ]),
+
+                /// Sección de Mi Cuenta
+                _buildSectionCard(
+                    theme: theme,
+                    title: 'Mi Cuenta',
+                    children: [
+                      PerfilActionTile(
+                          icon: Icons.credit_card_outlined,
+                          title: 'Historial de Pagos',
+                          onTap: () => Navigator.pushNamed(
+                              context, '/historial_pagos')),
+                      PerfilActionTile(
+                          icon: Icons.edit_outlined,
+                          title: 'Editar Perfil',
+                          onTap: () async {
+                            final result = await Navigator.pushNamed(
+                                context, '/editar-perfil');
+                            if (result == true && mounted) {
+                              _refreshProfile();
+                            }
+                          }),
+                      PerfilActionTile(
+                          icon: Icons.settings_outlined,
+                          title: 'Configuración',
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/settings')),
+                      PerfilActionTile(
+                          icon: Icons.logout,
+                          title: 'Cerrar Sesión',
+                          color: Colors.red,
+                          onTap: _handleLogout),
+                    ]),
               ],
             );
           },
@@ -224,6 +250,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
+  /// Helper para construir las tarjetas de sección con título y contenido.
   Widget _buildSectionCard(
       {required ThemeData theme,
       required String title,
@@ -232,10 +259,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
       elevation: 0,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-              color: theme.dividerColor
-                  .withAlpha(128)) // CORREGIDO: withOpacity -> withAlpha
-          ),
+          side: BorderSide(color: theme.dividerColor.withAlpha(128))),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
         child: Column(

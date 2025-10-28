@@ -61,28 +61,17 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Método público llamado por el widget padre (<a href="../../screens_verificacion_screen/VerificacionScreen-class.html">VerificacionScreen</a>) para refrescar.
+Retorna el nuevo total de elementos filtrados.</p>
+</section>
 
 
     
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
-  <pre class="language-dart"><code class="language-dart">Future&lt;int&gt; refreshData() async {
-  _currentPage = 1;
-  _hasMore = true;
-  _reportes = [];
-  if (mounted) setStateIfMounted(() =&gt; _isLoading = true);
-
-  if (widget.isHistory) {
-    await Future.wait([
-      _fetchData(isRefresh: true),
-      _cargarEstadosSolicitudes(),
-    ]);
-  } else {
-    await _fetchData(isRefresh: true);
-  }
-
-  if (mounted) setStateIfMounted(() =&gt; _isLoading = false);
-  return _totalFiltrado;
+  <pre class="language-dart"><code class="language-dart">Future&lt;int&gt; refreshData() {
+  return _fetchData(isInitialLoad: true);
 }</code></pre>
 </section>
 

@@ -53,6 +53,21 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Pantalla que muestra los detalles completos de un reporte ciudadano.</p>
+<p>Carga los datos usando <a href="../api_reporte_service/ReporteService/getReporteById.html">ReporteService.getReporteById</a>.
+Permite al usuario interactuar con el reporte:</p>
+<ul>
+<li>Dar/Quitar Apoyo (<code>_onSupportReport</code>)</li>
+<li>Seguir/Dejar de seguir (<code>_toggleFollow</code>)</li>
+<li>Añadir/Editar/Eliminar/Reportar comentarios (<a href="../widgets_reporte_detalle_comments_section/CommentsSection-class.html">CommentsSection</a> callbacks)</li>
+<li>Reportar al autor del comentario (<code>_showReportUserDialog</code>)</li>
+<li>Editar el reporte si es el autor y está pendiente (<code>_handleEditReportAuthor</code>)</li>
+<li>Abrir el chat si es el autor y está pendiente (<code>_handleChatAuthor</code>)</li>
+</ul>
+<p>Utiliza <a href="../widgets_reporte_detalle_layout_detalle_reporte/LayoutDetalleReporte-class.html">LayoutDetalleReporte</a> para estructurar el contenido.
+Maneja los diferentes estados del reporte (verificado, pendiente, fusionado, oculto).</p>
+</section>
 
 
     <section>
@@ -88,7 +103,7 @@
           <span class="name"><a href="../screens_reporte_detalle_screen/ReporteDetalleScreen/ReporteDetalleScreen.html">ReporteDetalleScreen.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-reporteId"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">reporteId</span></span>})</span>
         </dt>
         <dd>
-          
+          Pantalla que muestra los detalles completos de un reporte ciudadano.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -130,7 +145,7 @@
 
 </dt>
 <dd>
-  
+  El ID del reporte a mostrar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

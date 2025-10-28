@@ -59,6 +59,15 @@
 </ol>})
     </section>
     
+<section class="desc markdown">
+  <p>Define la estructura principal del contenido scrollable dentro de la
+pantalla de detalle de verificación (<a href="../../screens_verificacion_detalle_screen/VerificacionDetalleScreen-class.html">VerificacionDetalleScreen</a>).</p>
+<p>Utiliza un <a href="https://api.flutter.dev/flutter/widgets/CustomScrollView-class.html">CustomScrollView</a> con un <a href="https://api.flutter.dev/flutter/widgets/SliverList-class.html">SliverList</a> que contiene:</p>
+<ul>
+<li><a href="../../widgets_reporte_detalle_reporte_header/ReporteHeader-class.html">ReporteHeader</a>: Muestra la información principal del reporte (con imagen).</li>
+<li><a href="../../widgets_verificacion_mapa_verificacion/MapaVerificacion-class.html">MapaVerificacion</a>: Muestra un mapa no interactivo de la ubicación.</li>
+</ul>
+</section>
 
 
     
@@ -67,7 +76,6 @@
   <pre class="language-dart"><code class="language-dart">const LayoutDetalleVerificacion({
   super.key,
   required this.reporte,
-  &#47;&#47; Eliminamos los callbacks del constructor
 });</code></pre>
 </section>
 

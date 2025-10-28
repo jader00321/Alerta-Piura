@@ -53,6 +53,13 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget fundamental que renderiza el mapa interactivo y los marcadores.</p>
+<p>Utiliza <code>flutter_map</code> para la capa base del mapa (TileLayer) y
+<code>flutter_map_marker_cluster</code> para agrupar eficientemente los marcadores
+de reportes (<a href="../models_reporte_model/Reporte-class.html">Reporte</a>) cuando hay muchos en un área pequeña.
+Maneja los estados de carga y error del <a href="../widgets_mapa_capa_mapa_base/CapaMapaBase/reportesFuture.html">reportesFuture</a>.</p>
+</section>
 
 
     <section>
@@ -88,7 +95,7 @@
           <span class="name"><a href="../widgets_mapa_capa_mapa_base/CapaMapaBase/CapaMapaBase.html">CapaMapaBase.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-reportesFuture"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../models_reporte_model/Reporte-class.html">Reporte</a></span>&gt;</span></span>&gt;</span></span> <span class="parameter-name">reportesFuture</span>, </span><span class="parameter" id="-param-heatmapFuture"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a></span>&gt;</span></span>&gt;</span>?</span> <span class="parameter-name">heatmapFuture</span>, </span><span class="parameter" id="-param-mapController"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/flutter_map/8.2.2/flutter_map/MapController-class.html">MapController</a></span> <span class="parameter-name">mapController</span>, </span><span class="parameter" id="-param-initialCenter"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a></span> <span class="parameter-name">initialCenter</span>, </span><span class="parameter" id="-param-onPositionChanged"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onPositionChanged</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://pub.dev/documentation/flutter_map/8.2.2/flutter_map/MapEvent-class.html">MapEvent</a></span></span>), </span><span class="parameter" id="-param-onMapReady"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onMapReady</span>, </span><span class="parameter" id="-param-onShowReportSummary"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onShowReportSummary</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="../models_reporte_model/Reporte-class.html">Reporte</a></span></span>), </span><span class="parameter" id="-param-isHeatmapVisible"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isHeatmapVisible</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget fundamental que renderiza el mapa interactivo y los marcadores.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -118,7 +125,7 @@
 
 </dt>
 <dd>
-  
+  Futuro opcional para los datos del heatmap. (Actualmente no usado)
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -130,7 +137,7 @@
 
 </dt>
 <dd>
-  
+  Coordenada <a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a> inicial donde se centrará el mapa al cargar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +149,7 @@
 
 </dt>
 <dd>
-  
+  Flag para alternar entre la vista de marcadores y el heatmap.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +173,7 @@
 
 </dt>
 <dd>
-  
+  Controlador del mapa para permitir interacciones programáticas (ej. centrar).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -178,7 +185,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta una vez que el mapa está listo.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -190,7 +197,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta cuando la posición del mapa cambia (ej. por drag).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -202,7 +209,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta cuando el usuario toca un marcador de reporte.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -214,7 +221,7 @@
 
 </dt>
 <dd>
-  
+  Futuro que provee la lista de <a href="../models_reporte_model/Reporte-class.html">Reporte</a> a mostrar en el mapa.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

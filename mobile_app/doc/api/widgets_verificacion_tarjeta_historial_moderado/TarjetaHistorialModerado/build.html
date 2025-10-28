@@ -110,6 +110,7 @@ and</li>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
   final theme = Theme.of(context);
+  &#47;&#47; Determina si se puede solicitar revisión basado en el estado del reporte.
   final bool puedeSolicitarRevision = reporte.estado == &#39;verificado&#39; ||
       reporte.estado == &#39;rechazado&#39; ||
       reporte.estado == &#39;fusionado&#39;;
@@ -117,6 +118,7 @@ Widget build(BuildContext context) {
   Widget? trailingWidget;
   List&lt;Widget&gt; trailingWidgets = [];
 
+  &#47;&#47; Lógica para el botón&#47;estado de &quot;Solicitar Revisión&quot;.
   if (puedeSolicitarRevision) {
     switch (estadoSolicitud) {
       case &#39;pendiente&#39;:
@@ -131,8 +133,10 @@ Widget build(BuildContext context) {
         ));
         break;
       case &#39;aprobada&#39;:
+        &#47;&#47; No muestra nada si ya fue aprobada.
         break;
       case &#39;desestimada&#39;:
+      &#47;&#47; Si no hay solicitud o fue desestimada, muestra el botón.
       default:
         trailingWidgets.add(TextButton(
           onPressed: onSolicitarRevision,
@@ -141,13 +145,14 @@ Widget build(BuildContext context) {
             visualDensity: VisualDensity.compact,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text(&#39;Solicitar Revisión&#39;,
-              style: TextStyle(fontSize: 12)),
+          child:
+              const Text(&#39;Solicitar Revisión&#39;, style: TextStyle(fontSize: 12)),
         ));
         break;
     }
   }
 
+  &#47;&#47; Lógica para el botón de enlace (solo si está fusionado y hay callback).
   if (reporte.estado == &#39;fusionado&#39; &amp;&amp; onIrAlOriginal != null) {
     trailingWidgets.add(Tooltip(
       message: &#39;Ir al reporte original&#39;,
@@ -161,11 +166,13 @@ Widget build(BuildContext context) {
     ));
   }
 
+  &#47;&#47; Combina los widgets del trailing si hay más de uno.
   if (trailingWidgets.isEmpty) {
     trailingWidget = null;
   } else if (trailingWidgets.length == 1) {
     trailingWidget = trailingWidgets.first;
   } else {
+    &#47;&#47; Muestra ambos widgets (estado solicitud y enlace) si aplican.
     trailingWidget = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -176,6 +183,7 @@ Widget build(BuildContext context) {
     );
   }
 
+  &#47;&#47; Construye el ListTile principal.
   return Card(
     margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
     child: ListTile(
@@ -185,9 +193,9 @@ Widget build(BuildContext context) {
           overflow: TextOverflow.ellipsis),
       subtitle: Text(&#39;${reporte.categoria} • ${reporte.fecha}&#39;,
           style: const TextStyle(fontSize: 12)),
-      leading: _buildStatusChip(theme),
-      trailing: trailingWidget,
-      onTap: onTap,
+      leading: _buildStatusChip(theme), &#47;&#47; Muestra el chip de estado.
+      trailing: trailingWidget, &#47;&#47; Muestra las acciones&#47;estado calculados.
+      onTap: onTap, &#47;&#47; Permite navegar al detalle.
     ),
   );
 }</code></pre>

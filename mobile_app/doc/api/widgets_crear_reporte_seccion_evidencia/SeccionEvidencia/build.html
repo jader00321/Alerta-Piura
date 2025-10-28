@@ -111,23 +111,23 @@ and</li>
 Widget build(BuildContext context) {
   return Card(
     elevation: 2,
-    clipBehavior: Clip.antiAlias,
+    clipBehavior: Clip.antiAlias, &#47;&#47; Asegura que la imagen respete los bordes.
     child: InkWell(
-      onTap: onPickImage,
+      onTap: onPickImage, &#47;&#47; Llama al callback del padre.
       child: Container(
-        height: 200,
+        height: 200, &#47;&#47; Altura fija para la vista previa.
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Theme.of(context)
-              .colorScheme
-              .surfaceContainerHighest
-              .withAlpha(128),
+          &#47;&#47; Fondo sutil por si la imagen no carga o es transparente.
+          color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(128),
         ),
         child: imageFile != null
+            &#47;&#47;&#47; Muestra la imagen seleccionada desde el archivo.
             ? Image.file(
                 File(imageFile!.path),
-                fit: BoxFit.cover,
+                fit: BoxFit.cover, &#47;&#47; Cubre el contenedor.
               )
+            &#47;&#47;&#47; Muestra el placeholder si [imageFile] es nulo.
             : const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

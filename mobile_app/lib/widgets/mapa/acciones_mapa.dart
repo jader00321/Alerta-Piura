@@ -1,18 +1,38 @@
-// lib/widgets/mapa/acciones_mapa.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_app/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
+/// {@template acciones_mapa}
+/// Widget que agrupa y muestra los botones de acción flotantes (FAB)
+/// sobre la pantalla del [MapaView].
+///
+/// Incluye botones para:
+/// - Mostrar filtros ([onShowFilterSheet])
+/// - Centrar en la ubicación del usuario ([onCenterOnUser])
+/// - Crear un nuevo reporte ([onCreateReport])
+/// - Activar/Desactivar la Alerta SOS ([onActivateSos], [onDeactivateSos])
+///
+/// El botón SOS es dinámico: cambia de color, muestra un temporizador
+/// ([sosRemainingSeconds]) y su acción depende de si la alerta está
+/// activa ([isSosActive]) o si el usuario puede activarla ([AuthNotifier.canUseSos]).
+/// {@endtemplate}
 class AccionesMapa extends StatelessWidget {
+  /// Callback para mostrar el panel de filtros.
   final VoidCallback onShowFilterSheet;
+  /// Callback para centrar el mapa en la ubicación del usuario.
   final VoidCallback onCenterOnUser;
+  /// Callback para navegar a la pantalla de creación de reporte.
   final VoidCallback onCreateReport;
-
+  /// Indica si la alerta SOS está actualmente activa.
   final bool isSosActive;
+  /// Segundos restantes de la alerta SOS activa (para el temporizador).
   final int sosRemainingSeconds;
+  /// Callback para iniciar la activación de la alerta SOS.
   final VoidCallback onActivateSos;
+  /// Callback para mostrar el diálogo de desactivación de SOS.
   final VoidCallback onDeactivateSos;
 
+  /// {@macro acciones_mapa}
   const AccionesMapa({
     super.key,
     required this.onShowFilterSheet,
@@ -27,96 +47,87 @@ class AccionesMapa extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authNotifier = context.watch<AuthNotifier>();
-    final bool canActivateSos =
-        authNotifier.isAuthenticated && authNotifier.isPremium;
+    /// Determina si el usuario tiene permiso para usar SOS (Premium o Reportero).
+    final bool canActivateSos = authNotifier.isAuthenticated && authNotifier.isPremium;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 80.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.end,
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Padding(
-              padding: const EdgeInsets.only(left: 32.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FloatingActionButton(
-                    heroTag: 'filter_btn',
-                    onPressed: onShowFilterSheet,
-                    tooltip: 'Filtros',
-                    child: const Icon(Icons.filter_list),
-                  ),
-                ],
-              )),
-          Column(
-            mainAxisSize: MainAxisSize.min,
+          /// Fila superior de botones (Filtros, Ubicación)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Botón de Mi Ubicación
-              FloatingActionButton(
-                heroTag: 'my_location_btn',
+              FloatingActionButton.small(
+                heroTag: 'filter_btn',
+                onPressed: onShowFilterSheet,
+                child: const Icon(Icons.filter_list),
+              ),
+              FloatingActionButton.small(
+                heroTag: 'location_btn',
                 onPressed: onCenterOnUser,
-                tooltip: 'Mi Ubicación',
                 child: const Icon(Icons.my_location),
               ),
-              const SizedBox(height: 16),
-              // Botón Extendido de Reportar
+            ],
+          ),
+          const SizedBox(height: 16),
+          /// Fila inferior de botones (Crear Reporte, SOS)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
               FloatingActionButton.extended(
                 heroTag: 'create_report_btn',
                 onPressed: onCreateReport,
-                label: const Text('Reportar'),
                 icon: const Icon(Icons.add),
+                label: const Text('Reportar'),
               ),
-              const SizedBox(height: 16),
-
-              if (authNotifier.isAuthenticated)
-                GestureDetector(
-                  onTap: () {
-                    // Caso 1: SOS está activo. Tocar desactiva.
-                    if (isSosActive) {
-                      if (canActivateSos) {
-                        // Si es premium (debería serlo si está activo)
-                        onDeactivateSos();
-                      }
-                    }
-                    // Caso 2: SOS está inactivo. Tocar activa (si es premium) o muestra planes.
-                    else {
-                      if (canActivateSos) {
-                        // Es premium -> Activar SOS
-                        onActivateSos();
-                      } else if (authNotifier.isAuthenticated) {
-                        // No es premium -> Ir a planes
-                        Navigator.pushNamed(context, '/subscription_plans');
-                      }
-                    }
-                  },
-                  child: FloatingActionButton(
-                    heroTag: 'sos_btn',
-                    onPressed: null,
-
-                    backgroundColor: isSosActive
-                        ? Colors.red
-                        : canActivateSos
-                            ? Colors.red
-                                .shade300 // Rojo claro si es premium y listo
-                            : Colors.grey, // Gris si no es premium
-
-                    tooltip: canActivateSos
-                        ? (isSosActive
-                            ? 'Finalizar Alerta'
-                            : 'Presiona para SOS') // Tooltip actualizado
-                        : 'Activa Premium para usar SOS',
-                    child: isSosActive
-                        ? Text(
-                            // Mostrar contador
-                            '${(sosRemainingSeconds ~/ 60).toString().padLeft(2, '0')}:${(sosRemainingSeconds % 60).toString().padLeft(2, '0')}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: 16))
-                        : const Icon(Icons.sos, color: Colors.white, size: 28),
-                  ),
+              /// Widget dinámico del botón SOS
+              GestureDetector(
+                /// Usa un solo tap para activar o desactivar.
+                onTap: canActivateSos ? (isSosActive ? onDeactivateSos : onActivateSos) : () {
+                  // Si no puede activar, muestra diálogo para ir a planes.
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Función Premium'),
+                      content: const Text('La Alerta SOS es una función premium. ¿Deseas ver los planes?'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+                        ElevatedButton(onPressed: () {
+                          Navigator.pop(ctx);
+                          Navigator.pushNamed(context, '/subscription_plans');
+                        }, child: const Text('Ver Planes')),
+                      ],
+                    ),
+                  );
+                },
+                child: FloatingActionButton(
+                  heroTag: 'sos_btn',
+                  onPressed: null, // El GestureDetector maneja el tap.
+                  /// Color dinámico basado en el estado.
+                  backgroundColor: isSosActive
+                      ? Colors.red // Activo
+                      : canActivateSos
+                          ? Colors.red.shade300 // Listo para activar
+                          : Colors.grey, // Deshabilitado (no premium)
+                  tooltip: canActivateSos
+                      ? (isSosActive ? 'Finalizar Alerta' : 'Presiona para SOS')
+                      : 'Activa Premium para usar SOS',
+                  /// Contenido dinámico (Icono o Temporizador).
+                  child: isSosActive
+                      ? Text(
+                          /// Formatea los segundos restantes a MM:SS
+                          '${(sosRemainingSeconds ~/ 60).toString().padLeft(2, '0')}:${(sosRemainingSeconds % 60).toString().padLeft(2, '0')}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 16),
+                        )
+                      : const Icon(Icons.sos, color: Colors.white, size: 28),
                 ),
+              ),
             ],
           ),
         ],

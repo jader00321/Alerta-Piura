@@ -53,6 +53,21 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget principal que define la estructura y el layout de la pantalla
+de detalle de un reporte estándar (<a href="../screens_reporte_detalle_screen/ReporteDetalleScreen-class.html">ReporteDetalleScreen</a>).</p>
+<p>Organiza los componentes principales:</p>
+<ul>
+<li><a href="../widgets_reporte_detalle_reporte_header/ReporteHeader-class.html">ReporteHeader</a>: Muestra la información del reporte.</li>
+<li><a href="../widgets_reporte_detalle_reporte_actions_bar/ReporteActionsBar-class.html">ReporteActionsBar</a>: Muestra los botones de apoyo y contador de comentarios.</li>
+<li><a href="../widgets_reporte_detalle_merge_notification_card/MergeNotificationCard-class.html">MergeNotificationCard</a>s: Muestra (si existen) los avisos de fusión en un <a href="https://api.flutter.dev/flutter/material/ExpansionTile-class.html">ExpansionTile</a>.</li>
+<li><a href="../widgets_reporte_detalle_comments_section/CommentsSection-class.html">CommentsSection</a>: Muestra la lista de comentarios de usuario.</li>
+<li><a href="../widgets_reporte_detalle_campo_comentario/CampoComentarioInput-class.html">CampoComentarioInput</a> / <a href="../widgets_reporte_detalle_campo_comentario/PromptLoginComentario-class.html">PromptLoginComentario</a>: Muestra el campo para añadir
+comentarios o un prompt de login, según el estado del reporte y la autenticación.</li>
+</ul>
+<p>También maneja la lógica para mostrar vistas especiales para reportes
+fusionados (<a href="../widgets_reporte_detalle_vistas_estado_reporte/VistaReporteFusionado-class.html">VistaReporteFusionado</a>) u ocultos (<a href="../widgets_reporte_detalle_vistas_estado_reporte/VistaReporteOculto-class.html">VistaReporteOculto</a>, <a href="../widgets_reporte_detalle_vistas_estado_reporte/BannerReporteOculto-class.html">BannerReporteOculto</a>).</p>
+</section>
 
 
     <section>
@@ -88,7 +103,8 @@
           <span class="name"><a href="../widgets_reporte_detalle_layout_detalle_reporte/LayoutDetalleReporte/LayoutDetalleReporte.html">LayoutDetalleReporte.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-reporte"><span>required</span> <span class="type-annotation"><a href="../models_reporte_detallado_model/ReporteDetallado-class.html">ReporteDetallado</a></span> <span class="parameter-name">reporte</span>, </span><span class="parameter" id="-param-authNotifier"><span>required</span> <span class="type-annotation"><a href="../providers_auth_provider/AuthNotifier-class.html">AuthNotifier</a></span> <span class="parameter-name">authNotifier</span>, </span><span class="parameter" id="-param-onRefresh"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter">void</span>&gt;</span></span> <span class="parameter-name">onRefresh</span>(), </span><span class="parameter" id="-param-onSupportReport"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onSupportReport</span>, </span><span class="parameter" id="-param-onSupportComment"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onSupportComment</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span></span>), </span><span class="parameter" id="-param-onPostComment"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onPostComment</span>, </span><span class="parameter" id="-param-onEditComment"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onEditComment</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span></span>), </span><span class="parameter" id="-param-onDeleteComment"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onDeleteComment</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span></span>), </span><span class="parameter" id="-param-onReportComment"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onReportComment</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span></span>), </span><span class="parameter" id="-param-onReportUser"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onReportUser</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span></span>), </span><span class="parameter" id="-param-comentarioController"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/TextEditingController-class.html">TextEditingController</a></span> <span class="parameter-name">comentarioController</span>, </span><span class="parameter" id="-param-isPostingComment"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isPostingComment</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget principal que define la estructura y el layout de la pantalla
+de detalle de un reporte estándar (<a href="../screens_reporte_detalle_screen/ReporteDetalleScreen-class.html">ReporteDetalleScreen</a>).
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +122,7 @@
 
 </dt>
 <dd>
-  
+  El notifier de autenticación para verificar permisos y estado del usuario.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -118,7 +134,7 @@
 
 </dt>
 <dd>
-  
+  Controlador para el campo de texto del nuevo comentario.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +158,7 @@
 
 </dt>
 <dd>
-  
+  Indica si se está enviando un comentario.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +182,7 @@
 
 </dt>
 <dd>
-  
+  Callback al eliminar un comentario.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -178,7 +194,7 @@
 
 </dt>
 <dd>
-  
+  Callback al editar un comentario.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -190,7 +206,7 @@
 
 </dt>
 <dd>
-  
+  Callback al enviar un nuevo comentario.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -202,7 +218,7 @@
 
 </dt>
 <dd>
-  
+  Callback para el <a href="https://api.flutter.dev/flutter/material/RefreshIndicator-class.html">RefreshIndicator</a>.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -214,7 +230,7 @@
 
 </dt>
 <dd>
-  
+  Callback al reportar un comentario.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -226,7 +242,7 @@
 
 </dt>
 <dd>
-  
+  Callback al reportar un usuario.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -238,7 +254,7 @@
 
 </dt>
 <dd>
-  
+  Callback al presionar el botón de apoyo de un comentario.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -250,7 +266,7 @@
 
 </dt>
 <dd>
-  
+  Callback al presionar el botón de apoyo del reporte.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -262,7 +278,7 @@
 
 </dt>
 <dd>
-  
+  Los datos detallados del reporte a mostrar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

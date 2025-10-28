@@ -109,8 +109,10 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47; Usar read para obtener el AuthNotifier una sola vez.
   final authNotifier = context.read&lt;AuthNotifier&gt;();
   final theme = Theme.of(context);
+  &#47;&#47; Locale para formatear fechas.
   final locale = Localizations.localeOf(context).toString();
 
   return Padding(
@@ -120,15 +122,17 @@ Widget build(BuildContext context) {
       children: [
         Text(&#39;Comentarios&#39;, style: theme.textTheme.titleLarge),
         const SizedBox(height: 16),
+        &#47;&#47; Mensaje si no hay comentarios.
         if (comentarios.isEmpty)
           const Center(
               child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
                   child: Text(&#39;No hay comentarios aún.&#39;)))
         else
+          &#47;&#47; Lista de comentarios.
           ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true, &#47;&#47; Para usar dentro de otro ListView.
+            physics: const NeverScrollableScrollPhysics(), &#47;&#47; Deshabilita scroll propio.
             itemCount: comentarios.length,
             separatorBuilder: (context, index) =&gt; const SizedBox(height: 12),
             itemBuilder: (context, index) {
@@ -136,17 +140,21 @@ Widget build(BuildContext context) {
               final bool isOwner = c.idUsuario == authNotifier.userId;
               final bool isLider = authNotifier.isLider;
 
+              &#47;&#47; Formatea la fecha del comentario.
               String fechaFormateada = &#39;Fecha inválida&#39;;
               try {
+                &#47;&#47; Asume que fechaCreacion es un String ISO 8601.
                 final dateTime = DateTime.parse(c.fechaCreacion);
                 fechaFormateada =
                     DateFormat(&#39;dd MMM yyyy, HH:mm&#39;, locale).format(dateTime);
               } catch (e) {
                 debugPrint(
                     &quot;Error parseando fecha del comentario ${c.id}: ${c.fechaCreacion} - $e&quot;);
+                &#47;&#47; Muestra el string original si falla el parseo.
                 fechaFormateada = c.fechaCreacion;
               }
 
+              &#47;&#47; Construye la tarjeta para cada comentario.
               return Card(
                 elevation: 1,
                 shape: RoundedRectangleBorder(
@@ -156,6 +164,7 @@ Widget build(BuildContext context) {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      &#47;&#47;&#47; Fila con avatar, nombre, fecha y menú de opciones.
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -180,14 +189,16 @@ Widget build(BuildContext context) {
                               ],
                             ),
                           ),
+                          &#47;&#47;&#47; Menú de opciones contextual.
                           if (authNotifier.isAuthenticated)
                             SizedBox(
-                              height: 30,
+                              height: 30, &#47;&#47; Limita altura para mejor tap area
                               width: 40,
                               child: PopupMenuButton&lt;String&gt;(
                                 icon: const Icon(Icons.more_vert, size: 20),
                                 tooltip: &#39;Más opciones&#39;,
                                 onSelected: (value) {
+                                  &#47;&#47; Ejecuta la acción correspondiente al callback.
                                   if (value == &#39;editar&#39;) {
                                     onEdit(c.id, c.comentario);
                                   }
@@ -203,22 +214,18 @@ Widget build(BuildContext context) {
                                 },
                                 itemBuilder: (BuildContext context) =&gt;
                                     &lt;PopupMenuEntry&lt;String&gt;&gt;[
+                                  &#47;&#47; Opciones condicionales según permisos.
                                   if (isOwner)
                                     const PopupMenuItem&lt;String&gt;(
-                                        value: &#39;editar&#39;,
-                                        child: Text(&#39;Editar&#39;)),
-                                  if (isOwner ||
-                                      isLider ||
-                                      authNotifier.isAdmin)
+                                        value: &#39;editar&#39;, child: Text(&#39;Editar&#39;)),
+                                  if (isOwner || isLider || authNotifier.isAdmin)
                                     const PopupMenuItem&lt;String&gt;(
-                                        value: &#39;eliminar&#39;,
-                                        child: Text(&#39;Eliminar&#39;)),
+                                        value: &#39;eliminar&#39;, child: Text(&#39;Eliminar&#39;)),
                                   if (!isOwner)
                                     const PopupMenuItem&lt;String&gt;(
                                         value: &#39;reportar_comentario&#39;,
                                         child: Text(&#39;Reportar Comentario&#39;)),
-                                  if ((isLider || authNotifier.isAdmin) &amp;&amp;
-                                      !isOwner)
+                                  if ((isLider || authNotifier.isAdmin) &amp;&amp; !isOwner)
                                     const PopupMenuItem&lt;String&gt;(
                                         value: &#39;reportar_usuario&#39;,
                                         child: Text(&#39;Reportar Usuario&#39;)),
@@ -229,7 +236,9 @@ Widget build(BuildContext context) {
                         ],
                       ),
                       const SizedBox(height: 8),
+                      &#47;&#47;&#47; Texto del comentario.
                       Text(c.comentario),
+                      &#47;&#47;&#47; Fila con botón de apoyo y contador.
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton.icon(
@@ -238,10 +247,10 @@ Widget build(BuildContext context) {
                             minimumSize: const Size(50, 30),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          icon: const Icon(Icons.thumb_up_alt_outlined,
-                              size: 16),
+                          icon: const Icon(Icons.thumb_up_alt_outlined, size: 16),
                           label: Text(c.apoyosCount.toString()),
                           onPressed: () {
+                            &#47;&#47; Redirige a login si no está autenticado.
                             if (!authNotifier.isAuthenticated) {
                               Navigator.pushNamed(context, &#39;&#47;login&#39;);
                               return;

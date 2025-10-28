@@ -1,13 +1,11 @@
-// lib/screens/pantalla_panel_analitico.dart
-
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:mobile_app/api/analiticas_service.dart';
 import 'package:mobile_app/models/estadisticas_model.dart';
-import 'package:mobile_app/services/servicio_pdf.dart'; // <-- NUEVO IMPORT
-import 'package:open_file/open_file.dart'; // <-- NUEVO IMPORT
+import 'package:mobile_app/services/servicio_pdf.dart';
+import 'package:open_file/open_file.dart';
 
-// Helper class para agrupar los datos cargados
+/// Clase auxiliar para agrupar los datos cargados para las analíticas.
 class AnaliticasData {
   final List<DatoGrafico> porCategoria;
   final List<DatoGrafico> porDistrito;
@@ -18,16 +16,31 @@ class AnaliticasData {
       required this.tendencia});
 }
 
+/// {@template pantalla_panel_analitico}
+/// Pantalla que muestra gráficos analíticos globales (función Premium/Reportero).
+///
+/// Obtiene datos agregados de [AnaliticasService] y los muestra usando [fl_chart].
+/// Permite generar y guardar un informe PDF de los datos mostrados
+/// utilizando [ServicioPdf].
+/// {@endtemplate}
 class PantallaPanelAnalitico extends StatefulWidget {
+  /// {@macro pantalla_panel_analitico}
   const PantallaPanelAnalitico({super.key});
   @override
-  State<PantallaPanelAnalitico> createState() => _PantallaPanelAnaliticoState();
+  State<PantallaPanelAnalitico> createState() =>
+      _PantallaPanelAnaliticoState();
 }
 
+/// Estado para [PantallaPanelAnalitico].
+///
+/// Maneja la carga de los datos analíticos y la generación del PDF.
 class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
   final AnaliticasService _analiticasService = AnaliticasService();
-  final ServicioPdf _pdfService = ServicioPdf(); // <-- NUEVO SERVICIO
+  final ServicioPdf _pdfService = ServicioPdf();
+  
+  /// Futuro que contiene los datos combinados para los gráficos.
   late Future<AnaliticasData> _analyticsFuture;
+  /// Indica si se está generando el archivo PDF.
   bool _isExporting = false;
 
   @override
@@ -36,7 +49,9 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
     _analyticsFuture = _loadAllAnalytics();
   }
 
+  /// Carga simultáneamente todos los datos necesarios para los gráficos.
   Future<AnaliticasData> _loadAllAnalytics() async {
+    // Se usan Futures en paralelo para optimizar la carga
     final results = await Future.wait([
       _analiticasService.getReportesPorCategoria(),
       _analiticasService.getReportesPorDistrito(),
@@ -49,7 +64,8 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
     );
   }
 
-  // --- FUNCIÓN _handleExportPDF COMPLETAMENTE REEMPLAZADA ---
+  /// Genera el informe PDF usando [ServicioPdf], lo guarda localmente
+  /// y ofrece abrirlo.
   Future<void> _handleExportPDF(AnaliticasData data) async {
     setState(() => _isExporting = true);
 
@@ -105,7 +121,6 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            // Este es el error que estabas viendo
             return Center(
                 child: Text('Error al cargar analíticas: ${snapshot.error}'));
           }
@@ -115,6 +130,7 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
           }
 
           final data = snapshot.data!;
+          // Muestra los gráficos en un ListView
           return ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
@@ -127,10 +143,10 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
           );
         },
       ),
-      // --- FAB ACTUALIZADO ---
       floatingActionButton: FutureBuilder<AnaliticasData>(
           future: _analyticsFuture,
           builder: (context, snapshot) {
+            // Muestra el FAB solo si los datos están cargados y no se está exportando
             if (snapshot.hasData && !_isExporting) {
               return FloatingActionButton.extended(
                 onPressed: () => _handleExportPDF(snapshot.data!),
@@ -140,20 +156,18 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
               );
             }
             if (_isExporting) {
-              return FloatingActionButton(
+              return const FloatingActionButton(
                 onPressed: null,
-                child: const CircularProgressIndicator(color: Colors.white),
+                child: CircularProgressIndicator(color: Colors.white),
               );
             }
-            return const SizedBox.shrink(); // No muestra nada si no hay datos
+            return const SizedBox.shrink(); // Oculta el FAB si no hay datos
           }),
     );
   }
 
-  // --- WIDGETS DE GRÁFICOS ---
-
+  /// Construye el gráfico de líneas para la tendencia.
   Widget _buildTrendChart(BuildContext context, List<DatoGrafico> data) {
-    // (Esta función no tenía errores y se mantiene igual)
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -170,8 +184,7 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
                   gridData: const FlGridData(show: false),
                   titlesData: const FlTitlesData(
                     leftTitles: AxisTitles(
-                        sideTitles:
-                            SideTitles(showTitles: true, reservedSize: 28)),
+                        sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
                     rightTitles:
                         AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     topTitles:
@@ -180,15 +193,10 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
                         AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   borderData: FlBorderData(
-                      show: true,
-                      border: Border.all(color: Colors.grey.shade300)),
+                      show: true, border: Border.all(color: Colors.grey.shade300)),
                   lineBarsData: [
                     LineChartBarData(
-                      spots: data
-                          .asMap()
-                          .entries
-                          .map((e) => FlSpot(e.key.toDouble(), e.value.value))
-                          .toList(),
+                      spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.value)).toList(),
                       isCurved: true,
                       color: Theme.of(context).colorScheme.primary,
                       barWidth: 4,
@@ -196,10 +204,7 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
                       dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                           show: true,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.2)),
+                          color: Theme.of(context).colorScheme.primary.withAlpha(51)),
                     ),
                   ],
                 ),
@@ -211,6 +216,7 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
     );
   }
 
+  /// Construye el gráfico de barras para categorías.
   Widget _buildCategoryChart(BuildContext context, List<DatoGrafico> data) {
     return Card(
       child: Padding(
@@ -226,26 +232,23 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
-                  gridData:
-                      const FlGridData(show: true, drawVerticalLine: false),
+                  gridData: const FlGridData(show: true, drawVerticalLine: false),
                   titlesData: FlTitlesData(
                     leftTitles: const AxisTitles(
-                        sideTitles:
-                            SideTitles(showTitles: true, reservedSize: 28)),
-                    rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
+                        sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
+                    rightTitles:
+                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles:
+                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                       showTitles: true,
-                      // --- SINTAXIS CORREGIDA ---
                       getTitlesWidget: (value, meta) => SideTitleWidget(
-                        meta: meta, // Pasamos el objeto meta completo
+                        meta: meta,
                         child: Text(data[value.toInt()].name,
                             style: const TextStyle(fontSize: 10)),
                       ),
-                      // --- FIN DE LA CORRECCIÓN ---
+                      reservedSize: 30,
                     )),
                   ),
                   barGroups: data.asMap().entries.map((entry) {
@@ -254,11 +257,10 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
                       barRods: [
                         BarChartRodData(
                           toY: entry.value.value,
-                          color: Colors
-                              .primaries[entry.key % Colors.primaries.length],
+                          color: Colors.primaries[entry.key % Colors.primaries.length],
                           width: 16,
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(4)),
+                          borderRadius:
+                              const BorderRadius.vertical(top: Radius.circular(4)),
                         )
                       ],
                     );
@@ -272,7 +274,9 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
     );
   }
 
+  /// Construye el gráfico de barras para los 5 distritos principales.
   Widget _buildDistrictChart(BuildContext context, List<DatoGrafico> data) {
+    // Tomar solo los 5 distritos con más reportes
     final topData = data.length > 5 ? data.sublist(0, 5) : data;
     return Card(
       child: Padding(
@@ -289,22 +293,20 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
                 BarChartData(
                   titlesData: FlTitlesData(
                     leftTitles: const AxisTitles(
-                        sideTitles:
-                            SideTitles(showTitles: true, reservedSize: 28)),
-                    rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
+                        sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
+                    rightTitles:
+                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles:
+                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                       showTitles: true,
-                      // --- SINTAXIS CORREGIDA ---
                       getTitlesWidget: (value, meta) => SideTitleWidget(
-                        meta: meta, // Pasamos el objeto meta completo
+                        meta: meta,
                         child: Text(topData[value.toInt()].name,
                             style: const TextStyle(fontSize: 10)),
                       ),
-                      // --- FIN DE LA CORRECCIÓN ---
+                      reservedSize: 30,
                     )),
                   ),
                   barGroups: topData.asMap().entries.map((entry) {
@@ -313,11 +315,10 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
                       barRods: [
                         BarChartRodData(
                           toY: entry.value.value,
-                          color:
-                              Colors.accents[entry.key % Colors.accents.length],
+                          color: Colors.accents[entry.key % Colors.accents.length],
                           width: 16,
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(4)),
+                          borderRadius:
+                              const BorderRadius.vertical(top: Radius.circular(4)),
                         )
                       ],
                     );

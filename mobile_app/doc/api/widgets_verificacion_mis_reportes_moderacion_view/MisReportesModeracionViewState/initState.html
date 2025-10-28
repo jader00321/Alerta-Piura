@@ -100,14 +100,8 @@ method, as in <code>super.initState()</code>.</p>
   <pre class="language-dart"><code class="language-dart">@override
 void initState() {
   super.initState();
-  &#47;&#47; --- CORRECCIÓN: Inicializar fechas ---
-  final now = DateTime.now();
-  _startDate =
-      now.subtract(const Duration(days: 7)); &#47;&#47; Última semana por defecto
-  _endDate = now;
-  &#47;&#47; --- FIN CORRECCIÓN ---
-  refreshData(); &#47;&#47; Carga inicial
-  _scrollController.addListener(_onScroll);
+  _fetchCombinedReports(isInitialLoad: true); &#47;&#47; Carga inicial
+  _scrollController.addListener(_onScroll); &#47;&#47; Listener para scroll infinito
 }</code></pre>
 </section>
 

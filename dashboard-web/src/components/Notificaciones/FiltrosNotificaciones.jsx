@@ -8,10 +8,21 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import ClearIcon from '@mui/icons-material/Clear';
 
+/**
+ * FiltrosNotificaciones - Componente de filtros por fecha para notificaciones
+ * @param {Object} props - Propiedades del componente
+ * @param {function} props.onFiltersChange - Callback cuando cambian los filtros
+ * @param {boolean} props.disabled - Estado deshabilitado del componente
+ * @returns {JSX.Element}
+ */
 function FiltrosNotificaciones({ onFiltersChange, disabled }) {
   const [startDate, setStartDate] = useState(null); // Use null for initial empty state
   const [endDate, setEndDate] = useState(null);
 
+  /**
+   * Maneja la aplicación de filtros
+   * Formatea las fechas y las envía al componente padre
+   */
   const handleApply = () => {
     // Format dates to YYYY-MM-DD string or pass null
     // The date objects (startDate, endDate) are already Dayjs objects
@@ -21,6 +32,10 @@ function FiltrosNotificaciones({ onFiltersChange, disabled }) {
     onFiltersChange({ startDate: formattedStartDate, endDate: formattedEndDate });
   };
 
+  /**
+   * Maneja la limpieza de filtros
+   * Resetea las fechas y notifica al padre
+   */
   const handleClear = () => {
     setStartDate(null);
     setEndDate(null);

@@ -53,6 +53,19 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Pantalla que muestra la actividad del usuario en varias pestañas.</p>
+<p>Muestra pestañas para:</p>
+<ul>
+<li>Mis Reportes</li>
+<li>Mis Apoyos</li>
+<li>Seguimientos</li>
+<li>Mis Comentarios</li>
+<li>Solicitudes de Revisión (solo si el usuario es <a href="../providers_auth_provider/AuthNotifier/isLider.html">AuthNotifier.isLider</a>).</li>
+</ul>
+<p>También maneja la lógica de swipe para navegar entre las
+pantallas principales de <a href="../screens_home_screen/HomeScreen-class.html">HomeScreen</a>.</p>
+</section>
 
 
     <section>
@@ -88,7 +101,7 @@
           <span class="name"><a href="../screens_mi_actividad_screen/MiActividadScreen/MiActividadScreen.html">MiActividadScreen.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-mainPageController"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/PageController-class.html">PageController</a></span> <span class="parameter-name">mainPageController</span></span>})</span>
         </dt>
         <dd>
-          
+          Pantalla que muestra la actividad del usuario en varias pestañas.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -130,7 +143,8 @@
 
 </dt>
 <dd>
-  
+  El <a href="https://api.flutter.dev/flutter/widgets/PageController-class.html">PageController</a> de la <a href="../screens_home_screen/HomeScreen-class.html">HomeScreen</a> principal, usado para
+controlar la navegación por swipe entre pantallas principales.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

@@ -53,6 +53,13 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Panel modal inferior (<a href="https://api.flutter.dev/flutter/widgets/DraggableScrollableSheet-class.html">DraggableScrollableSheet</a>) que permite al usuario
+seleccionar filtros para la lista de "Reportes Cerca de Ti" (<a href="../screens_pantalla_cerca_de_ti/PantallaCercaDeTi-class.html">PantallaCercaDeTi</a>).</p>
+<p>Gestiona un estado local (<code>_filtrosSeleccionados</code>) que se actualiza
+al interactuar con los chips. Al presionar "Aplicar", devuelve el
+<a href="../api_reporte_service/FiltrosCercanos-class.html">FiltrosCercanos</a> actualizado a la pantalla padre a través de <a href="../widgets_cerca_de_ti_panel_filtros_cercanos/PanelFiltrosCercanos/onAplicarFiltros.html">onAplicarFiltros</a>.</p>
+</section>
 
 
     <section>
@@ -88,7 +95,8 @@
           <span class="name"><a href="../widgets_cerca_de_ti_panel_filtros_cercanos/PanelFiltrosCercanos/PanelFiltrosCercanos.html">PanelFiltrosCercanos.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-filtrosActuales"><span>required</span> <span class="type-annotation"><a href="../api_reporte_service/FiltrosCercanos-class.html">FiltrosCercanos</a></span> <span class="parameter-name">filtrosActuales</span>, </span><span class="parameter" id="-param-onAplicarFiltros"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onAplicarFiltros</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../api_reporte_service/FiltrosCercanos-class.html">FiltrosCercanos</a></span></span>), </span><span class="parameter" id="-param-categoriasDisponibles"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../models_categoria_model/Categoria-class.html">Categoria</a></span>&gt;</span></span> <span class="parameter-name">categoriasDisponibles</span></span>})</span>
         </dt>
         <dd>
-          
+          Panel modal inferior (<a href="https://api.flutter.dev/flutter/widgets/DraggableScrollableSheet-class.html">DraggableScrollableSheet</a>) que permite al usuario
+seleccionar filtros para la lista de "Reportes Cerca de Ti" (<a href="../screens_pantalla_cerca_de_ti/PantallaCercaDeTi-class.html">PantallaCercaDeTi</a>).
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +114,7 @@
 
 </dt>
 <dd>
-  
+  La lista de categorías (cargada en la pantalla padre) para poblar el filtro.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -118,7 +126,7 @@
 
 </dt>
 <dd>
-  
+  El estado de los filtros actualmente aplicados en <a href="../screens_pantalla_cerca_de_ti/PantallaCercaDeTi-class.html">PantallaCercaDeTi</a>.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +162,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al presionar "Aplicar", devolviendo los nuevos filtros.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

@@ -109,19 +109,18 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
-  &#47;&#47; Shimmer proporciona el efecto de brillo animado
   return Shimmer.fromColors(
     baseColor: Colors.grey[300]!,
     highlightColor: Colors.grey[100]!,
     child: Stack(
       children: [
-        &#47;&#47; Fondo del mapa como un contenedor gris
+        &#47;&#47;&#47; Fondo del mapa (simulado como un contenedor blanco).
         Container(
           color: Colors.white,
         ),
-        &#47;&#47; Simulación de la barra de búsqueda
+        &#47;&#47;&#47; Simulación de la [TopSearchBar].
         Positioned(
-          top: 50,
+          top: 50, &#47;&#47; Aproxima la posición debajo de la barra de estado.
           left: 16,
           right: 16,
           child: Container(
@@ -132,7 +131,7 @@ Widget build(BuildContext context) {
             ),
           ),
         ),
-        &#47;&#47; Simulación de la barra de navegación inferior
+        &#47;&#47;&#47; Simulación de la [BottomNavigationBar] o [AccionesMapa].
         Positioned(
           bottom: 16,
           left: 16,
@@ -145,7 +144,7 @@ Widget build(BuildContext context) {
             ),
           ),
         ),
-        &#47;&#47; Indicador de carga en el centro
+        &#47;&#47;&#47; Indicador de carga central.
         const Center(
           child: CircularProgressIndicator(),
         ),

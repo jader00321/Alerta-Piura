@@ -1,9 +1,27 @@
-// src/components/Notificaciones/ListaHistorialNotificaciones.jsx
 import React from 'react';
 import { Box, Paper, Typography, Button, CircularProgress, Stack } from '@mui/material';
-import { MarkChatRead as EmptyIcon, SearchOff as NoResultsIcon } from '@mui/icons-material'; // Added NoResultsIcon
+import { MarkChatRead as EmptyIcon, SearchOff as NoResultsIcon } from '@mui/icons-material';
 import ItemHistorialNotificacion from './ItemHistorialNotificacion';
 
+/**
+ * Muestra una lista (Stack) de notificaciones enviadas (historial).
+ * * Este componente es responsable de:
+ * 1. Renderizar un <ItemHistorialNotificacion> por cada notificación en el prop `history`.
+ * 2. Mostrar un estado vacío específico (con ícono <NoResultsIcon>) si `history` está vacío 
+ * y `loading` es falso, indicando que la búsqueda o filtros no arrojaron resultados.
+ * 3. Mostrar un botón "Cargar Más" si `hasMore` es verdadero, que muestra un 
+ * <CircularProgress> si `loading` (cargando más) es verdadero.
+ * 4. Mostrar un mensaje de "Fin del historial" cuando `hasMore` es falso.
+ *
+ * @param {object} props - Propiedades del componente.
+ * @param {Array<object>} props.history - Array de objetos de notificación a mostrar.
+ * @param {boolean} props.loading - Indica si se está cargando la *siguiente* página (paginación).
+ * @param {boolean} props.hasMore - Indica si hay más notificaciones por cargar.
+ * @param {Function} props.onLoadMore - Callback ejecutado al hacer clic en 'Cargar Más'.
+ * @param {Function} props.onResend - Callback para reenviar una notificación (pasado a `ItemHistorialNotificacion`).
+ * @param {Function} props.onDelete - Callback para eliminar una notificación (pasado a `ItemHistorialNotificacion`).
+ * @returns {JSX.Element} El componente de la lista del historial.
+ */
 function ListaHistorialNotificaciones({
   history,
   loading, // Only true when loading MORE pages (page > 1)
@@ -60,9 +78,9 @@ function ListaHistorialNotificaciones({
 
       {/* Optional: Show a message if loading is done and there are no more pages */}
       {!hasMore && !loading && history.length > 0 && (
-         <Typography variant="caption" color="text.secondary" align="center" sx={{ py: 2 }}>
-           Fin del historial
-         </Typography>
+          <Typography variant="caption" color="text.secondary" align="center" sx={{ py: 2 }}>
+            Fin del historial
+          </Typography>
       )}
     </Stack>
   );

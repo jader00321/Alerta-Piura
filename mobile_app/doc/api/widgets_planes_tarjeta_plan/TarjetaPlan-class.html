@@ -53,6 +53,12 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget de tarjeta que muestra los detalles de un <a href="../models_plan_suscripcion_model/PlanSuscripcion-class.html">PlanSuscripcion</a> disponible.</p>
+<p>Muestra el nombre, precio, lista de características (parseadas desde <code>plan.descripcion</code>)
+y un botón para seleccionar el plan. Puede mostrar opcionalmente un chip "Recomendado".
+Utilizado en <a href="../screens_pantalla_planes_suscripcion/PantallaPlanesSuscripcion-class.html">PantallaPlanesSuscripcion</a>.</p>
+</section>
 
 
     <section>
@@ -88,7 +94,7 @@
           <span class="name"><a href="../widgets_planes_tarjeta_plan/TarjetaPlan/TarjetaPlan.html">TarjetaPlan.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-plan"><span>required</span> <span class="type-annotation"><a href="../models_plan_suscripcion_model/PlanSuscripcion-class.html">PlanSuscripcion</a></span> <span class="parameter-name">plan</span>, </span><span class="parameter" id="-param-onSelected"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onSelected</span>, </span><span class="parameter" id="-param-isRecommended"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isRecommended</span> = <span class="default-value">false</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget de tarjeta que muestra los detalles de un <a href="../models_plan_suscripcion_model/PlanSuscripcion-class.html">PlanSuscripcion</a> disponible.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -118,7 +124,7 @@
 
 </dt>
 <dd>
-  
+  Si es <code>true</code>, muestra un chip "Recomendado" en la tarjeta.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +148,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al presionar el botón "Seleccionar Plan".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +160,7 @@
 
 </dt>
 <dd>
-  
+  Los datos del plan de suscripción a mostrar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

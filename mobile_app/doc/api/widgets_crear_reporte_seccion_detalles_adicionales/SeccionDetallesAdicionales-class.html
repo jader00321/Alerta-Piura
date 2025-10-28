@@ -53,6 +53,19 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget reutilizable que agrupa los campos de entrada <em>adicionales u opcionales</em>
+para el formulario de creación/edición de reportes (<a href="../screens_create_report_screen/CreateReportScreen-class.html">CreateReportScreen</a>, <a href="../screens_pantalla_editar_reporte_autor/PantallaEditarReporteAutor-class.html">PantallaEditarReporteAutor</a>).</p>
+<p>Incluye campos para:</p>
+<ul>
+<li>Descripción (Opcional)</li>
+<li>Distrito (Requerido)</li>
+<li>Referencia de Ubicación (Opcional)</li>
+<li>Hora del Incidente (Opcional)</li>
+<li>Impacto del Problema</li>
+<li>Etiquetas (Tags) y sugerencias de tags.</li>
+</ul>
+</section>
 
 
     <section>
@@ -88,7 +101,8 @@
           <span class="name"><a href="../widgets_crear_reporte_seccion_detalles_adicionales/SeccionDetallesAdicionales/SeccionDetallesAdicionales.html">SeccionDetallesAdicionales.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-descripcionController"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/TextEditingController-class.html">TextEditingController</a></span> <span class="parameter-name">descripcionController</span>, </span><span class="parameter" id="-param-referenciaController"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/TextEditingController-class.html">TextEditingController</a></span> <span class="parameter-name">referenciaController</span>, </span><span class="parameter" id="-param-distritoSeleccionado"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">distritoSeleccionado</span>, </span><span class="parameter" id="-param-distritos"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>&gt;</span></span> <span class="parameter-name">distritos</span>, </span><span class="parameter" id="-param-onDistritoChanged"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onDistritoChanged</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span></span>), </span><span class="parameter" id="-param-horaIncidente"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/material/TimeOfDay-class.html">TimeOfDay</a>?</span> <span class="parameter-name">horaIncidente</span>, </span><span class="parameter" id="-param-onSelectTime"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onSelectTime</span>, </span><span class="parameter" id="-param-impactoSeleccionado"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">impactoSeleccionado</span>, </span><span class="parameter" id="-param-onImpactoChanged"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onImpactoChanged</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span></span>), </span><span class="parameter" id="-param-tagsController"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/TextEditingController-class.html">TextEditingController</a></span> <span class="parameter-name">tagsController</span>, </span><span class="parameter" id="-param-recommendedTags"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>&gt;</span></span> <span class="parameter-name">recommendedTags</span>, </span><span class="parameter" id="-param-onAddTag"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onAddTag</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span></span>)</span>})</span>
         </dt>
         <dd>
-          
+          Widget reutilizable que agrupa los campos de entrada <em>adicionales u opcionales</em>
+para el formulario de creación/edición de reportes (<a href="../screens_create_report_screen/CreateReportScreen-class.html">CreateReportScreen</a>, <a href="../screens_pantalla_editar_reporte_autor/PantallaEditarReporteAutor-class.html">PantallaEditarReporteAutor</a>).
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +120,7 @@
 
 </dt>
 <dd>
-  
+  Controlador para el campo 'Descripción'.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -118,7 +132,7 @@
 
 </dt>
 <dd>
-  
+  La lista de strings para poblar el dropdown 'Distrito'.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -130,7 +144,7 @@
 
 </dt>
 <dd>
-  
+  El valor actual seleccionado en el dropdown 'Distrito'.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +168,7 @@
 
 </dt>
 <dd>
-  
+  La hora del incidente seleccionada (o <code>null</code>).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +180,7 @@
 
 </dt>
 <dd>
-  
+  El valor actual seleccionado en el dropdown 'Impacto'.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -190,7 +204,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al presionar un chip de etiqueta sugerida.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -202,7 +216,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta cuando se selecciona un nuevo distrito.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -214,7 +228,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta cuando se selecciona un nuevo impacto.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -226,7 +240,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta para mostrar el selector de hora.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -238,7 +252,7 @@
 
 </dt>
 <dd>
-  
+  Lista de strings para mostrar como <a href="https://api.flutter.dev/flutter/material/ActionChip-class.html">ActionChip</a>s de sugerencia.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -250,7 +264,7 @@
 
 </dt>
 <dd>
-  
+  Controlador para el campo 'Referencia de Ubicación'.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -274,7 +288,7 @@
 
 </dt>
 <dd>
-  
+  Controlador para el campo de texto 'Etiquetas'.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

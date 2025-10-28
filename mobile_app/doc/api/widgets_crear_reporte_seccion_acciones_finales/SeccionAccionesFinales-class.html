@@ -53,6 +53,18 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget reutilizable que muestra las acciones finales en el formulario de
+creación/edición de reportes (<a href="../screens_create_report_screen/CreateReportScreen-class.html">CreateReportScreen</a>).</p>
+<p>Incluye:</p>
+<ul>
+<li>Un <a href="https://api.flutter.dev/flutter/material/CheckboxListTile-class.html">CheckboxListTile</a> para marcar el reporte como anónimo.</li>
+<li>Un <a href="https://api.flutter.dev/flutter/material/OutlinedButton-class.html">OutlinedButton</a> para obtener la ubicación GPS actual del usuario.</li>
+<li>Un <a href="https://api.flutter.dev/flutter/widgets/Text-class.html">Text</a> que muestra las coordenadas obtenidas (si <a href="../widgets_crear_reporte_seccion_acciones_finales/SeccionAccionesFinales/currentLocation.html">currentLocation</a> no es nulo).</li>
+<li>Un <a href="https://api.flutter.dev/flutter/material/ElevatedButton-class.html">ElevatedButton</a> principal para enviar el formulario, que muestra
+un <a href="https://api.flutter.dev/flutter/material/CircularProgressIndicator-class.html">CircularProgressIndicator</a> si <a href="../widgets_crear_reporte_seccion_acciones_finales/SeccionAccionesFinales/isLoading.html">isLoading</a> es <code>true</code>.</li>
+</ul>
+</section>
 
 
     <section>
@@ -88,7 +100,8 @@
           <span class="name"><a href="../widgets_crear_reporte_seccion_acciones_finales/SeccionAccionesFinales/SeccionAccionesFinales.html">SeccionAccionesFinales.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-isAnonimo"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isAnonimo</span>, </span><span class="parameter" id="-param-onAnonimoChanged"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onAnonimoChanged</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a>?</span></span>), </span><span class="parameter" id="-param-onGetCurrentLocation"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onGetCurrentLocation</span>, </span><span class="parameter" id="-param-currentLocation"><span class="type-annotation"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a>?</span> <span class="parameter-name">currentLocation</span>, </span><span class="parameter" id="-param-isLoading"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isLoading</span>, </span><span class="parameter" id="-param-onSubmitReport"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onSubmitReport</span></span>})</span>
         </dt>
         <dd>
-          
+          Widget reutilizable que muestra las acciones finales en el formulario de
+creación/edición de reportes (<a href="../screens_create_report_screen/CreateReportScreen-class.html">CreateReportScreen</a>).
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +119,7 @@
 
 </dt>
 <dd>
-  
+  La ubicación <a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a> actual obtenida (o <code>null</code> si no se ha obtenido).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -130,7 +143,7 @@
 
 </dt>
 <dd>
-  
+  El estado actual del checkbox "Publicar como anónimo".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +155,7 @@
 
 </dt>
 <dd>
-  
+  Indica si el formulario se está enviando o si se está obteniendo la ubicación.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +179,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta cuando el valor del checkbox cambia.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -178,7 +191,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al presionar el botón "Obtener Ubicación".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -190,7 +203,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al presionar el botón "Enviar Reporte".
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

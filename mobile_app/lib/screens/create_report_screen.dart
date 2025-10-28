@@ -12,15 +12,30 @@ import 'package:mobile_app/widgets/crear_reporte/seccion_detalles_principales.da
 import 'package:mobile_app/widgets/crear_reporte/seccion_detalles_adicionales.dart';
 import 'package:mobile_app/widgets/crear_reporte/seccion_acciones_finales.dart';
 
+/// {@template create_report_screen}
+/// Pantalla de formulario para que los usuarios creen un nuevo reporte.
+///
+/// Organizada en secciones reutilizables:
+/// - [SeccionEvidencia]
+/// - [SeccionDetallesPrincipales]
+/// - [SeccionDetallesAdicionales]
+/// - [SeccionAccionesFinales]
+/// {@endtemplate}
 class CreateReportScreen extends StatefulWidget {
+  /// {@macro create_report_screen}
   const CreateReportScreen({super.key});
 
   @override
   State<CreateReportScreen> createState() => _CreateReportScreenState();
 }
 
+/// Estado para [CreateReportScreen].
+///
+/// Maneja todos los controladores del formulario, la lógica de selección de imagen/ubicación,
+/// y la presentación del formulario a la API.
 class _CreateReportScreenState extends State<CreateReportScreen> {
   final _formKey = GlobalKey<FormState>();
+
   final _tituloController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _categoriaSugeridaController = TextEditingController();
@@ -42,23 +57,10 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   final ReporteService _reporteService = ReporteService();
   final ImagePicker _picker = ImagePicker();
   final List<String> _distritosDePiura = [
-    'Piura',
-    'Castilla',
-    'Veintiséis de Octubre',
-    'Catacaos',
-    'Cura Mori',
-    'El Tallán',
-    'La Arena',
-    'La Unión',
-    'Las Lomas',
-    'Tambo Grande'
+    'Piura', 'Castilla', 'Veintiséis de Octubre', 'Catacaos', 'Cura Mori',
+    'El Tallán', 'La Arena', 'La Unión', 'Las Lomas', 'Tambo Grande'
   ];
-  final List<String> _recommendedTags = [
-    'peligroso',
-    'tráfico',
-    'niños',
-    'urgente'
-  ];
+  final List<String> _recommendedTags = ['peligroso', 'tráfico', 'niños', 'urgente'];
 
   @override
   void initState() {
@@ -77,6 +79,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     super.dispose();
   }
 
+  /// Obtiene la lista de categorías desde la API para poblar el dropdown.
   Future<void> _fetchCategories() async {
     try {
       final cats = await _reporteService.getCategorias();
@@ -92,20 +95,21 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoadingCategories = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error al cargar categorías')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Error al cargar categorías')));
       }
     }
   }
 
+  /// Abre la galería para seleccionar una imagen de evidencia.
   Future<void> _pickImage() async {
-    final XFile? selectedImage =
-        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final XFile? selectedImage = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (selectedImage != null) {
       setState(() => _imageFile = selectedImage);
     }
   }
 
+  /// Solicita permisos y obtiene la ubicación GPS actual del dispositivo.
   Future<void> _getCurrentLocation() async {
     var status = await Permission.location.request();
     if (status.isGranted) {
@@ -116,13 +120,13 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 accuracy: LocationAccuracy.high,
                 timeLimit: Duration(seconds: 15)));
         if (mounted) {
-          setState(() =>
-              _currentLocation = LatLng(position.latitude, position.longitude));
+          setState(
+              () => _currentLocation = LatLng(position.latitude, position.longitude));
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('No se pudo obtener la ubicación.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No se pudo obtener la ubicación.')));
         }
       } finally {
         if (mounted) {
@@ -137,6 +141,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     }
   }
 
+  /// Valida y envía el formulario completo a [ReporteService.createReport].
   Future<void> _submitReport() async {
     if (_formKey.currentState!.validate() && _currentLocation != null) {
       final otroCategoria = _categorias.firstWhere(
@@ -144,8 +149,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
           orElse: () => Categoria(id: -1, nombre: ''));
       if (_selectedCategoria == otroCategoria.id &&
           _categoriaSugeridaController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Por favor, especifica la categoría.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Por favor, especifica la categoría.')));
         return;
       }
 
@@ -178,9 +183,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(success
-              ? 'Reporte enviado para verificación'
-              : 'Error al crear reporte'),
+          content: Text(
+              success ? 'Reporte enviado para verificación' : 'Error al crear reporte'),
           backgroundColor: success ? Colors.green : Colors.red,
         ));
         if (success) {
@@ -188,11 +192,12 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         }
       }
     } else if (_currentLocation == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Por favor, obtén tu ubicación actual')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor, obtén tu ubicación actual')));
     }
   }
 
+  /// Muestra el selector de hora para [horaIncidente].
   Future<void> _selectTime() async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -203,6 +208,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     }
   }
 
+  /// Añade una etiqueta recomendada al campo de texto de tags.
   void _addTag(String tag) {
     final currentTags =
         _tagsController.text.split(',').map((t) => t.trim()).toList();
@@ -285,8 +291,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
               const SizedBox(height: 16),
               SeccionAccionesFinales(
                 isAnonimo: _isAnonimo,
-                onAnonimoChanged: (value) =>
-                    setState(() => _isAnonimo = value!),
+                onAnonimoChanged: (value) => setState(() => _isAnonimo = value!),
                 onGetCurrentLocation: _getCurrentLocation,
                 currentLocation: _currentLocation,
                 isLoading: _isLoading,

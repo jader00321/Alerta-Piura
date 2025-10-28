@@ -53,6 +53,15 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Un widget reutilizable que muestra la sección de "Apariencia"
+dentro de la pantalla de <a href="../screens_settings_screen/SettingsScreen-class.html">SettingsScreen</a>.</p>
+<p>Permite al usuario cambiar el tema de la aplicación (Modo Claro / Modo Oscuro)
+a través de un <a href="https://api.flutter.dev/flutter/material/SwitchListTile-class.html">SwitchListTile</a>.</p>
+<p>Este widget utiliza <a href="https://pub.dev/documentation/provider/6.1.5+1/provider/Consumer-class.html">Consumer</a> de <code>provider</code> para escuchar y reaccionar
+a los cambios en <a href="../providers_theme_provider/ThemeProvider-class.html">ThemeProvider</a>, y <code>context.read</code> para llamar al
+método <a href="../providers_theme_provider/ThemeProvider/setThemeMode.html">ThemeProvider.setThemeMode</a> y persistir el cambio.</p>
+</section>
 
 
     <section>
@@ -88,7 +97,8 @@
           <span class="name"><a href="../widgets_configuracion_seccion_apariencia/SeccionApariencia/SeccionApariencia.html">SeccionApariencia.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span></span>})</span>
         </dt>
         <dd>
-          
+          Un widget reutilizable que muestra la sección de "Apariencia"
+dentro de la pantalla de <a href="../screens_settings_screen/SettingsScreen-class.html">SettingsScreen</a>.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>

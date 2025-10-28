@@ -113,26 +113,28 @@ Widget build(BuildContext context) {
     baseColor: Colors.grey[300]!,
     highlightColor: Colors.grey[100]!,
     child: ListView.builder(
-      itemCount: 6, &#47;&#47; Muestra 6 placeholders
+      physics: const NeverScrollableScrollPhysics(), &#47;&#47; Deshabilita scroll
+      itemCount: 6, &#47;&#47; Muestra 6 placeholders.
       itemBuilder: (context, index) {
+        &#47;&#47;&#47; Simulación de una tarjeta de actividad [ListTile]
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 16.0),
           child: ListTile(
             leading: Container(
               width: 40,
               height: 40,
-              color: Colors.white,
+              color: Colors.white, &#47;&#47; Simula un avatar o icono
             ),
             title: Container(
               width: double.infinity,
               height: 16.0,
-              color: Colors.white,
+              color: Colors.white, &#47;&#47; Simula la línea del título
             ),
             subtitle: Container(
               margin: const EdgeInsets.only(top: 8.0),
               width: 150,
               height: 12.0,
-              color: Colors.white,
+              color: Colors.white, &#47;&#47; Simula la línea del subtítulo
             ),
           ),
         );

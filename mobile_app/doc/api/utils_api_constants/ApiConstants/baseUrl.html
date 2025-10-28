@@ -61,13 +61,21 @@
 
       </section>
       
+<section class="desc markdown">
+  <p>URL base para todas las llamadas a la API del backend.</p>
+<p>Utiliza <code>http://10.0.2.2</code> para el emulador de Android (que es como
+el emulador accede al <code>localhost</code> de la máquina anfitriona)
+y <code>http://localhost</code> para otras plataformas (como iOS o web).</p>
+<p><strong>Nota:</strong> Has cambiado <code>10.0.2.2</code> por <code>192.168.100.5</code>. Esto es correcto
+si estás probando en un dispositivo físico en la misma red Wi-Fi
+que tu computadora de desarrollo.</p>
+</section>
 
       
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
-  <pre class="language-dart"><code class="language-dart">static String baseUrl = Platform.isAndroid
-    ? &#39;http:&#47;&#47;192.168.100.5:3000&#39;
-    : &#39;http:&#47;&#47;localhost:3000&#39;;</code></pre>
+  <pre class="language-dart"><code class="language-dart">static String baseUrl =
+    Platform.isAndroid ? &#39;http:&#47;&#47;192.168.100.5:3000&#39; : &#39;http:&#47;&#47;localhost:3000&#39;;</code></pre>
 </section>
 
 

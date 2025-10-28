@@ -63,18 +63,26 @@
 </ol>})
     </section>
     
+<section class="desc markdown">
+  <p>Widget reutilizable <a href="https://api.flutter.dev/flutter/material/ListTile-class.html">ListTile</a> diseñado para mostrar acciones o enlaces
+de navegación dentro de las tarjetas de sección en <a href="../../screens_perfil_screen/PerfilScreen-class.html">PerfilScreen</a>.</p>
+<p>Muestra un icono a la izquierda, título, subtítulo opcional y un
+icono de chevron a la derecha. Es tappable a través de <a href="../../widgets_perfil_perfil_action_tile/PerfilActionTile/onTap.html">onTap</a>.
+Puede tener un color personalizado para el icono y el texto.</p>
+</section>
 
 
     
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">const PerfilActionTile({
+  &#47;&#47; Usa super parámetros para la key.
   super.key,
   required this.icon,
   required this.title,
   required this.onTap,
   this.color,
-  this.subtitle, &#47;&#47; &lt;-- Añadido
+  this.subtitle,
 });</code></pre>
 </section>
 

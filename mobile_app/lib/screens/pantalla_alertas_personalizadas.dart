@@ -1,12 +1,17 @@
-// lib/screens/pantalla_alertas_personalizadas.dart
-
 import 'package:flutter/material.dart';
 import 'package:mobile_app/api/perfil_service.dart';
 import 'package:mobile_app/models/zona_segura_model.dart';
 import 'package:mobile_app/widgets/alertas_personalizadas/tarjeta_zona_segura.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_reportes.dart';
 
+/// {@template pantalla_alertas_personalizadas}
+/// Pantalla para gestionar las "Zonas Seguras" del usuario (función Premium).
+///
+/// Muestra una lista de [TarjetaZonaSegura] y permite navegar a
+/// [PantallaCrearZona] para añadir nuevas zonas o eliminarlas.
+/// {@endtemplate}
 class PantallaAlertasPersonalizadas extends StatefulWidget {
+  /// {@macro pantalla_alertas_personalizadas}
   const PantallaAlertasPersonalizadas({super.key});
 
   @override
@@ -14,8 +19,10 @@ class PantallaAlertasPersonalizadas extends StatefulWidget {
       _PantallaAlertasPersonalizadasState();
 }
 
+/// Estado para [PantallaAlertasPersonalizadas].
 class _PantallaAlertasPersonalizadasState
     extends State<PantallaAlertasPersonalizadas> {
+  /// Futuro que contiene la lista de zonas seguras del usuario.
   late Future<List<ZonaSegura>> _zonasFuture;
   final PerfilService _perfilService = PerfilService();
 
@@ -25,27 +32,29 @@ class _PantallaAlertasPersonalizadasState
     _cargarZonas();
   }
 
+  /// Carga o recarga la lista de [ZonaSegura] desde [PerfilService].
   void _cargarZonas() {
     setState(() {
       _zonasFuture = _perfilService.getMisZonasSeguras();
     });
   }
 
+  /// Muestra un diálogo de confirmación y elimina una [ZonaSegura] por su [idZona].
   Future<void> _eliminarZona(int idZona) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar Zona Segura'),
         content: const Text(
-            '¿Estás seguro de que quieres eliminar esta zona? Dejarás de recibir notificaciones para esta área.'),
+            '¿Estás seguro de que quieres eliminar esta zona? Dejarás de recibir alertas para esta área.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Cancelar')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sí, Eliminar'),
+            child: const Text('Eliminar'),
           ),
         ],
       ),
@@ -56,14 +65,13 @@ class _PantallaAlertasPersonalizadasState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(success
-                ? 'Zona eliminada correctamente.'
-                : 'Error al eliminar la zona.'),
+            content: Text(
+                success ? 'Zona eliminada.' : 'Error al eliminar la zona.'),
             backgroundColor: success ? Colors.green : Colors.red,
           ),
         );
         if (success) {
-          _cargarZonas(); // Refrescar la lista de zonas
+          _cargarZonas();
         }
       }
     }
@@ -73,7 +81,7 @@ class _PantallaAlertasPersonalizadasState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Zonas Seguras'),
+        title: const Text('Alertas de Zonas Seguras'),
       ),
       body: RefreshIndicator(
         onRefresh: () async => _cargarZonas(),
@@ -84,7 +92,8 @@ class _PantallaAlertasPersonalizadasState
               return const EsqueletoListaReportes();
             }
             if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
+              return Center(
+                  child: Text('Error al cargar las zonas: ${snapshot.error}'));
             }
             if (!snapshot.hasData || snapshot.data!.isEmpty) {
               return const Center(
@@ -118,10 +127,8 @@ class _PantallaAlertasPersonalizadasState
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          // Navegamos a la pantalla de creación y esperamos un resultado.
           final result =
               await Navigator.pushNamed(context, '/crear_zona_segura');
-          // Si el resultado es 'true', significa que se creó una zona y debemos refrescar.
           if (result == true) {
             _cargarZonas();
           }

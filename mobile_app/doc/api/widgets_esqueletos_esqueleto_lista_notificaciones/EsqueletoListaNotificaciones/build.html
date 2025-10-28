@@ -113,20 +113,22 @@ Widget build(BuildContext context) {
     baseColor: Colors.grey[300]!,
     highlightColor: Colors.grey[100]!,
     child: ListView.builder(
-      itemCount: 8, &#47;&#47; Muestra 8 placeholders
+      physics: const NeverScrollableScrollPhysics(), &#47;&#47; Deshabilita scroll
+      itemCount: 8, &#47;&#47; Muestra 8 placeholders para llenar la pantalla.
       itemBuilder: (context, index) {
+        &#47;&#47;&#47; Simulación de un [ListTile] de notificación.
         return ListTile(
-          leading: const CircleAvatar(backgroundColor: Colors.white),
+          leading: const CircleAvatar(backgroundColor: Colors.white), &#47;&#47; Simula el icono
           title: Container(
             width: double.infinity,
             height: 16.0,
-            color: Colors.white,
+            color: Colors.white, &#47;&#47; Simula el título
           ),
           subtitle: Container(
             margin: const EdgeInsets.only(top: 8.0),
             width: 200,
             height: 12.0,
-            color: Colors.white,
+            color: Colors.white, &#47;&#47; Simula el subtítulo
           ),
         );
       },

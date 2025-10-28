@@ -53,6 +53,18 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Tarjeta <strong>reutilizable y unificada</strong> que muestra un resumen de reporte
+adaptado al contexto de las diferentes pestañas de la pantalla <a href="../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a>.</p>
+<p>Adapta su apariencia basándose en el <a href="../widgets_mi_actividad_tarjeta_actividad/TarjetaActividad/fetcher.html">fetcher</a> (contexto de la pestaña) para mostrar:</p>
+<ul>
+<li>Imagen, estado, título.</li>
+<li>Categoría, Urgencia, Distrito (principalmente para <a href="../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher.misReportes</a>).</li>
+<li>Autor del reporte (para <a href="../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher.misApoyos</a>, <a href="../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher.misSeguimientos</a>, <a href="../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher.misComentarios</a>).</li>
+<li>Una "fila contextual" que indica la acción del usuario (Apoyaste, Siguiendo, Tu comentario).</li>
+<li>Acepta un <a href="../widgets_mi_actividad_tarjeta_actividad/TarjetaActividad/trailingAction.html">trailingAction</a> opcional (ej. botón "Cancelar" para reportes pendientes).</li>
+</ul>
+</section>
 
 
     <section>
@@ -88,7 +100,8 @@
           <span class="name"><a href="../widgets_mi_actividad_tarjeta_actividad/TarjetaActividad/TarjetaActividad.html">TarjetaActividad.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-reporte"><span>required</span> <span class="type-annotation"><a href="../models_reporte_resumen_model/ReporteResumen-class.html">ReporteResumen</a></span> <span class="parameter-name">reporte</span>, </span><span class="parameter" id="-param-fetcher"><span>required</span> <span class="type-annotation"><a href="../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher</a></span> <span class="parameter-name">fetcher</span>, </span><span class="parameter" id="-param-onTap"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onTap</span>, </span><span class="parameter" id="-param-trailingAction"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/Widget-class.html">Widget</a>?</span> <span class="parameter-name">trailingAction</span></span>})</span>
         </dt>
         <dd>
-          
+          Tarjeta <strong>reutilizable y unificada</strong> que muestra un resumen de reporte
+adaptado al contexto de las diferentes pestañas de la pantalla <a href="../screens_mi_actividad_screen/MiActividadScreen-class.html">MiActividadScreen</a>.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +119,7 @@
 
 </dt>
 <dd>
-  
+  El contexto (<a href="../widgets_mi_actividad_activity_list_view/Fetcher.html">Fetcher</a>) que indica desde qué pestaña se está mostrando la tarjeta.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +155,7 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta al tocar la tarjeta (navega al detalle).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +167,7 @@
 
 </dt>
 <dd>
-  
+  Los datos resumidos del reporte a mostrar.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -178,7 +191,7 @@
 
 </dt>
 <dd>
-  
+  Widget opcional que se muestra en el área del trailing (ej. botón cancelar).
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

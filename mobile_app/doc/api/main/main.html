@@ -61,30 +61,63 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Punto de entrada principal de la aplicación Reporta Piura.</p>
+<p>Esta función <code>main</code> es responsable de:</p>
+<ol>
+<li>Inicializar los bindings de Flutter.</li>
+<li>Configurar la localización de fechas a español (<code>es_ES</code>).</li>
+<li>Inicializar los servicios globales:
+<ul>
+<li><a href="../services_notification_service/NotificationService-class.html">NotificationService</a>: Para notificaciones locales (y le pasa la <a href="../navigator_key/navigatorKey.html">navigatorKey</a>).</li>
+<li><code>BackgroundService</code>: Para el servicio en segundo plano del SOS.</li>
+</ul>
+</li>
+<li>Inicializar los proveedores de estado globales:
+<ul>
+<li><a href="../providers_theme_provider/ThemeProvider-class.html">ThemeProvider</a>: Carga la preferencia de tema (claro/oscuro).</li>
+<li><a href="../providers_auth_provider/AuthNotifier-class.html">AuthNotifier</a>: Carga el token de autenticación guardado (<code>checkAuthStatus</code>).</li>
+</ul>
+</li>
+<li>Configurar el listener global de <a href="../services_socket_service/SocketService-class.html">SocketService</a> para <code>onStopSos</code>.</li>
+<li>Ejecutar la aplicación (<code>runApp</code>) envolviéndola en un <a href="https://pub.dev/documentation/provider/6.1.5+1/provider/MultiProvider-class.html">MultiProvider</a>.</li>
+</ol>
+</section>
 
 
     
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">void main() async {
+  &#47;&#47; 1. Inicialización de Bindings
   WidgetsFlutterBinding.ensureInitialized();
+
+  &#47;&#47; 2. Configuración de Localización
   await initializeDateFormatting(&#39;es_ES&#39;, null);
+
+  &#47;&#47; 3. Inicialización de Servicios
   await NotificationService().initialize(navigatorKey);
   await initializeBackgroundService();
 
+  &#47;&#47; 4. Inicialización de Providers
   final themeProvider = ThemeProvider();
   final authProvider = AuthNotifier();
   await themeProvider.loadTheme();
+  &#47;&#47;&#47; Carga el token desde SharedPreferences ANTES de construir la UI.
   await authProvider.checkAuthStatus();
 
+  &#47;&#47; 5. Configuración de Listeners Globales
+  &#47;&#47;&#47; Si el usuario ya está autenticado al abrir la app, conectar el listener
+  &#47;&#47;&#47; que escucha si un admin detiene su SOS remotamente.
   if (authProvider.isAuthenticated) {
     SocketService().onStopSos.listen((data) {
-      debugPrint(
-          &quot;MAIN.DART: Evento stopSos recibido. Invocando al servicio de fondo.&quot;);
+      debugPrint(&quot;MAIN.DART: Evento stopSos recibido. Invocando al servicio de fondo.&quot;);
+      &#47;&#47;&#47; Invoca al servicio en segundo plano (Isolate) para que se detenga.
       FlutterBackgroundService().invoke(&#39;serverForceStop&#39;, data);
     });
   }
 
+  &#47;&#47; 6. Ejecución de la App
   runApp(
     MultiProvider(
       providers: [

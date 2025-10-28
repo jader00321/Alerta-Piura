@@ -4,6 +4,14 @@ import { Autocomplete, TextField, CircularProgress, Box, Avatar, Typography } fr
 import adminService from '../../services/adminService';
 import { useDebounce } from '../../hooks/useDebounce';
 
+/**
+ * SelectorUsuarioNotificaciones - Componente de autocompletado para seleccionar usuarios en notificaciones
+ * @param {Object} props - Propiedades del componente
+ * @param {function} props.onUserSelected - Callback cuando se selecciona un usuario
+ * @param {boolean} props.disabled - Estado deshabilitado del componente
+ * @param {Object} props.value - Valor controlado desde el componente padre
+ * @returns {JSX.Element}
+ */
 function SelectorUsuarioNotificaciones({ onUserSelected, disabled, value: controlledValue }) { // Added controlledValue
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState([]);
@@ -12,7 +20,9 @@ function SelectorUsuarioNotificaciones({ onUserSelected, disabled, value: contro
   const debouncedSearch = useDebounce(inputValue, 400);
   const [selectedValue, setSelectedValue] = useState(null);
 
-   // Effect to sync controlled value from parent
+   /**
+    * Sincroniza el valor controlado desde el padre
+    */
    useEffect(() => {
     if (controlledValue === null && selectedValue !== null) {
       setSelectedValue(null);
@@ -21,7 +31,10 @@ function SelectorUsuarioNotificaciones({ onUserSelected, disabled, value: contro
     // Note: We don't fetch based on controlledValue here to avoid extra calls
   }, [controlledValue, selectedValue]);
 
-
+  /**
+   * Obtiene usuarios del servicio basado en término de búsqueda
+   * @param {string} searchTerm - Término de búsqueda para filtrar usuarios
+   */
   const fetchUsers = useCallback(async (searchTerm) => {
     setLoading(true);
     try {
@@ -39,6 +52,9 @@ function SelectorUsuarioNotificaciones({ onUserSelected, disabled, value: contro
     }
   }, []);
 
+  /**
+   * Efecto para buscar usuarios cuando cambia el término de búsqueda
+   */
   useEffect(() => {
     //let active = true; 
 

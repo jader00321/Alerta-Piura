@@ -176,98 +176,44 @@ prints green, as expected.</p>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
-  super.build(context); &#47;&#47; Mantener estado de pestaña
-  final DateFormat dateFormat =
-      DateFormat(&#39;dd MMM&#39;, &#39;es_ES&#39;); &#47;&#47; Formateador para botón de fecha
-
-  &#47;&#47; --- UI de Filtros ---
-  Widget buildFiltros() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-      &#47;&#47; --- CORRECCIÓN: Hacer scrollable horizontalmente ---
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            &#47;&#47; Filtro Tipo
-            Wrap(
-              spacing: 8.0,
-              children: FiltroTipoModeracion.values.map((filtro) {
-                String label;
-                switch (filtro) {
-                  case FiltroTipoModeracion.comentario:
-                    label = &#39;Comentarios&#39;;
-                    break;
-                  case FiltroTipoModeracion.usuario:
-                    label = &#39;Usuarios&#39;;
-                    break;
-                  default:
-                    label = &#39;Todos&#39;;
-                    break;
-                }
-                return ChoiceChip(
-                  label: Text(label, style: const TextStyle(fontSize: 12)),
-                  selected: _filtroTipo == filtro,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() =&gt; _filtroTipo = filtro);
-                      refreshData(); &#47;&#47; Refrescar con nuevo filtro
-                    }
-                  },
-                  visualDensity: VisualDensity.compact,
-                );
-              }).toList(),
-            ),
-            const SizedBox(width: 16), &#47;&#47; Espacio antes de fecha
-            &#47;&#47; --- CORRECCIÓN: Botón para DateRangePicker ---
-            TextButton.icon(
-              icon: const Icon(Icons.calendar_today, size: 16),
-              label: Text(
-                _startDate != null &amp;&amp; _endDate != null
-                    ? &#39;${dateFormat.format(_startDate!)} - ${dateFormat.format(_endDate!)}&#39;
-                    : &#39;Seleccionar Fechas&#39;,
-                style: const TextStyle(fontSize: 12),
-              ),
-              onPressed: _selectDateRange,
-              style: TextButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-            ),
-            &#47;&#47; --- FIN CORRECCIÓN ---
-          ],
-        ),
-      ),
-      &#47;&#47; --- FIN CORRECCIÓN ---
-    );
-  }
-  &#47;&#47; --- Fin UI Filtros ---
-
-  &#47;&#47; --- Lógica Principal del Build ---
-  if (_isLoading &amp;&amp; _reportes.isEmpty) {
-    return const EsqueletoListaActividad();
-  }
-  if (_errorMessage != null &amp;&amp; _reportes.isEmpty) {
-    return Center(
-        child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(&#39;Error: $_errorMessage&#39;)));
-  }
+  super.build(context); &#47;&#47; Necesario para AutomaticKeepAliveClientMixin
 
   Widget listContent;
-  if (_reportes.isEmpty) {
-    listContent = const Center(
-        child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(&#39;No hay reportes de moderación con estos filtros.&#39;)));
+
+  if (_isLoading &amp;&amp; _reportes.isEmpty) {
+    listContent = const EsqueletoListaActividad(); &#47;&#47; Usar esqueleto adecuado
+  } else if (_errorMessage != null) {
+    listContent = ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+          Center(child: Text(&#39;Error: $_errorMessage&#39;)),
+          Center(child: TextButton(onPressed: () =&gt; refreshData(), child: const Text(&#39;Reintentar&#39;)))
+        ]);
+  } else if (_reportes.isEmpty) {
+    listContent = ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+          const Center(
+              child: Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+                &#39;No hay reportes de moderación que coincidan con los filtros.&#39;,
+                textAlign: TextAlign.center),
+          ))
+        ]);
   } else {
+    &#47;&#47; Construye la lista de tarjetas de moderación.
     listContent = ListView.builder(
       controller: _scrollController,
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 80),
+      padding: const EdgeInsets.only(bottom: 80), &#47;&#47; Espacio para FAB&#47;scroll
       itemCount: _reportes.length +
-          ((_hasMoreComentarios || _hasMoreUsuarios) ? 1 : 0),
+          ((_hasMoreComentarios || _hasMoreUsuarios)
+              ? 1
+              : 0), &#47;&#47; +1 para indicador de carga
       itemBuilder: (context, index) {
+        &#47;&#47; Muestra indicador de carga al final si hay más páginas
         if (index == _reportes.length) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -278,35 +224,40 @@ Widget build(BuildContext context) {
           );
         }
         final reporte = _reportes[index];
+        &#47;&#47; Clave única para el estado de eliminación
         final String loadingKey = &#39;${reporte.tipo.name}-${reporte.id}&#39;;
         final bool isDeleting = _deletingStatus[loadingKey] ?? false;
 
+        &#47;&#47; Renderiza la tarjeta de moderación
         return TarjetaModeracionReporte(
           reporteModeracion: reporte,
           isDeleting: isDeleting,
           onTap: () {
+            &#47;&#47; Navega al detalle del reporte si es un reporte de comentario
             if (reporte.tipo == TipoReporteModeracion.comentario &amp;&amp;
                 reporte.idReporte != null) {
               Navigator.pushNamed(context, &#39;&#47;reporte_detalle&#39;,
                   arguments: reporte.idReporte);
             }
+            &#47;&#47; Podría añadirse navegación al perfil de usuario si es reporte de usuario
           },
-          onQuitar:
-              reporte.estado == &#39;pendiente&#39; ? _handleQuitarReporte : null,
+          &#47;&#47; Permite quitar solo si está pendiente
+          onQuitar: reporte.estado == &#39;pendiente&#39; ? _handleQuitarReporte : null,
         );
       },
     );
   }
 
+  &#47;&#47; Estructura final con filtros y lista
   return Column(
     children: [
-      buildFiltros(),
+      buildFiltros(), &#47;&#47; Muestra la fila de filtros
       const Divider(height: 1, thickness: 1),
       Expanded(
         child: RefreshIndicator(
           onRefresh: () async {
             await refreshData();
-          }, &#47;&#47; Llama al método público
+          }, &#47;&#47; Permite pull-to-refresh
           child: listContent,
         ),
       ),

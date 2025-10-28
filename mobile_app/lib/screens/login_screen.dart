@@ -6,10 +6,14 @@ import 'package:mobile_app/widgets/login/login_header.dart';
 import 'package:mobile_app/widgets/login/login_form_fields.dart';
 import 'package:mobile_app/widgets/login/login_actions.dart';
 
+/// {@template login_screen}
 /// Pantalla de inicio de sesión para usuarios existentes.
 ///
 /// Permite al usuario ingresar credenciales y autenticarse contra la API.
+/// Utiliza widgets reutilizables como [LoginHeader], [LoginFormFields] y [LoginActions].
+/// {@endtemplate}
 class LoginScreen extends StatefulWidget {
+  /// {@macro login_screen}
   const LoginScreen({super.key});
 
   @override
@@ -22,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  /// Indica si se está procesando la solicitud de login.
   bool _isLoading = false;
   final AuthService _authService = AuthService();
 
@@ -36,6 +41,8 @@ class _LoginScreenState extends State<LoginScreen> {
   ///
   /// Si tiene éxito, actualiza el [AuthNotifier] y navega a `/home`.
   /// Si falla, muestra un [SnackBar] con el error.
+  /// Incluye verificación `mounted` antes de interactuar con el [BuildContext]
+  /// después de una operación asíncrona.
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate() && !_isLoading) {
       setState(() => _isLoading = true);

@@ -63,6 +63,21 @@
 </ol>})
     </section>
     
+<section class="desc markdown">
+  <p>Un widget reutilizable que agrupa las configuraciones relacionadas con la
+función de Alerta SOS en la pantalla de <a href="../../screens_settings_screen/SettingsScreen-class.html">SettingsScreen</a>.</p>
+<p>Este widget es <strong>sin estado</strong> (<code>StatelessWidget</code>) porque el estado
+(la duración seleccionada) se gestiona en el widget padre (<a href="../../screens_settings_screen/SettingsScreen-class.html">SettingsScreen</a>),
+que le pasa el valor y los callbacks. Esto se conoce como "levantar el estado"
+(lifting state up).</p>
+<p>Contiene:</p>
+<ol>
+<li>Un <a href="https://api.flutter.dev/flutter/material/Slider-class.html">Slider</a> para ajustar la duración del seguimiento SOS
+(<a href="../../widgets_configuracion_seccion_sos/SeccionSOS/sosDurationInMinutes.html">sosDurationInMinutes</a>).</li>
+<li>Un <a href="https://api.flutter.dev/flutter/material/ListTile-class.html">ListTile</a> que navega a <a href="../../screens_editar_contacto_screen/EditarContactoScreen-class.html">EditarContactoScreen</a> (<code>/editar-contacto</code>)
+para gestionar el contacto de emergencia.</li>
+</ol>
+</section>
 
 
     

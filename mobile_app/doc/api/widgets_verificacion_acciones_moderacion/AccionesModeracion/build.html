@@ -109,27 +109,24 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
-  final theme = Theme.of(context); &#47;&#47; Obtener el tema actual
+  final theme = Theme.of(context);
 
   return BottomAppBar(
-    &#47;&#47; Añadir elevación para destacar
     elevation: 8.0,
-    surfaceTintColor: theme.colorScheme.surface, &#47;&#47; Color de fondo
+    surfaceTintColor: theme.colorScheme.surface,
     child: Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          &#47;&#47; --- Botón Rechazar (Adaptable al Tema) ---
+          &#47;&#47;&#47; Botón para rechazar el reporte.
           Expanded(
             child: ElevatedButton.icon(
               icon: const Icon(Icons.cancel_outlined),
               label: const Text(&#39;Rechazar&#39;),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    theme.colorScheme.error, &#47;&#47; Color de error del tema
-                foregroundColor:
-                    theme.colorScheme.onError, &#47;&#47; Color de texto sobre error
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -139,14 +136,13 @@ Widget build(BuildContext context) {
           ),
           const SizedBox(width: 8),
 
-          &#47;&#47; --- NUEVO: Botón Fusionar ---
+          &#47;&#47;&#47; Botón para iniciar el flujo de fusión del reporte.
           Expanded(
             child: OutlinedButton.icon(
               icon: const Icon(Icons.merge_type_outlined),
               label: const Text(&#39;Fusionar&#39;),
               style: OutlinedButton.styleFrom(
-                foregroundColor:
-                    theme.colorScheme.secondary, &#47;&#47; Color secundario del tema
+                foregroundColor: theme.colorScheme.secondary,
                 side: BorderSide(color: theme.colorScheme.secondary),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -155,15 +151,12 @@ Widget build(BuildContext context) {
               onPressed: isLoading ? null : onFusionar,
             ),
           ),
-          &#47;&#47; --- FIN NUEVO ---
-
           const SizedBox(width: 8),
 
-          &#47;&#47; --- Botón Aprobar (Adaptable al Tema) ---
+          &#47;&#47;&#47; Botón para aprobar el reporte. Muestra un spinner si [isLoading] es true.
           Expanded(
             child: ElevatedButton.icon(
               icon: isLoading
-                  &#47;&#47; Mostrar spinner si está cargando CUALQUIER acción
                   ? SizedBox(
                       width: 20,
                       height: 20,
@@ -172,10 +165,8 @@ Widget build(BuildContext context) {
                   : const Icon(Icons.check_circle_outline),
               label: const Text(&#39;Aprobar&#39;),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    theme.colorScheme.primary, &#47;&#47; Color primario del tema
-                foregroundColor: theme
-                    .colorScheme.onPrimary, &#47;&#47; Color de texto sobre primario
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),

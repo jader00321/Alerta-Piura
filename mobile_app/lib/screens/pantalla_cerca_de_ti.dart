@@ -10,25 +10,47 @@ import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_reportes.dart';
 import 'package:mobile_app/widgets/cerca_de_ti/panel_filtros_cercanos.dart';
 import 'package:mobile_app/models/categoria_model.dart';
 
+/// {@template pantalla_cerca_de_ti}
+/// Pantalla que muestra una lista de reportes (pendientes y verificados)
+/// cercanos a la ubicación actual del usuario.
+///
+/// Utiliza [geolocator] para obtener la ubicación y [ReporteService.getReportesCercanos]
+/// para obtener los datos. Permite filtrar y "unirse" a reportes pendientes.
+/// {@endtemplate}
 class PantallaCercaDeTi extends StatefulWidget {
+  /// {@macro pantalla_cerca_de_ti}
   const PantallaCercaDeTi({super.key});
 
   @override
   State<PantallaCercaDeTi> createState() => _PantallaCercaDeTiState();
 }
 
+/// Estado para [PantallaCercaDeTi].
+///
+/// Maneja la obtención de la ubicación, la carga de reportes cercanos,
+/// la aplicación de filtros, y las acciones de unirse/desunirse a reportes pendientes.
+/// Utiliza [WidgetsBindingObserver] para refrescar al volver a la app.
 class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
     with WidgetsBindingObserver {
+  /// Lista de reportes cercanos actualmente mostrados.
   List<ReporteCercano>? _reportes;
   final ReporteService _reporteService = ReporteService();
+  /// Última ubicación conocida del usuario.
   LatLng? _lastKnownLocation;
+  /// Filtros actualmente aplicados a la lista.
   FiltrosCercanos _filtrosAplicados = FiltrosCercanos();
+  /// Lista de categorías disponibles para el filtro.
   List<Categoria> _categoriasDisponibles = [];
+  /// Indica si se están cargando las categorías.
   bool _isLoadingCategories = true;
+  /// Indica si se están cargando los reportes.
   bool _isLoadingReports = false;
+  /// Mensaje de error a mostrar si falla la carga.
   String? _errorMessage;
 
+  /// Mapa para rastrear el estado de carga al unirse a un reporte.
   final Map<int, bool> _joiningStatus = {};
+  /// Mapa para rastrear el estado de carga al desunirse de un reporte.
   final Map<int, bool> _unjoiningStatus = {};
 
   @override
@@ -47,16 +69,19 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    // Refresca los reportes cuando la app vuelve a primer plano.
     if (state == AppLifecycleState.resumed) {
       _fetchNearbyReports(forceLocation: false, resetFilters: false);
     }
   }
 
+  /// Carga las categorías y luego los reportes iniciales.
   Future<void> _initializeScreen() async {
     await _loadCategories();
     _fetchNearbyReports(forceLocation: true, resetFilters: true);
   }
 
+  /// Carga las categorías desde la API si aún no se han cargado.
   Future<void> _loadCategories() async {
     if (_categoriasDisponibles.isEmpty) {
       setState(() => _isLoadingCategories = true);
@@ -77,6 +102,10 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
     }
   }
 
+  /// Obtiene la ubicación del usuario (si es necesario) y carga los reportes cercanos.
+  ///
+  /// [forceLocation]: Si es `true`, siempre intenta obtener una nueva ubicación GPS.
+  /// [resetFilters]: Si es `true`, limpia los filtros aplicados.
   Future<void> _fetchNearbyReports(
       {bool forceLocation = false, bool resetFilters = false}) async {
     if (_isLoadingReports) {
@@ -146,9 +175,9 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
     }
   }
 
+  /// Maneja la acción de "unirse" a un reporte pendiente.
   Future<void> _handleJoinReport(int reporteId) async {
-    if (_joiningStatus[reporteId] == true ||
-        _unjoiningStatus[reporteId] == true) {
+    if (_joiningStatus[reporteId] == true || _unjoiningStatus[reporteId] == true) {
       return;
     }
 
@@ -185,9 +214,9 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
     }
   }
 
+  /// Maneja la acción de "quitar apoyo" de un reporte pendiente.
   Future<void> _handleUnjoinReport(int reporteId) async {
-    if (_joiningStatus[reporteId] == true ||
-        _unjoiningStatus[reporteId] == true) {
+    if (_joiningStatus[reporteId] == true || _unjoiningStatus[reporteId] == true) {
       return;
     }
 
@@ -218,10 +247,11 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
     }
   }
 
+  /// Maneja el tap sobre una tarjeta de reporte, navegando a la pantalla de detalle.
+  /// Navega a [PantallaDetallePendienteVista] si es pendiente, o a `/reporte_detalle` si es verificado.
   void _onReportTap(ReporteCercano reporte) async {
     if (reporte.estado == 'pendiente_verificacion') {
-      final result = await Navigator.pushNamed(
-          context, '/detalle_pendiente_vista',
+      final result = await Navigator.pushNamed(context, '/detalle_pendiente_vista',
           arguments: reporte.id);
       if (result == true && mounted) {
         _fetchNearbyReports(forceLocation: false, resetFilters: false);
@@ -231,6 +261,7 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
     }
   }
 
+  /// Muestra el modal [PanelFiltrosCercanos].
   void _showFilterPanel() {
     if (_isLoadingCategories) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -328,8 +359,7 @@ class _PantallaCercaDeTiState extends State<PantallaCercaDeTi>
           children: [
             const Text('Reportes Cerca de Ti'),
             if (appBarSubtitle != null)
-              Text(appBarSubtitle,
-                  style: Theme.of(context).textTheme.bodySmall),
+              Text(appBarSubtitle, style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
         actions: [

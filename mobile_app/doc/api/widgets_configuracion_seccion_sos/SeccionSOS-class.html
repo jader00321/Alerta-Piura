@@ -53,6 +53,21 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Un widget reutilizable que agrupa las configuraciones relacionadas con la
+función de Alerta SOS en la pantalla de <a href="../screens_settings_screen/SettingsScreen-class.html">SettingsScreen</a>.</p>
+<p>Este widget es <strong>sin estado</strong> (<code>StatelessWidget</code>) porque el estado
+(la duración seleccionada) se gestiona en el widget padre (<a href="../screens_settings_screen/SettingsScreen-class.html">SettingsScreen</a>),
+que le pasa el valor y los callbacks. Esto se conoce como "levantar el estado"
+(lifting state up).</p>
+<p>Contiene:</p>
+<ol>
+<li>Un <a href="https://api.flutter.dev/flutter/material/Slider-class.html">Slider</a> para ajustar la duración del seguimiento SOS
+(<a href="../widgets_configuracion_seccion_sos/SeccionSOS/sosDurationInMinutes.html">sosDurationInMinutes</a>).</li>
+<li>Un <a href="https://api.flutter.dev/flutter/material/ListTile-class.html">ListTile</a> que navega a <a href="../screens_editar_contacto_screen/EditarContactoScreen-class.html">EditarContactoScreen</a> (<code>/editar-contacto</code>)
+para gestionar el contacto de emergencia.</li>
+</ol>
+</section>
 
 
     <section>
@@ -88,7 +103,8 @@
           <span class="name"><a href="../widgets_configuracion_seccion_sos/SeccionSOS/SeccionSOS.html">SeccionSOS.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-sosDurationInMinutes"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">sosDurationInMinutes</span>, </span><span class="parameter" id="-param-onDurationChanged"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onDurationChanged</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span></span>), </span><span class="parameter" id="-param-onDurationChangeEnd"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onDurationChangeEnd</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span></span>)</span>})</span>
         </dt>
         <dd>
-          
+          Un widget reutilizable que agrupa las configuraciones relacionadas con la
+función de Alerta SOS en la pantalla de <a href="../screens_settings_screen/SettingsScreen-class.html">SettingsScreen</a>.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -130,7 +146,8 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta continuamente mientras el <a href="https://api.flutter.dev/flutter/material/Slider-class.html">Slider</a> se mueve.
+Se usa para actualizar la UI en <a href="../screens_settings_screen/SettingsScreen-class.html">SettingsScreen</a> en tiempo real.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +159,8 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta cuando el usuario <em>suelta</em> el <a href="https://api.flutter.dev/flutter/material/Slider-class.html">Slider</a>.
+Se usa para guardar el valor final en <a href="https://pub.dev/documentation/shared_preferences/2.5.3/shared_preferences/SharedPreferences-class.html">SharedPreferences</a> en <a href="../screens_settings_screen/SettingsScreen-class.html">SettingsScreen</a>.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +184,8 @@
 
 </dt>
 <dd>
-  
+  El valor actual de la duración del SOS en minutos (ej. 10.0).
+Usado para establecer la posición inicial del <a href="https://api.flutter.dev/flutter/material/Slider-class.html">Slider</a>.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

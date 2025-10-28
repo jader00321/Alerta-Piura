@@ -1,4 +1,3 @@
-// src/components/Usuarios/ModalAsignarZonas.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, FormGroup,
@@ -19,25 +18,56 @@ const DISTRITOS_PIURA = [
   'El Tallán', 'La Arena', 'La Unión', 'Las Lomas', 'Tambo Grande',
 ];
 
-// --- COMPONENTE RENOMBRADO ---
+/**
+ * Renderiza un modal (Dialog) para asignar zonas (distritos) a un Líder Vecinal.
+ *
+ * Al abrirse, este componente carga las zonas previamente asignadas al líder
+ * usando `adminService.getZonasAsignadas`.
+ *
+ * Ofrece dos modos de asignación:
+ * 1. "Asignar Todas las Zonas": Guarda un array con el comodín `['*']`.
+ * 2. Selección Específica: Guarda un array con los nombres de los distritos
+ * seleccionados (ej: `['Piura', 'Castilla']`).
+ *
+ * El estado de guardado (`isSaving`) y el de carga (`isLoadingZonas`) son
+ * manejados para deshabilitar controles y mostrar indicadores de progreso.
+ *
+ * @param {object} props - Propiedades del componente.
+ * @param {boolean} props.open - Controla si el modal está abierto.
+ * @param {Function} props.onClose - Callback que se ejecuta al cerrar el modal (ej. clic en 'Cancelar' o fuera del modal).
+ * @param {Function} props.onSave - Callback que se ejecuta al guardar. Recibe un array de strings con las
+ * zonas seleccionadas (ej: `['Piura', 'Castilla']` o `['*']`).
+ * **Nota:** Este componente *no* cierra el modal; el componente padre debe
+ * manejar el cierre después de que la operación de guardado (asíncrona) termine.
+ * @param {object | null} props.lider - El objeto del usuario (líder) al que se le están asignando zonas.
+ * @param {string} [props.lider.id] - ID del líder, usado para cargar sus zonas.
+ * @param {string} [props.lider.alias] - Alias del líder, para mostrar en el título.
+ * @param {string} [props.lider.nombre] - Nombre del líder (fallback si no hay alias).
+ * @param {boolean} props.isSaving - Indica si la operación de guardado (manejada por el padre)
+ * está en progreso. Deshabilita botones y muestra un LinearProgress.
+ * @returns {JSX.Element} El componente del modal de asignación de zonas.
+ */
 function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
   const [selectedDistritos, setSelectedDistritos] = useState({});
   const [isTodasZonas, setIsTodasZonas] = useState(false);
   const [isLoadingZonas, setIsLoadingZonas] = useState(false);
   const [error, setError] = useState(null);
 
-  // Cargar zonas asignadas (Sin cambios)
+  // Cargar zonas asignadas
   useEffect(() => {
+    // Solo cargar si el modal está abierto y hay un líder
     if (open && lider) {
       setIsLoadingZonas(true);
       setError(null);
       
       adminService.getZonasAsignadas(lider.id)
         .then(zonas => {
+          // Si el líder tiene el comodín '*', marcar "Todas las Zonas"
           if (zonas.includes('*')) {
             setIsTodasZonas(true);
             setSelectedDistritos({});
           } else {
+            // Mapear el array de zonas a un objeto de estado
             const zonasMap = {};
             for (const distrito of zonas) {
               if (DISTRITOS_PIURA.includes(distrito)) {
@@ -56,9 +86,11 @@ function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
           setIsLoadingZonas(false);
         });
     }
-  }, [open, lider]);
+  }, [open, lider]); // Dependencias: se recarga si cambia el líder o si se abre
 
-  // Limpiar estado al cerrar (Sin cambios)
+  /**
+   * Limpia el estado interno y llama al callback `onClose` del padre.
+   */
   const handleClose = () => {
     setSelectedDistritos({});
     setIsTodasZonas(false);
@@ -66,37 +98,53 @@ function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
     onClose();
   };
 
-  // Handlers de Toggles (Sin cambios)
+  /**
+   * Manejador para los checkboxes de distritos individuales.
+   * Deshabilitado si "Todas las Zonas" está activo.
+   * @param {string} distrito - El nombre del distrito a marcar/desmarcar.
+   */
   const handleToggle = (distrito) => {
-    if (isTodasZonas) return; 
+    if (isTodasZonas) return; // No permitir selección individual si 'Todas' está activo
     setSelectedDistritos(prev => ({
       ...prev,
       [distrito]: !prev[distrito],
     }));
   };
+
+  /**
+   * Manejador para el checkbox "Todas las Zonas".
+   * Si se marca, limpia las selecciones individuales.
+   * @param {React.ChangeEvent<HTMLInputElement>} e - Evento del checkbox.
+   */
   const handleToggleTodas = (e) => {
     const isChecked = e.target.checked;
     setIsTodasZonas(isChecked);
     if (isChecked) {
-      setSelectedDistritos({});
+      setSelectedDistritos({}); // Limpiar selecciones específicas
     }
   };
 
-  // handleSave (Ya es correcto, solo llama a onSave)
+  /**
+   * Prepara los datos a guardar y llama al callback `onSave` del padre.
+   * Valida que se haya seleccionado al menos una opción.
+   */
   const handleSave = () => {
     setError(null);
     const distritosArray = isTodasZonas 
-      ? ['*'] 
-      : Object.keys(selectedDistritos).filter(key => selectedDistritos[key]);
+      ? ['*'] // Si 'Todas' está marcado, enviar el comodín
+      : Object.keys(selectedDistritos).filter(key => selectedDistritos[key]); // Filtrar solo los true
         
+    // Validar que se haya seleccionado algo
     if (distritosArray.length === 0) {
-        setError('Debes seleccionar al menos una zona o marcar "Todas las Zonas".');
-        return;
+      setError('Debes seleccionar al menos una zona o marcar "Todas las Zonas".');
+      return;
     }
-    // Llama al onSave del padre, que ahora maneja el cierre SIN recargar
+    
+    // Llama al onSave del padre, pasando el array de zonas.
     onSave(distritosArray);
   };
 
+  // --- Helpers de Renderizado ---
   const hasSpecificSelection = Object.values(selectedDistritos).some(val => val === true) && !isTodasZonas;
   const midPoint = Math.ceil(DISTRITOS_PIURA.length / 2);
   const column1 = DISTRITOS_PIURA.slice(0, midPoint);
@@ -110,8 +158,10 @@ function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
       </DialogTitle>
       
       <DialogContent dividers sx={{ minHeight: '350px', bgcolor: 'background.default' }}>
+        {/* Indicador de guardado (controlado por el padre) */}
         {isSaving && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0 }} />}
         
+        {/* Indicador de carga (controlado internamente) */}
         {isLoadingZonas ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
             <CircularProgress />
@@ -123,7 +173,7 @@ function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
               Gestiona las zonas (distritos) que este líder podrá moderar.
             </DialogContentText>
             
-            {/* "Asignar Todas" Paper (Sin cambios) */}
+            {/* Opción "Asignar Todas" */}
             <Paper 
               elevation={0} 
               sx={{ 
@@ -149,7 +199,7 @@ function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
               </FormGroup>
             </Paper>
 
-            {/* Label "O seleccionar" (Sin cambios) */}
+            {/* Label "O seleccionar" */}
             <FormLabel 
               component="legend" 
               sx={{ 
@@ -164,7 +214,7 @@ function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
               O seleccionar distritos específicos:
             </FormLabel>
 
-            {/* Lista de Distritos (Sin cambios) */}
+            {/* Lista de Distritos en 2 columnas */}
             <Paper 
               variant="outlined" 
               sx={{ p: 2, pt: 1, borderRadius: 1.5, maxHeight: '250px', overflowY: 'auto', bgcolor: 'background.paper' }}

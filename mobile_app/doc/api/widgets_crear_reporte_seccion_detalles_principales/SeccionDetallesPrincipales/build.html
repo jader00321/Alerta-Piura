@@ -109,11 +109,13 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47;&#47; Determina si el campo de sugerencia debe mostrarse.
   final bool mostrarSugerencia = categoriaSeleccionada == otroCategoriaId;
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
+      &#47;&#47;&#47; Campo Título (Requerido).
       TextFormField(
         controller: tituloController,
         decoration: const InputDecoration(
@@ -126,6 +128,8 @@ Widget build(BuildContext context) {
             : null,
       ),
       const SizedBox(height: 16),
+
+      &#47;&#47;&#47; Campo Urgencia (Requerido).
       DropdownButtonFormField&lt;String&gt;(
         value: urgenciaSeleccionada,
         decoration: const InputDecoration(
@@ -133,13 +137,15 @@ Widget build(BuildContext context) {
           border: OutlineInputBorder(),
         ),
         items: [&#39;Baja&#39;, &#39;Media&#39;, &#39;Alta&#39;]
-            .map(
-                (label) =&gt; DropdownMenuItem(value: label, child: Text(label)))
+            .map((label) =&gt; DropdownMenuItem(value: label, child: Text(label)))
             .toList(),
         onChanged: (value) =&gt; onUrgenciaChanged(value!),
       ),
       const SizedBox(height: 16),
+
+      &#47;&#47;&#47; Campo Categoría (Requerido).
       isLoadingCategories
+          &#47;&#47; Muestra un spinner mientras se cargan las categorías.
           ? const Center(
               child: Padding(
                   padding: EdgeInsets.all(8.0),
@@ -151,14 +157,17 @@ Widget build(BuildContext context) {
                 border: OutlineInputBorder(),
               ),
               items: categorias
-                  .map((cat) =&gt; DropdownMenuItem(
-                      value: cat.id, child: Text(cat.nombre)))
+                  .map((cat) =&gt;
+                      DropdownMenuItem(value: cat.id, child: Text(cat.nombre)))
                   .toList(),
               onChanged: onCategoriaChanged,
               validator: (value) =&gt;
                   value == null ? &#39;Selecciona una categoría&#39; : null,
             ),
       const SizedBox(height: 16),
+
+      &#47;&#47;&#47; Campo Sugerir Categoría (Condicional).
+      &#47;&#47;&#47; Se muestra solo si la categoría seleccionada es &quot;Otro&quot;.
       if (mostrarSugerencia)
         TextFormField(
           controller: categoriaSugeridaController,
@@ -167,13 +176,11 @@ Widget build(BuildContext context) {
             hintText: &#39;Ej. Poste caído, Semáforo malogrado&#39;,
             border: OutlineInputBorder(),
           ),
-          validator: (value) {
-            if (mostrarSugerencia &amp;&amp;
-                (value == null || value.trim().isEmpty)) {
-              return &#39;Debes sugerir una categoría si eliges &quot;Otro&quot;&#39;;
-            }
-            return null;
-          },
+          &#47;&#47;&#47; Se valida solo si está visible.
+          validator: (value) =&gt;
+              (mostrarSugerencia &amp;&amp; (value == null || value.trim().isEmpty))
+                  ? &#39;Debes sugerir una categoría si eliges &quot;Otro&quot;&#39;
+                  : null,
         ),
     ],
   );

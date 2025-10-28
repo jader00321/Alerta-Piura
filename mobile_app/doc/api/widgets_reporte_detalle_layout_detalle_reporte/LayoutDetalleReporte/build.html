@@ -109,6 +109,7 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47; Si el reporte está fusionado, muestra una vista especial y termina.
   if (reporte.estado == &#39;fusionado&#39;) {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 50),
@@ -119,12 +120,16 @@ Widget build(BuildContext context) {
   final bool isOwner = authNotifier.userId == reporte.idAutor;
   final bool isPrivileged = authNotifier.isLider || authNotifier.isAdmin;
 
+  &#47;&#47; Si el reporte está oculto y el usuario no es dueño ni privilegiado,
+  &#47;&#47; muestra una vista especial y termina.
   if (reporte.estado == &#39;oculto&#39; &amp;&amp; !isOwner &amp;&amp; !isPrivileged) {
     return const VistaReporteOculto();
   }
 
+  &#47;&#47; Separa los comentarios normales de los avisos de fusión.
   final List&lt;Comentario&gt; mergeNotifications = [];
   final List&lt;Comentario&gt; userComments = [];
+  &#47;&#47; Patrón para identificar comentarios de fusión (generados por el sistema).
   final mergePattern =
       RegExp(r&#39;^Reporte #.* fue fusionado con este&#39;, caseSensitive: false);
   for (var comentario in reporte.comentarios) {
@@ -137,14 +142,18 @@ Widget build(BuildContext context) {
     }
   }
 
+  &#47;&#47; Estructura principal con Column (para input fijo) y Expanded (para scroll).
   return Column(
     children: [
       Expanded(
         child: RefreshIndicator(
-          onRefresh: onRefresh,
+          onRefresh: onRefresh, &#47;&#47; Habilita pull-to-refresh.
           child: ListView(
             children: [
+              &#47;&#47;&#47; Cabecera con la información del reporte.
               ReporteHeader(reporte: reporte, showImage: true),
+
+              &#47;&#47;&#47; Chip opcional indicando reportes vinculados (si &gt; 0).
               if (reporte.reportesVinculadosCount &gt; 0)
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -156,8 +165,7 @@ Widget build(BuildContext context) {
                           color: Colors.blue.shade900, size: 16),
                       label: Text(
                           &#39;${reporte.reportesVinculadosCount} reporte(s) vinculado(s)&#39;),
-                      backgroundColor:
-                          Colors.blue.shade100.withAlpha(204), &#47;&#47; CORREGIDO
+                      backgroundColor: Colors.blue.shade100.withAlpha(204),
                       labelStyle: TextStyle(
                           color: Colors.blue.shade900, fontSize: 12),
                       padding: const EdgeInsets.symmetric(
@@ -166,17 +174,24 @@ Widget build(BuildContext context) {
                     ),
                   ),
                 ),
+
+              &#47;&#47;&#47; Banner opcional si el reporte está oculto pero visible para el usuario.
               if (reporte.estado == &#39;oculto&#39;) const BannerReporteOculto(),
+
+              &#47;&#47;&#47; Barra de acciones con botones de apoyo y contador de comentarios.
               ReporteActionsBar(
                 apoyosCount: reporte.apoyosCount,
-                comentariosCount: userComments.length,
+                comentariosCount: userComments.length, &#47;&#47; Usa comentarios filtrados
                 onSupportPressed: onSupportReport,
               ),
+
+              &#47;&#47;&#47; Sección expandible para mostrar el historial de fusiones.
               if (mergeNotifications.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8.0, vertical: 4.0),
                   child: ExpansionTile(
+                    &#47;&#47; Clave para mantener estado de expansión entre refrescos.
                     key: PageStorageKey(&#39;fusionHistory_${reporte.id}&#39;),
                     title: Text(
                       &#39;Historial de Fusión (${mergeNotifications.length})&#39;,
@@ -187,14 +202,16 @@ Widget build(BuildContext context) {
                     ),
                     tilePadding: const EdgeInsets.symmetric(horizontal: 8.0),
                     childrenPadding: const EdgeInsets.only(bottom: 8.0),
-                    initiallyExpanded: false,
+                    initiallyExpanded: false, &#47;&#47; Colapsado por defecto.
                     children: mergeNotifications
                         .map((c) =&gt; MergeNotificationCard(comentario: c))
                         .toList(),
                   ),
                 ),
+
+              &#47;&#47;&#47; Sección principal de comentarios de usuario.
               CommentsSection(
-                comentarios: userComments,
+                comentarios: userComments, &#47;&#47; Pasa comentarios filtrados.
                 onEdit: onEditComment,
                 onDelete: onDeleteComment,
                 onReportComment: onReportComment,
@@ -203,11 +220,13 @@ Widget build(BuildContext context) {
                 currentUserId: authNotifier.userId,
                 currentUserRole: authNotifier.userRole,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 20), &#47;&#47; Espacio al final.
             ],
           ),
         ),
       ),
+
+      &#47;&#47;&#47; Campo de entrada de comentario o prompt de login (condicional).
       if (authNotifier.isAuthenticated &amp;&amp;
           (reporte.estado == &#39;verificado&#39; || reporte.estado == &#39;oculto&#39;))
         CampoComentarioInput(
@@ -216,9 +235,10 @@ Widget build(BuildContext context) {
           onSend: onPostComment,
         )
       else if (!authNotifier.isAuthenticated &amp;&amp;
-          (reporte.estado == &#39;verificado&#39; || reporte.estado == &#39;oculto&#39;))
+               (reporte.estado == &#39;verificado&#39; || reporte.estado == &#39;oculto&#39;))
         const PromptLoginComentario()
       else
+        &#47;&#47; No muestra campo de comentario si el reporte está pendiente, rechazado, etc.
         const SizedBox.shrink(),
     ],
   );

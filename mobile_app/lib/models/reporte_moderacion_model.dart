@@ -1,21 +1,58 @@
-// lib/models/reporte_moderacion_model.dart
+/// Define el tipo de entidad que está siendo reportada para moderación.
+enum TipoReporteModeracion {
+  /// El reporte es sobre un [Comentario].
+  comentario,
 
-enum TipoReporteModeracion { comentario, usuario }
+  /// El reporte es sobre un [Usuario].
+  usuario
+}
 
+/// Representa un reporte de moderación hecho por un líder.
+///
+/// Esto es un "reporte sobre un reporte" o "reporte sobre un usuario",
+/// no un reporte de incidente cívico. Se usa para que los líderes
+/// marquen contenido inapropiado (comentarios) o usuarios problemáticos.
 class ReporteModeracion {
-  final int id; // ID del reporte de moderación
-  final String motivo;
-  final String estado;
-  final String fecha;
-  final DateTime sortDate; // Usado para ordenar cronológicamente
-  final String contenido; // Texto del comentario o alias/nombre del usuario
-  final TipoReporteModeracion tipo;
-  final int? idReporte; // ID del reporte original (si tipo == comentario)
-  final int? idUsuarioReportado; // ID del usuario (si tipo == usuario)
-  // --- NUEVO CAMPO ---
-  final String?
-      codigoReporte; // Código del reporte original (si tipo == comentario)
+  /// El ID único de *este* reporte de moderación.
+  final int id;
 
+  /// La justificación o motivo por el cual se reporta.
+  final String motivo;
+
+  /// El estado actual de este reporte de moderación (ej. "pendiente", "resuelto").
+  final String estado;
+
+  /// La fecha de creación del reporte (formateada como String).
+  final String fecha;
+
+  /// Un objeto [DateTime] usado internamente para ordenar la lista de reportes.
+  final DateTime sortDate;
+
+  /// El contenido que está siendo reportado.
+  ///
+  /// - Si [tipo] es [TipoReporteModeracion.comentario], este es el texto del comentario.
+  /// - Si [tipo] es [TipoReporteModeracion.usuario], este es el nombre/alias del usuario.
+  final String contenido;
+
+  /// El tipo de entidad que está siendo reportada.
+  final TipoReporteModeracion tipo;
+
+  /// El ID del reporte cívico original donde se encuentra el comentario.
+  ///
+  /// Es `null` si el [tipo] es [TipoReporteModeracion.usuario].
+  final int? idReporte;
+
+  /// El ID del usuario que está siendo reportado.
+  ///
+  /// Es `null` si el [tipo] es [TipoReporteModeracion.comentario].
+  final int? idUsuarioReportado;
+
+  /// El código (ej. "R-12345") del reporte cívico original.
+  ///
+  /// Es `null` si el [tipo] es [TipoReporteModeracion.usuario].
+  final String? codigoReporte;
+
+  /// Crea una instancia de [ReporteModeracion].
   ReporteModeracion({
     required this.id,
     required this.motivo,
@@ -26,9 +63,14 @@ class ReporteModeracion {
     required this.tipo,
     this.idReporte,
     this.idUsuarioReportado,
-    this.codigoReporte, // <-- Añadido al constructor
+    this.codigoReporte,
   });
 
+  /// Crea una instancia de [ReporteModeracion] a partir de un mapa JSON.
+  ///
+  /// Este factory es utilizado para deserializar la respuesta de la API.
+  /// Requiere que se especifique el [tipo] de antemano, ya que la API
+  /// devuelve comentarios y usuarios desde endpoints separados.
   factory ReporteModeracion.fromJson(
       Map<String, dynamic> json, TipoReporteModeracion tipo) {
     return ReporteModeracion(
@@ -45,10 +87,9 @@ class ReporteModeracion {
       idUsuarioReportado: tipo == TipoReporteModeracion.usuario
           ? json['id_usuario_reportado']
           : null,
-      // --- PARSEAR NUEVO CAMPO ---
       codigoReporte: tipo == TipoReporteModeracion.comentario
           ? json['codigo_reporte']
-          : null, // <-- Añadido
+          : null,
     );
   }
 }

@@ -64,13 +64,16 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Muestra una notificación local estándar (no-SOS).</p>
+<p>Utiliza el canal <code>_reportChannel</code> por defecto.</p>
+</section>
 
 
     
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
-  <pre class="language-dart"><code class="language-dart">Future&lt;void&gt; showNotification(String title, String body,
-    {String? payload}) async {
+  <pre class="language-dart"><code class="language-dart">Future&lt;void&gt; showNotification(String title, String body, {String? payload}) async {
   final AndroidNotificationDetails androidPlatformChannelSpecifics =
       AndroidNotificationDetails(
     _reportChannel.id,
@@ -85,11 +88,11 @@
       NotificationDetails(android: androidPlatformChannelSpecifics);
 
   await _flutterLocalNotificationsPlugin.show(
-    DateTime.now().millisecondsSinceEpoch.remainder(100000),
+    DateTime.now().millisecondsSinceEpoch.remainder(100000), &#47;&#47; ID único
     title,
     body,
     platformChannelSpecifics,
-    payload: payload,
+    payload: payload, &#47;&#47; El JSON string para la navegación.
   );
 }</code></pre>
 </section>

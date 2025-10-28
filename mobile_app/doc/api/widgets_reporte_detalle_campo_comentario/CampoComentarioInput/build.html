@@ -114,13 +114,15 @@ Widget build(BuildContext context) {
     decoration: BoxDecoration(
       color: Theme.of(context).cardColor,
       boxShadow: [
-        BoxShadow(
-            blurRadius: 5, color: Colors.black.withAlpha(26)), &#47;&#47; CORREGIDO
+        &#47;&#47; Sombra sutil en la parte superior.
+        BoxShadow(blurRadius: 5, color: Colors.black.withAlpha(26)),
       ],
     ),
+    &#47;&#47; SafeArea para evitar que el teclado obstruya la entrada en algunos dispositivos.
     child: SafeArea(
       child: Row(
         children: [
+          &#47;&#47;&#47; Campo de texto principal.
           Expanded(
             child: TextField(
               controller: controller,
@@ -129,10 +131,11 @@ Widget build(BuildContext context) {
                   border: InputBorder.none,
                   contentPadding:
                       EdgeInsets.symmetric(vertical: 10, horizontal: 8)),
-              enabled: !isPosting,
-              maxLines: null,
+              enabled: !isPosting, &#47;&#47; Deshabilitado mientras se envía.
+              maxLines: null, &#47;&#47; Permite múltiples líneas.
             ),
           ),
+          &#47;&#47;&#47; Muestra un spinner o el botón de enviar.
           isPosting
               ? const Padding(
                   padding: EdgeInsets.all(12),

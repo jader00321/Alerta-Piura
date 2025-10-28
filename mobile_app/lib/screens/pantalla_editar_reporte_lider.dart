@@ -5,9 +5,17 @@ import 'package:mobile_app/api/reporte_service.dart';
 import 'package:mobile_app/models/categoria_model.dart';
 import 'package:mobile_app/models/reporte_detallado_model.dart';
 
+/// {@template pantalla_editar_reporte_lider}
+/// Pantalla que permite a un Líder Vecinal editar ciertos campos de un reporte
+/// que aún está en estado 'pendiente_verificacion'.
+///
+/// Recibe el [ReporteDetallado] inicial para pre-llenar los campos.
+/// {@endtemplate}
 class PantallaEditarReporteLider extends StatefulWidget {
+  /// Los datos iniciales del reporte a editar.
   final ReporteDetallado reporteInicial;
 
+  /// {@macro pantalla_editar_reporte_lider}
   const PantallaEditarReporteLider({super.key, required this.reporteInicial});
 
   @override
@@ -15,6 +23,10 @@ class PantallaEditarReporteLider extends StatefulWidget {
       _PantallaEditarReporteLiderState();
 }
 
+/// Estado para [PantallaEditarReporteLider].
+///
+/// Maneja los controladores del formulario, carga las categorías disponibles,
+/// y envía los datos actualizados a [LiderService.editarReporteLider].
 class _PantallaEditarReporteLiderState
     extends State<PantallaEditarReporteLider> {
   final _formKey = GlobalKey<FormState>();
@@ -33,17 +45,16 @@ class _PantallaEditarReporteLiderState
   @override
   void initState() {
     super.initState();
-    _tituloController =
-        TextEditingController(text: widget.reporteInicial.titulo);
+    _tituloController = TextEditingController(text: widget.reporteInicial.titulo);
     _descripcionController =
         TextEditingController(text: widget.reporteInicial.descripcion);
     _referenciaController =
         TextEditingController(text: widget.reporteInicial.referenciaUbicacion);
-    _tagsController =
-        TextEditingController(text: widget.reporteInicial.tags.join(', '));
+    _tagsController = TextEditingController(text: widget.reporteInicial.tags.join(', '));
     _loadCategoriesAndSetInitial();
   }
 
+  /// Carga las categorías desde la API y establece la categoría inicial del reporte.
   Future<void> _loadCategoriesAndSetInitial() async {
     setState(() => _isLoadingCategories = true);
     try {
@@ -51,9 +62,8 @@ class _PantallaEditarReporteLiderState
       if (mounted) {
         int? initialCatId;
         try {
-          initialCatId = cats
-              .firstWhere((c) => c.nombre == widget.reporteInicial.categoria)
-              .id;
+          initialCatId =
+              cats.firstWhere((c) => c.nombre == widget.reporteInicial.categoria).id;
         } catch (e) {
           initialCatId = null;
         }
@@ -81,10 +91,9 @@ class _PantallaEditarReporteLiderState
     super.dispose();
   }
 
+  /// Valida el formulario y envía los datos actualizados del reporte a la API.
   Future<void> _guardarCambios() async {
-    if (!_formKey.currentState!.validate() ||
-        _isLoading ||
-        _isLoadingCategories) {
+    if (!_formKey.currentState!.validate() || _isLoading || _isLoadingCategories) {
       return;
     }
 
@@ -117,7 +126,7 @@ class _PantallaEditarReporteLiderState
       ));
 
       if (success) {
-        Navigator.pop(context, true);
+        Navigator.pop(context, true); // Devuelve true para indicar éxito
       } else {
         setState(() => _isLoading = false);
       }
@@ -215,8 +224,7 @@ class _PantallaEditarReporteLiderState
                           ? const SizedBox(
                               width: 24,
                               height: 24,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white))
+                              child: CircularProgressIndicator(color: Colors.white))
                           : const Text('Guardar Cambios'),
                     )
                   ],

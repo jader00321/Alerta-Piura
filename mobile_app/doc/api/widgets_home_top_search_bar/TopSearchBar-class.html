@@ -53,6 +53,15 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Widget que representa la barra de búsqueda superior en <a href="../screens_mapa_view/MapaView-class.html">MapaView</a>.</p>
+<p>Se posiciona en la parte superior de la pantalla (generalmente dentro de un <a href="https://api.flutter.dev/flutter/widgets/Stack-class.html">Stack</a>).
+Incluye un campo de texto para buscar reportes (controlado por <a href="../widgets_home_top_search_bar/TopSearchBar/onSearchChanged.html">onSearchChanged</a>)
+y un avatar de perfil <a href="https://api.flutter.dev/flutter/material/CircleAvatar-class.html">CircleAvatar</a> que funciona como botón.</p>
+<p>El avatar muestra la inicial del usuario si está autenticado (<a href="../providers_auth_provider/AuthNotifier/isAuthenticated.html">AuthNotifier.isAuthenticated</a>)
+o un icono de persona si es un invitado. Al tocarlo, navega a <a href="../screens_perfil_screen/PerfilScreen-class.html">PerfilScreen</a>
+o <a href="../screens_login_screen/LoginScreen-class.html">LoginScreen</a> respectivamente.</p>
+</section>
 
 
     <section>
@@ -88,7 +97,7 @@
           <span class="name"><a href="../widgets_home_top_search_bar/TopSearchBar/TopSearchBar.html">TopSearchBar.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-onSearchChanged"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onSearchChanged</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span></span>)</span>})</span>
         </dt>
         <dd>
-          
+          Widget que representa la barra de búsqueda superior en <a href="../screens_mapa_view/MapaView-class.html">MapaView</a>.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -130,7 +139,8 @@
 
 </dt>
 <dd>
-  
+  Callback que se ejecuta cada vez que el texto en el campo de búsqueda cambia.
+El <a href="../screens_mapa_view/MapaView-class.html">MapaView</a> utiliza esto para aplicar un debounce y filtrar los reportes.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

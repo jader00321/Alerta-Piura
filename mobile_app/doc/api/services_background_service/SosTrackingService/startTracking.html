@@ -63,6 +63,11 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Inicia el proceso completo de seguimiento SOS.</p>
+<p><code>durationInSeconds</code>: Duración total de la alerta.
+<code>emergencyContact</code>: Datos del contacto de emergencia.</p>
+</section>
 
 
     
@@ -82,9 +87,12 @@
   _isActive = true;
 
   try {
+    &#47;&#47;&#47; 1. Obtener ubicación inicial.
     Position pos = await Geolocator.getCurrentPosition(
         locationSettings:
             const LocationSettings(accuracy: LocationAccuracy.high));
+
+    &#47;&#47;&#47; 2. Activar la alerta en el backend.
     _alertId = await _apiService.activateSos(
       lat: pos.latitude,
       lon: pos.longitude,
@@ -93,16 +101,11 @@
     );
 
     if (_alertId == null) {
-      debugPrint(&quot;BG_SERVICE: Error al activar SOS en el backend.&quot;);
-      _isActive = false;
-      service.invoke(&#39;sosFinished&#39;, {
-        &#39;action&#39;: &#39;sosFinished&#39;,
-        &#39;error&#39;: &#39;Failed to activate on backend&#39;
-      });
-      return;
+      throw Exception(&#39;Failed to activate on backend&#39;);
     }
 
     debugPrint(&quot;BG_SERVICE: Alerta activada con ID: $_alertId&quot;);
+    &#47;&#47;&#47; 3. Notificar a la UI que el SOS comenzó.
     service.invoke(&#39;sosStarted&#39;, {
       &#39;action&#39;: &#39;sosStarted&#39;,
       &#39;alertId&#39;: _alertId,
@@ -110,6 +113,7 @@
     });
     _updateNotification(&#39;SOS Activo&#39;, &#39;Enviando ubicación...&#39;);
 
+    &#47;&#47;&#47; 4. Iniciar temporizador de cuenta regresiva (cada 1 seg).
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isActive) {
@@ -117,20 +121,22 @@
         return;
       }
       _remainingSeconds--;
-      debugPrint(
-          &quot;BG_SERVICE: Tick Countdown - Remaining: $_remainingSeconds&quot;);
+      debugPrint(&quot;BG_SERVICE: Tick Countdown - Remaining: $_remainingSeconds&quot;);
 
-      service.invoke(&#39;updateTimer&#39;,
-          {&#39;action&#39;: &#39;updateTimer&#39;, &#39;seconds&#39;: _remainingSeconds});
+      &#47;&#47;&#47; 4a. Notificar a la UI del tiempo restante.
+      service.invoke(
+          &#39;updateTimer&#39;, {&#39;action&#39;: &#39;updateTimer&#39;, &#39;seconds&#39;: _remainingSeconds});
       _updateNotification(&#39;SOS Activo&#39;,
           &#39;Tiempo restante: ${(_remainingSeconds ~&#47; 60)}m ${(_remainingSeconds % 60)}s&#39;);
 
+      &#47;&#47;&#47; 4b. Detener si el tiempo se acaba.
       if (_remainingSeconds &lt;= 0) {
         debugPrint(&quot;BG_SERVICE: Tiempo de SOS finalizado.&quot;);
-        stopTracking(byUser: true);
+        stopTracking(byUser: true); &#47;&#47; Se detiene por tiempo agotado.
       }
     });
 
+    &#47;&#47;&#47; 5. Iniciar temporizador de envío de ubicación (cada 15 seg).
     _locationTimer?.cancel();
     _locationTimer =
         Timer.periodic(const Duration(seconds: 15), (timer) async {
@@ -147,18 +153,19 @@
           lat: newPos.latitude,
           lon: newPos.longitude,
         );
-        debugPrint(
-            &quot;BG_SERVICE: Ubicación actualizada enviada (Success: $success).&quot;);
+        debugPrint(&quot;BG_SERVICE: Ubicación actualizada enviada (Success: $success).&quot;);
       } catch (e) {
         debugPrint(&quot;BG_SERVICE: Error al enviar ubicación: $e&quot;);
+        &#47;&#47;&#47; 5a. Notificar a la UI si se pierde la conexión.
         service.invoke(&#39;connectionLost&#39;, {&#39;action&#39;: &#39;connectionLost&#39;});
       }
     });
   } catch (e) {
     debugPrint(&quot;BG_SERVICE: Error fatal al iniciar SOS: $e&quot;);
     _isActive = false;
-    service.invoke(
-        &#39;sosFinished&#39;, {&#39;action&#39;: &#39;sosFinished&#39;, &#39;error&#39;: e.toString()});
+    &#47;&#47;&#47; Notificar a la UI que el inicio falló.
+    service
+        .invoke(&#39;sosFinished&#39;, {&#39;action&#39;: &#39;sosFinished&#39;, &#39;error&#39;: e.toString()});
   }
 }</code></pre>
 </section>

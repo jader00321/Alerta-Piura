@@ -62,6 +62,19 @@
 
     </section>
     
+<section class="desc markdown">
+  <p>Genera un informe PDF basado en los datos de <a href="../../screens_pantalla_panel_analitico/AnaliticasData-class.html">AnaliticasData</a>.</p>
+<p>El informe incluye:</p>
+<ul>
+<li>Título y fecha de generación.</li>
+<li>Tabla de "Reportes por Categoría".</li>
+<li>Tabla de "Reportes por Distrito".</li>
+<li>Tabla de "Tendencia de Reportes".</li>
+</ul>
+<p>Guarda el archivo en un subdirectorio "Informes" dentro del
+directorio de documentos de la app y devuelve el <a href="https://api.flutter.dev/flutter/dart-io/File-class.html">File</a> generado.</p>
+<p><code>data</code>: Los datos analíticos cargados desde <a href="../../screens_pantalla_panel_analitico/PantallaPanelAnalitico-class.html">PantallaPanelAnalitico</a>.</p>
+</section>
 
 
     
@@ -70,20 +83,24 @@
   <pre class="language-dart"><code class="language-dart">Future&lt;File&gt; generarInformeAnalitico(AnaliticasData data) async {
   final pdf = pw.Document();
 
-  &#47;&#47; CORREGIDO: await_only_futures
+  &#47;&#47;&#47; Carga las fuentes Roboto (regular y bold) desde los assets.
+  &#47;&#47;&#47; Es necesario para que el PDF pueda renderizar texto.
   final fontData = await rootBundle.load(&quot;assets&#47;fonts&#47;Roboto-Regular.ttf&quot;);
   final boldFontData = await rootBundle.load(&quot;assets&#47;fonts&#47;Roboto-Bold.ttf&quot;);
   final font = pw.Font.ttf(fontData);
   final boldFont = pw.Font.ttf(boldFontData);
 
+  &#47;&#47;&#47; Define estilos de texto reutilizables.
   final style = pw.TextStyle(font: font, fontSize: 10);
   final titleStyle = pw.TextStyle(font: boldFont, fontSize: 18);
   final headerStyle = pw.TextStyle(font: boldFont, fontSize: 12);
   final tableHeader = pw.TextStyle(font: boldFont, fontSize: 10);
 
+  &#47;&#47;&#47; Añade una página al documento PDF.
   pdf.addPage(
     pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
+      &#47;&#47;&#47; Define la cabecera de cada página.
       header: (pw.Context context) {
         return pw.Container(
             alignment: pw.Alignment.centerRight,
@@ -91,14 +108,15 @@
             child:
                 pw.Text(&#39;Reporte Analítico - Reporta Piura&#39;, style: style));
       },
+      &#47;&#47;&#47; Define el pie de página (número de página).
       footer: (pw.Context context) {
         return pw.Container(
             alignment: pw.Alignment.centerRight,
             margin: const pw.EdgeInsets.only(top: 1.0 * PdfPageFormat.cm),
-            child: pw.Text(
-                &#39;Página ${context.pageNumber} de ${context.pagesCount}&#39;,
+            child: pw.Text(&#39;Página ${context.pageNumber} de ${context.pagesCount}&#39;,
                 style: style));
       },
+      &#47;&#47;&#47; Construye el contenido de la página.
       build: (pw.Context context) =&gt; [
         pw.Header(
           level: 0,
@@ -109,9 +127,9 @@
             style: style),
         pw.Divider(height: 24),
 
+        &#47;&#47;&#47; Tabla de Reportes por Categoría.
         pw.Text(&#39;Reportes por Categoría&#39;, style: headerStyle),
         pw.SizedBox(height: 8),
-        &#47;&#47; CORREGIDO: deprecated_member_use
         pw.TableHelper.fromTextArray(
           headers: [&#39;Categoría&#39;, &#39;Total&#39;],
           cellStyle: style,
@@ -122,9 +140,9 @@
         ),
         pw.SizedBox(height: 24),
 
+        &#47;&#47;&#47; Tabla de Reportes por Distrito.
         pw.Text(&#39;Reportes por Distrito&#39;, style: headerStyle),
         pw.SizedBox(height: 8),
-        &#47;&#47; CORREGIDO: deprecated_member_use
         pw.TableHelper.fromTextArray(
           headers: [&#39;Distrito&#39;, &#39;Total&#39;],
           cellStyle: style,
@@ -135,10 +153,10 @@
         ),
         pw.SizedBox(height: 24),
 
+        &#47;&#47;&#47; Tabla de Tendencia de Reportes.
         pw.Text(&#39;Tendencia de Reportes (Últimos 30 días)&#39;,
             style: headerStyle),
         pw.SizedBox(height: 8),
-        &#47;&#47; CORREGIDO: deprecated_member_use
         pw.TableHelper.fromTextArray(
           headers: [&#39;Fecha&#39;, &#39;Reportes&#39;],
           cellStyle: style,
@@ -151,13 +169,17 @@
     ),
   );
 
+  &#47;&#47;&#47; Obtiene el directorio de documentos de la aplicación.
   final directory = await getApplicationDocumentsDirectory();
   final path = &#39;${directory.path}&#47;Informes&#39;;
+  &#47;&#47;&#47; Crea el subdirectorio &quot;Informes&quot; si no existe.
   await Directory(path).create(recursive: true);
 
+  &#47;&#47;&#47; Define un nombre de archivo único basado en la fecha&#47;hora actual.
   final fileName =
       &#39;Reporte_Analitico_${DateFormat(&#39;yyyyMMdd_HHmm&#39;).format(DateTime.now())}.pdf&#39;;
   final file = File(&#39;$path&#47;$fileName&#39;);
+  &#47;&#47;&#47; Escribe los bytes del PDF al archivo.
   await file.writeAsBytes(await pdf.save());
 
   return file;

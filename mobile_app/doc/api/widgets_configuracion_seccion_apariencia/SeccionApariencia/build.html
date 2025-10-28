@@ -109,19 +109,32 @@ and</li>
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">@override
 Widget build(BuildContext context) {
+  &#47;&#47;&#47; Obtiene la instancia del [ThemeProvider] usando `context.read`.
+  &#47;&#47;&#47; Se usa `read` aquí porque solo necesitamos llamar al *método* [setThemeMode],
+  &#47;&#47;&#47; no necesitamos que este widget `build` se reconstruya cuando el tema cambie
+  &#47;&#47;&#47; (de eso se encarga el [Consumer] más abajo).
   final themeProvider = context.read&lt;ThemeProvider&gt;();
 
   return Card(
     elevation: 2,
-    child: Consumer&lt;ThemeProvider&gt;(
+    child:
+        &#47;&#47;&#47; [Consumer] escucha específicamente los cambios en [ThemeProvider].
+        &#47;&#47;&#47; Solo este [SwitchListTile] se reconstruirá cuando [provider.isDarkMode]
+        &#47;&#47;&#47; cambie, optimizando el rendimiento de [SettingsScreen].
+        Consumer&lt;ThemeProvider&gt;(
       builder: (context, provider, child) {
         return SwitchListTile(
           title: const Text(&#39;Modo Oscuro&#39;),
           subtitle: const Text(&#39;Activa o desactiva el tema oscuro.&#39;),
+          &#47;&#47;&#47; El valor del switch se obtiene del estado actual del provider.
           value: provider.isDarkMode,
+          &#47;&#47;&#47; Al cambiar el valor, llama al método [setThemeMode] del provider
+          &#47;&#47;&#47; para actualizar el tema en toda la aplicación y guardarlo
+          &#47;&#47;&#47; en [SharedPreferences].
           onChanged: (value) {
             themeProvider.setThemeMode(value);
           },
+          &#47;&#47;&#47; El icono cambia dinámicamente para reflejar el estado actual.
           secondary: Icon(
             provider.isDarkMode
                 ? Icons.dark_mode_outlined
