@@ -1,37 +1,32 @@
 // src/components/Usuarios/ModalNotificacion.jsx
 import React, { useState, useEffect } from 'react';
 import { 
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, 
-  DialogContentText, CircularProgress, Alert,
-  Box,
-  InputAdornment
+  Dialog, DialogContent, DialogActions, TextField, Button, 
+  CircularProgress, Alert, Box, InputAdornment, Typography,
+  Avatar, Slide, useTheme, alpha, IconButton
 } from '@mui/material';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import TitleIcon from '@mui/icons-material/Title';
-import MessageIcon from '@mui/icons-material/Message';
-import SendIcon from '@mui/icons-material/Send';
-import InfoIcon from '@mui/icons-material/Info';
-import PersonIcon from '@mui/icons-material/Person';
+import {
+  NotificationsActive as NotificationsIcon,
+  Title as TitleIcon,
+  Message as MessageIcon,
+  Send as SendIcon,
+  Close as CloseIcon,
+  Group as GroupIcon,
+  Person as PersonIcon
+} from '@mui/icons-material';
 
-/**
- * ModalNotificacion - Componente modal para enviar notificaciones a usuarios
- * @param {Object} props - Propiedades del componente
- * @param {boolean} props.open - Estado de apertura del modal
- * @param {function} props.onClose - Callback cuando se cierra el modal
- * @param {function} props.onSubmit - Callback para enviar la notificación
- * @param {number} props.targetUserCount - Número de usuarios objetivo (para notificaciones masivas)
- * @param {boolean} props.isSending - Estado de envío para mostrar loading
- * @param {string} props.targetUserName - Nombre del usuario objetivo (para notificaciones individuales)
- * @returns {JSX.Element}
- */
+// Transición suave
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
 function ModalNotificacion({ open, onClose, onSubmit, targetUserCount, isSending, targetUserName }) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [error, setError] = useState('');
+  const theme = useTheme();
 
-  /**
-   * Efecto para resetear el formulario cuando se cierra el modal
-   */
+  // Resetear formulario
   useEffect(() => {
     if (!open) {
       setTitle('');
@@ -40,78 +35,101 @@ function ModalNotificacion({ open, onClose, onSubmit, targetUserCount, isSending
     }
   }, [open]);
 
-  /**
-   * Maneja el envío de la notificación
-   * Valida los campos y llama al callback del padre
-   */
   const handleSend = () => {
     setError('');
-    if (title.trim() === '' || body.trim() === '') {
+    if (!title.trim() || !body.trim()) {
       setError('El título y el cuerpo son requeridos.');
       return;
     }
-    // Llama a la función del padre (PaginaUsuarios)
     onSubmit(title, body);
   };
 
   return (
-    <Dialog open={open} onClose={isSending ? () => {} : onClose} fullWidth maxWidth="sm">
+    <Dialog 
+      open={open} 
+      onClose={isSending ? undefined : onClose} 
+      TransitionComponent={Transition}
+      fullWidth 
+      maxWidth="sm"
+      PaperProps={{
+        sx: { borderRadius: 3, overflow: 'hidden', boxShadow: theme.shadows[10] }
+      }}
+    >
+      {/* Encabezado con Diseño Premium */}
+      <Box sx={{ 
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+        p: 3, display: 'flex', alignItems: 'center', gap: 2, color: 'white', position: 'relative'
+      }}>
+        <Avatar sx={{ bgcolor: 'white', color: 'primary.main' }}>
+          <NotificationsIcon />
+        </Avatar>
+        <Box>
+          <Typography variant="h6" fontWeight="bold">
+            {targetUserName ? 'Notificación Personal' : 'Notificación Masiva'}
+          </Typography>
+          <Typography variant="caption" sx={{ opacity: 0.9 }}>
+            {targetUserName 
+              ? `Destinatario: ${targetUserName}` 
+              : `Destinatarios: ${targetUserCount} usuarios visibles`
+            }
+          </Typography>
+        </Box>
+        <IconButton 
+          onClick={onClose} 
+          disabled={isSending}
+          sx={{ position: 'absolute', top: 8, right: 8, color: 'white' }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
       
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <NotificationsActiveIcon color="primary" />
-        {targetUserName 
-          ? `Enviar Notificación a ${targetUserName}`
-          : `Enviar Notificación Masiva`
-        }
-      </DialogTitle>
-      
-      <DialogContent dividers>
-        
-        {!targetUserName ? (
-          <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 2 }}>
-            El mensaje se enviará a todos los usuarios actualmente visibles en la lista
-            ({targetUserCount} usuario(s)).
-          </Alert>
-        ) : (
-          <DialogContentText sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <PersonIcon fontSize="small" color="action" />
-            El mensaje se enviará directamente a este usuario.
-          </DialogContentText>
-        )}
+      <DialogContent sx={{ p: 3 }}>
+        {/* Banner Informativo */}
+        <Box sx={{ 
+          mb: 3, p: 2, borderRadius: 2, 
+          bgcolor: targetUserName ? alpha(theme.palette.info.main, 0.08) : alpha(theme.palette.warning.main, 0.08),
+          border: `1px solid ${targetUserName ? alpha(theme.palette.info.main, 0.2) : alpha(theme.palette.warning.main, 0.2)}`,
+          display: 'flex', alignItems: 'center', gap: 2
+        }}>
+          {targetUserName 
+            ? <PersonIcon color="info" /> 
+            : <GroupIcon color="warning" />
+          }
+          <Typography variant="body2" color="text.secondary">
+            {targetUserName 
+              ? "Este mensaje llegará como una alerta directa al dispositivo del usuario."
+              : `Estás a punto de enviar una alerta a ${targetUserCount} personas. Úsalo con responsabilidad.`
+            }
+          </Typography>
+        </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <TextField
             autoFocus
-            label="Título de la Notificación"
-            type="text"
+            label="Asunto / Título"
             fullWidth
-            variant="outlined"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={isSending}
+            variant="outlined"
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <TitleIcon color="action" />
-                </InputAdornment>
+                <InputAdornment position="start"><TitleIcon color="action" /></InputAdornment>
               ),
             }}
           />
           <TextField
-            label="Cuerpo del Mensaje"
-            type="text"
+            label="Mensaje"
             fullWidth
             multiline
             rows={4}
-            variant="outlined"
             value={body}
             onChange={(e) => setBody(e.target.value)}
             disabled={isSending}
+            placeholder="Escribe el contenido de la notificación aquí..."
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <MessageIcon color="action" />
-                </InputAdornment>
+                <InputAdornment position="start" sx={{ mt: 1.5 }}><MessageIcon color="action" /></InputAdornment>
               ),
             }}
           />
@@ -119,15 +137,16 @@ function ModalNotificacion({ open, onClose, onSubmit, targetUserCount, isSending
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </DialogContent>
       
-      <DialogActions sx={{ p: '16px 24px' }}>
-        <Button onClick={onClose} disabled={isSending}>Cancelar</Button>
+      <DialogActions sx={{ p: 3, pt: 0 }}>
+        <Button onClick={onClose} disabled={isSending} color="inherit">Cancelar</Button>
         <Button 
           onClick={handleSend} 
           variant="contained" 
           disabled={isSending}
-          startIcon={isSending ? null : <SendIcon />}
+          startIcon={!isSending && <SendIcon />}
+          sx={{ px: 4, borderRadius: 2 }}
         >
-          {isSending ? <CircularProgress size={24} color="inherit" /> : 'Enviar'}
+          {isSending ? <CircularProgress size={24} color="inherit" /> : 'Enviar Notificación'}
         </Button>
       </DialogActions>
     </Dialog>

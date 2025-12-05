@@ -1,87 +1,75 @@
-// lib/api/analiticas_service.dart
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mobile_app/models/estadisticas_model.dart';
+import 'package:mobile_app/models/analiticas_reportero_model.dart'; // <-- IMPORTAR
 import 'package:mobile_app/utils/api_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Gestiona la comunicación con la API de analíticas.
-///
-/// Esta clase se encarga de obtener datos estadísticos
-/// para los gráficos de la aplicación, manejando la autenticación
-/// y el procesamiento de las respuestas.
 class AnaliticasService {
-  /// Método privado para obtener el token de autenticación guardado localmente.
-  ///
-  /// Utiliza [SharedPreferences] para buscar el 'authToken'.
-  /// Retorna el token como un [String], o [null] si no se encuentra.
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('authToken');
   }
-  /// Método genérico privado para realizar peticiones GET a los endpoints de analíticas.
-  ///
-  /// Se encarga de:
-  /// 1. Obtener el token con [_getToken].
-  /// 2. Construir la URL completa.
-  /// 3. Añadir el token 'Bearer' a las cabeceras.
-  /// 4. Decodificar la respuesta JSON y mapearla a una `List<DatoGrafico>`.
-  ///
-  /// Lanza una [Exception] si el token es nulo o si la API
-  /// devuelve un código de estado diferente a 200.
-  Future<List<DatoGrafico>> _fetchDatosGrafico(String endpoint) async {
+
+  // --- Helper para peticiones GET genéricas ---
+  Future<dynamic> _get(String endpoint) async {
     final token = await _getToken();
     if (token == null) throw Exception('No autenticado');
 
     final url = Uri.parse('${ApiConstants.baseUrl}/api/analiticas/$endpoint');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
-
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((item) => DatoGrafico.fromJson(item)).toList();
-    } else {
-      throw Exception('Error al cargar datos de analíticas ($endpoint)');
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else if (response.statusCode == 403) {
+        throw Exception('Acceso denegado. Requiere plan Reportero o Admin.');
+      } else {
+        throw Exception('Error ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión: $e');
     }
   }
 
-  /// Obtiene las estadísticas de reportes agrupados por categoría.
-  ///
-  /// Llama a [_fetchDatosGrafico] con el endpoint 'por-categoria'.
-  Future<List<DatoGrafico>> getReportesPorCategoria() {
-    return _fetchDatosGrafico('por-categoria');
+  // --- Métodos Existentes ---
+  Future<List<DatoGrafico>> getReportesPorCategoria() async {
+    final List data = await _get('por-categoria');
+    return data.map((json) => DatoGrafico.fromJson(json)).toList();
   }
 
-  /// Obtiene las estadísticas de reportes agrupados por distrito.
-  ///
-  /// Llama a [_fetchDatosGrafico] con el endpoint 'por-distrito'.
-  Future<List<DatoGrafico>> getReportesPorDistrito() {
-    return _fetchDatosGrafico('por-distrito');
+  Future<List<DatoGrafico>> getReportesPorDistrito() async {
+    final List data = await _get('por-distrito');
+    return data.map((json) => DatoGrafico.fromJson(json)).toList();
   }
 
-  /// Obtiene la tendencia de reportes a lo largo del tiempo.
-  ///
-  /// Llama a [_fetchDatosGrafico] con el endpoint 'tendencia'.
-  Future<List<DatoGrafico>> getTendenciaReportes() {
-    return _fetchDatosGrafico('tendencia');
+  Future<List<DatoGrafico>> getTendenciaReportes() async {
+    final List data = await _get('tendencia');
+    return data.map((json) => DatoGrafico.fromJson(json)).toList();
   }
 
-  /// Registra una solicitud de exportación de PDF en el backend.
-  ///
-  /// Esta función realiza una petición POST al endpoint 'exportar-pdf'.
-  ///
-  /// **Nota:** Esta función ya no se usa para generar el PDF en el cliente,
-  /// pero se mantiene para registrar la descarga en el backend.
-  ///
-  /// Retorna un [Map] con el [statusCode] de la respuesta y
-  /// los [data] (JSON decodificado).
-  Future<Map<String, dynamic>> solicitarExportacionPDF() async {
-    final token = await _getToken();
-    if (token == null) return {'statusCode': 401, 'data': {'message': 'No autenticado'}};
+  // --- NUEVOS MÉTODOS (Reportero) ---
 
-    final url = Uri.parse('${ApiConstants.baseUrl}/api/analiticas/exportar-pdf');
-    final response = await http.post(url, headers: {'Authorization': 'Bearer $token'});
+  /// Obtiene la distribución de reportes por nivel de urgencia.
+  Future<List<DatoGrafico>> getReportesPorUrgencia() async {
+    final List data = await _get('por-urgencia');
+    return data.map((json) => DatoGrafico.fromJson(json)).toList();
+  }
 
-    return {'statusCode': response.statusCode, 'data': json.decode(response.body)};
+  /// Obtiene las métricas de eficiencia de atención.
+  Future<TiemposAtencion> getTiemposAtencion() async {
+    final data = await _get('tiempos-atencion');
+    return TiemposAtencion.fromJson(data);
+  }
+
+  /// Obtiene la lista de puntos para el mapa de calor.
+  Future<List<PuntoMapaCalor>> getMapaCalor() async {
+    final List data = await _get('mapa-calor');
+    return data.map((json) => PuntoMapaCalor.fromJson(json)).toList();
+  }
+  
+  // Método legacy para registro de PDF (opcional)
+  Future<void> solicitarExportacionPDF() async {
+     await _get('exportar-pdf'); // Usamos GET o POST según ruta, aquí simplificado
   }
 }

@@ -22,6 +22,7 @@ const metodoPagoRoutes = require('./routes/metodoPago.routes.js');
 const analiticasRoutes = require('./routes/analiticas.routes.js');
 const categoriasRoutes = require('./routes/categorias.routes.js');
 const gamificacionRoutes = require('./routes/gamificacion.routes.js');
+const aiRoutes = require('./routes/ai.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -76,7 +77,7 @@ io.on('connection', (socket) => {
 
 
   // --- LISTENERS (join, leave, send-message, disconnect sin cambios) ---
-  socket.on('join-chat-room', (roomId) => {
+  /*socket.on('join-chat-room', (roomId) => {
     if (!socket.user) {
         console.warn(`Socket ${socket.id}: Intento de unirse a sala ${roomId} sin usuario asignado.`);
         return socket.emit('unauthorized', { message: 'Error de autenticación interna.' });
@@ -95,40 +96,202 @@ io.on('connection', (socket) => {
   });
 
   socket.on('send-message', async (data) => {
-     if (!socket.user) {
-        console.warn(`Socket ${socket.id}: Intento de enviar mensaje sin usuario asignado.`);
-        return;
-     }
-     const { id_reporte, message_text } = data;
-     const id_sender = socket.user.userId;
-     const sender_alias = socket.user.alias || 'Usuario';
+        console.log("Evento 'send-message' recibido:", data);
+        
+        // --- CORRECCIÓN CRÍTICA DE REFERENCIAS ---
+        // 1. Desestructuración de variables directamente desde 'data' para evitar ReferenceError
+        const id_reporte = data.id_reporte;
+        const mensaje = data.mensaje;
+        const id_remitente = data.id_remitente;
+        const es_admin = data.es_admin || false;
+        const remitente_alias = data.remitente_alias || 'Usuario';
+        
+        if (!id_reporte || !mensaje || !id_remitente) {
+          console.error("❌ Socket: Datos incompletos. Faltan id_reporte, mensaje o id_remitente.", data);
+          return; // Detener si faltan datos críticos
+        }
 
-     if (!id_reporte || !message_text) {
-        console.error("Evento 'send-message' recibido con datos incompletos:", data);
-        socket.emit('message-error', { message: 'Datos del mensaje incompletos.' });
-        return;
-     }
-     const roomName = id_reporte.toString();
-     try {
-       console.log(`💾 Guardando mensaje para sala ${roomName} en DB...`);
-       const query = 'INSERT INTO chat_messages (id_reporte, id_remitente, remitente_alias, mensaje) VALUES ($1, $2, $3, $4) RETURNING *, to_char(fecha_envio, \'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"\') as fecha_envio_iso';
-       const result = await db.query(query, [id_reporte, id_sender, sender_alias, message_text]);
-       if (result.rows.length === 0) throw new Error('No se pudo guardar el mensaje.');
-       const newMessage = result.rows[0];
-       console.log(`   ✅ Mensaje guardado con ID: ${newMessage.id}`);
-       console.log(`✉️ Emitiendo mensaje a sala ${roomName}:`, newMessage);
-       io.to(roomName).emit('receive-message', newMessage);
-     } catch (error) {
-         console.error(`❌ Error procesando 'send-message' para sala ${roomName}:`, error);
-         socket.emit('message-error', { message: 'No se pudo enviar o guardar el mensaje.' });
-     }
-  });
+        const leido = es_admin ? true : false; 
+
+        try {
+            // 2. Guardar en BD (Usando las variables locales explícitamente)
+            const query = `
+                INSERT INTO chat_messages (id_reporte, id_remitente, mensaje, remitente_alias, es_admin, fecha_envio, leido)
+                VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+                RETURNING id, id_reporte, id_remitente, mensaje, remitente_alias, es_admin, leido, fecha_envio AS timestamp
+            `;
+            const result = await db.query(query, [id_reporte, id_remitente, mensaje, remitente_alias, es_admin, leido]);
+            const savedMsg = result.rows[0];
+
+            // 3. Emitir a la sala (Esto hace que el mensaje vuelva al remitente para confirmación)
+            io.to(`report_${id_reporte}`).emit('receive-message', savedMsg);
+            
+            // 4. Notificar globalmente si no es admin
+            if (!es_admin) {
+                io.emit('new_chat_notification'); 
+            }
+
+        } catch (err) {
+            console.error("Error guardando mensaje socket:", err);
+        }
+    });
 
   socket.on('disconnect', (reason) => {
     console.log(`🔌 Cliente desconectado: ${socket.id}. Razón: ${reason}`);
-  });
-  // --- FIN LISTENERS ---
-}); // Fin io.on('connection')
+  });*/
+  /*socket.on('joinRoom', (room) => {
+        socket.join(room);
+        console.log(`Socket ${socket.id} se unió a la sala: ${room}`);
+    });
+
+    socket.on('leaveRoom', (room) => {
+        socket.leave(room);
+        console.log(`Socket ${socket.id} salió de la sala: ${room}`);
+    });
+    // -------------------------------------------
+
+    // --- 2. LÓGICA DE ENVÍO DE MENSAJES ---
+    socket.on('send-message', async (data) => {
+        console.log("Evento 'send-message' recibido:", data);
+        
+        // Extracción segura de datos
+        const { id_reporte, mensaje, id_remitente, es_admin, remitente_alias } = data;
+
+        // Validación estricta
+        if (!id_reporte || !mensaje || !id_remitente) {
+          console.error("❌ Socket: Datos incompletos.", data);
+          return; 
+        }
+
+        const esAdmin = es_admin || false;
+        const alias = remitente_alias || 'Usuario';
+        const leido = esAdmin ? true : false; // Si lo envía el admin, nace leído (por el admin)
+
+        try {
+            // Guardar en BD
+            const query = `
+                INSERT INTO chat_messages (id_reporte, id_remitente, mensaje, remitente_alias, es_admin, fecha_envio, leido)
+                VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+                RETURNING id, id_reporte, id_remitente, mensaje, remitente_alias, es_admin, leido, fecha_envio AS timestamp
+            `;
+            const result = await db.query(query, [id_reporte, id_remitente, mensaje, alias, esAdmin, leido]);
+            const savedMsg = result.rows[0];
+
+            // Emitir a la sala específica (ESTO AHORA FUNCIONARÁ PORQUE YA EXISTE joinRoom)
+            io.to(`report_${id_reporte}`).emit('receive-message', savedMsg);
+            
+            // Notificación global de chat nuevo (para el panel web)
+            if (!esAdmin) {
+                io.emit('new_chat_notification'); 
+            }
+
+        } catch (err) {
+            console.error("Error guardando mensaje socket:", err);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado:', socket.id);
+    });*/
+    // --- 1. LÓGICA DE UNIÓN A SALAS (FUSIÓN) ---
+    
+    // Método usado por la APP MÓVIL
+    socket.on('joinRoom', (room) => {
+        // La app ya envía "report_70", así que lo usamos directo
+        socket.join(room);
+        console.log(`📱 App (Socket ${socket.id}) se unió a sala: ${room}`);
+    });
+
+    // Método usado por la PÁGINA WEB
+    socket.on('join-chat-room', (roomId) => {
+        // La web a veces envía solo el número "70" o "report_70". Estandarizamos.
+        const roomName = roomId.toString().startsWith('report_') 
+            ? roomId 
+            : `report_${roomId}`;
+            
+        socket.join(roomName);
+        console.log(`💻 Web (Socket ${socket.id}) se unió a sala: ${roomName}`);
+    });
+
+    // --- 2. LÓGICA DE SALIDA DE SALAS (FUSIÓN) ---
+    
+    socket.on('leaveRoom', (room) => {
+        socket.leave(room);
+    });
+
+    socket.on('leave-chat-room', (roomId) => {
+        const roomName = roomId.toString().startsWith('report_') 
+            ? roomId 
+            : `report_${roomId}`;
+        socket.leave(roomName);
+    });
+
+    // --- 3. LÓGICA DE ENVÍO DE MENSAJES (ROBUSTA) ---
+    socket.on('send-message', async (data) => {
+        console.log("📨 Evento 'send-message' recibido:", data);
+        
+        const { id_reporte, mensaje, id_remitente, es_admin, remitente_alias } = data;
+
+        // Validación flexible para aceptar diferentes nombres de campos si es necesario
+        const senderId = id_remitente || data.id_sender || data.id_usuario;
+
+        if (!id_reporte || !mensaje || !senderId) {
+          console.error("❌ Socket: Datos incompletos.", data);
+          return; 
+        }
+
+        const esAdmin = es_admin === true || es_admin === 'true'; // Asegurar booleano
+        const alias = remitente_alias || data.sender_alias || 'Usuario';
+        
+        // --- CORRECCIÓN DE LÓGICA DE LECTURA ---
+        // Un mensaje nuevo SIEMPRE nace como NO LEÍDO por la contraparte.
+        // Si lo envía el Admin, el Usuario no lo ha leído.
+        // Si lo envía el Usuario, el Admin no lo ha leído.
+        const leido = false; 
+
+        try {
+            // Guardar en BD
+            const query = `
+                INSERT INTO chat_messages (id_reporte, id_remitente, mensaje, remitente_alias, es_admin, fecha_envio, leido)
+                VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+                RETURNING id, id_reporte, id_remitente, mensaje, remitente_alias, es_admin, leido, fecha_envio AS timestamp
+            `;
+            
+            const result = await db.query(query, [id_reporte, senderId, mensaje, alias, esAdmin, leido]);
+            const savedMsg = result.rows[0];
+
+            // 1. Emitir a la sala del chat (para que aparezca en la pantalla de chat abierta)
+            const roomName = `report_${id_reporte}`;
+            io.to(roomName).emit('receive-message', savedMsg);
+            
+            // 2. Emitir evento GLOBAL de actualización de lista (NUEVO)
+            // Esto avisará a la pantalla de "Conversaciones" que debe recargar la lista para reordenar
+            io.emit('refresh_conversations_list', { 
+                id_reporte, 
+                ultimo_mensaje: mensaje, 
+                timestamp: savedMsg.timestamp 
+            });
+
+            // 3. Notificaciones específicas por rol
+            if (!esAdmin) {
+                // Si el usuario escribió, avisar al Admin (Web)
+                io.emit('new_chat_notification'); 
+            } else {
+                // Si el Admin escribió, avisar al Usuario (Móvil)
+                // Encontrar el ID del usuario dueño del reporte para enviarle notif (opcional si usas salas privadas)
+            }
+
+            console.log(`✅ Mensaje guardado y emitido en sala ${roomName}`);
+
+        } catch (err) {
+            console.error("Error guardando mensaje socket:", err);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado:', socket.id);
+    });
+}); 
 
 
 // --- Express Middlewares & Routes ---
@@ -161,6 +324,7 @@ app.use('/api/analiticas', analiticasRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/gamificacion', gamificacionRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/ai', aiRoutes);
 
 // --- Start Server ---
 const PORT = process.env.PORT || 3000;

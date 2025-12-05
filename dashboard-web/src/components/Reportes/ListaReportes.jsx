@@ -1,34 +1,14 @@
 /**
-
-* Componente: ListaReportes
-* ---
-* Muestra una lista de reportes en formato resumido, con soporte para:
-* * Indicador de carga (spinner) al traer más datos.
-* * Botón "Cargar más reportes".
-* * Mensaje amigable cuando no existen resultados.
-*
-* Este componente trabaja junto con `ItemReporteResumen`, que se encarga de
-* renderizar cada tarjeta individual de reporte.
-  */
-
+ * Componente: ListaReportes (Versión Mejorada)
+ */
 import React from 'react';
-import { Box, Typography, Button, CircularProgress, Stack, Paper } from '@mui/material';
-import { FindInPage as EmptyIcon } from '@mui/icons-material';
+import { Box, Typography, Button, CircularProgress, Stack, Paper, Fade, Divider } from '@mui/material';
+import { 
+    FindInPage as EmptyIcon, 
+    ExpandMore as ExpandIcon 
+} from '@mui/icons-material';
 import ItemReporteResumen from './ItemReporteResumen';
 
-/* -------------------------------------------------------------------------- */
-/*                              COMPONENTE PRINCIPAL                          */
-/* -------------------------------------------------------------------------- */
-
-/**
-
-* @param {Object} props - Propiedades del componente.
-* @param {Array} props.reports - Lista de objetos de reportes a mostrar.
-* @param {boolean} props.loading - Indica si se están cargando más reportes.
-* @param {boolean} props.hasMore - Indica si hay más reportes disponibles.
-* @param {Function} props.onLoadMore - Función que se ejecuta al hacer clic en "Cargar Más".
-* @param {Function} props.onOpenDrawer - Función para abrir el panel o drawer con los detalles del reporte seleccionado.
-  */
 function ListaReportes({
   reports,
   loading,
@@ -38,69 +18,95 @@ function ListaReportes({
 }) {
 
   /* ---------------------------------------------------------------------- */
-  /*                    1. Mensaje si no hay reportes                      */
+  /* 1. Mensaje si no hay reportes                       */
   /* ---------------------------------------------------------------------- */
   if (!loading && reports.length === 0) {
     return (
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
-          mt: 3,
-          backgroundColor: 'background.default',
-          borderStyle: 'dashed'
-        }}
-      >
-        <EmptyIcon sx={{ fontSize: 48, color: 'text.secondary' }} /> <Typography variant="h6" color="text.secondary">
-          No se encontraron reportes </Typography> <Typography color="text.secondary" align="center">
-          Prueba ajustar los filtros o revisa más tarde. </Typography> </Paper>
+      <Fade in={true}>
+        <Paper
+            variant="outlined"
+            sx={{
+            p: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            mt: 4,
+            borderRadius: 3,
+            backgroundColor: 'background.paper',
+            borderStyle: 'dashed',
+            borderColor: 'divider'
+            }}
+        >
+            <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: '50%', mb: 1 }}>
+                <EmptyIcon sx={{ fontSize: 60, color: 'text.secondary' }} /> 
+            </Box>
+            <Typography variant="h5" color="text.primary" fontWeight="bold">
+            No se encontraron reportes
+            </Typography> 
+            <Typography color="text.secondary" align="center" maxWidth="400px">
+            No hay resultados que coincidan con tus filtros actuales. Intenta ajustar la búsqueda o los filtros de estado.
+            </Typography> 
+        </Paper>
+      </Fade>
     );
   }
 
   /* ---------------------------------------------------------------------- */
-  /*                      2. Renderizado principal                         */
+  /* 2. Renderizado principal                          */
   /* ---------------------------------------------------------------------- */
   return (
-    <Stack spacing={2} sx={{ mt: 3 }}>
-      {/* Mapeo de cada reporte a su componente resumen */}
-      {reports.map((report, index) => (<ItemReporteResumen
-        key={report.id}
-        report={report}
-        index={index}
-        onOpenDrawer={onOpenDrawer}
-      />
-      ))}
+    <Box sx={{ mt: 3, pb: 4 }}>
+      <Stack spacing={2}>
+        {/* Mapeo de reportes con animación de entrada */}
+        {reports.map((report, index) => (
+            <Fade in={true} timeout={300 + (index % 5) * 100} key={report.id || index}>
+                <Box>
+                    <ItemReporteResumen
+                        report={report}
+                        index={index}
+                        onOpenDrawer={onOpenDrawer}
+                    />
+                </Box>
+            </Fade>
+        ))}
+      </Stack>
 
-      ```
       {/* Botón de carga adicional */}
       {hasMore && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <Button
-            variant="contained"
+            variant="outlined"
+            size="large"
             onClick={onLoadMore}
             disabled={loading}
+            fullWidth
+            startIcon={!loading && <ExpandIcon />}
+            sx={{ 
+                maxWidth: '300px', 
+                py: 1.5, 
+                borderRadius: 2,
+                textTransform: 'none',
+                fontSize: '1rem',
+                borderWidth: 2,
+                '&:hover': { borderWidth: 2 }
+            }}
           >
-            {loading ? <CircularProgress size={24} /> : 'Cargar Más Reportes'}
+            {loading ? <CircularProgress size={24} color="inherit" /> : 'Cargar más reportes'}
           </Button>
         </Box>
       )}
 
-      {/* Mensaje final cuando ya no hay más reportes */}
+      {/* Mensaje final (Footer elegante) */}
       {!hasMore && !loading && reports.length > 0 && (
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          align="center"
-          sx={{ py: 2 }}
-        >
-          Fin de los reportes
-        </Typography>
+        <Divider sx={{ mt: 4, mb: 2 }}>
+            <Typography variant="caption" color="text.disabled" sx={{ textTransform: 'uppercase', letterSpacing: 1, px: 1 }}>
+                Fin de los resultados
+            </Typography>
+        </Divider>
       )}
-    </Stack>
+    </Box>
   );
 }
 

@@ -5,7 +5,8 @@ import 'package:mobile_app/models/comentario_model.dart';
 /// Representa la vista completa y detallada de un reporte.
 ///
 /// Este modelo se usa en la pantalla de detalles del reporte e incluye
-/// toda la información del reporte, así como la lista anidada de [comentarios].
+/// toda la información del reporte, así como la lista anidada de [comentarios]
+/// y el estado de participación del usuario actual.
 class ReporteDetallado {
   /// El ID único del reporte.
   final int id;
@@ -31,7 +32,7 @@ class ReporteDetallado {
   /// El número de apoyos (likes) que ha recibido el reporte.
   final int apoyosCount;
 
-  /// El estado actual del reporte (ej. "pendiente", "verificado", "rechazado").
+  /// El estado actual del reporte (ej. "pendiente_verificacion", "verificado", "rechazado").
   final String estado;
 
   /// `true` si el reporte fue publicado de forma anónima.
@@ -77,6 +78,15 @@ class ReporteDetallado {
   /// (Es decir, cuántos duplicados se han vinculado a este reporte).
   final int reportesVinculadosCount;
 
+  /// Número de apoyos recibidos durante la fase de validación (solo pendientes).
+  final int apoyosPendientes;
+
+  /// Indica si el usuario actual (sesión activa) se ha unido a este reporte.
+  ///
+  /// Es `true` si el usuario ya apoyó este reporte pendiente.
+  /// Es `null` o `false` si no se ha unido o si el reporte ya no es pendiente.
+  final bool? usuarioActualUnido;
+
   /// Crea una instancia de [ReporteDetallado].
   ReporteDetallado({
     required this.id,
@@ -101,6 +111,8 @@ class ReporteDetallado {
     this.codigoReporte,
     this.idReporteOriginal,
     required this.reportesVinculadosCount,
+    this.apoyosPendientes = 0,
+    this.usuarioActualUnido,
   });
 
   /// Función de ayuda estática para parsear un valor a [int] de forma segura.
@@ -116,39 +128,41 @@ class ReporteDetallado {
 
   /// Crea una instancia de [ReporteDetallado] a partir de un mapa JSON.
   ///
-  /// Este factory es utilizado para deserializar la respuesta de la API.
+  /// Este factory es utilizado para deserializar la respuesta de la API (`getReporteById`).
   /// Es robusto y maneja:
   /// - Parseo de la lista anidada de [comentarios].
   /// - Parseo seguro de [location] (GeoJSON).
   /// - Parseo seguro de la lista de [tags].
-  /// - Parseo seguro de campos numéricos usando [_parseInt].
+  /// - Mapeo del nuevo campo [usuarioActualUnido].
   factory ReporteDetallado.fromJson(Map<String, dynamic> json) {
+    // 1. Parseo de comentarios
     var list = (json['comentarios'] as List? ?? [])
         .map((i) => Comentario.fromJson(i))
         .toList();
 
+    // 2. Parseo de ubicación (GeoJSON)
     LatLng parsedLocation;
     try {
       dynamic locationData = json['location'];
       if (locationData is String) {
         locationData = jsonDecode(locationData);
       }
-      // Added null checks for safety
       final coords = locationData?['coordinates'];
       if (coords != null && coords is List && coords.length >= 2) {
+        // GeoJSON es [lon, lat], LatLng espera (lat, lon)
         parsedLocation = LatLng(coords[1], coords[0]);
       } else {
         throw Exception('Invalid coordinates format');
       }
     } catch (e) {
-      print("Error parseando location, usando default: $e");
+      print("Error parseando location en ReporteDetallado, usando default: $e");
       parsedLocation = const LatLng(0, 0); // Fallback seguro
     }
 
+    // 3. Parseo de tags
     List<String> tagsList = [];
     if (json['tags'] != null && json['tags'] is List) {
       try {
-        // Ensure all elements are strings before converting
         tagsList = List<String>.from(json['tags'].map((tag) => tag.toString()));
       } catch (e) {
         print("Error parseando tags: $e");
@@ -156,14 +170,14 @@ class ReporteDetallado {
     }
 
     return ReporteDetallado(
-      id: _parseInt(json['id']), // Usar helper
+      id: _parseInt(json['id']),
       titulo: json['titulo'] ?? 'Sin Título',
       descripcion: json['descripcion'],
       fotoUrl: json['foto_url'],
       fechaCreacion: json['fecha_creacion'] ?? 'Fecha desconocida',
       autor: json['autor'] ?? 'Anónimo',
-      idAutor: _parseInt(json['id_autor']), // Usar helper
-      apoyosCount: _parseInt(json['apoyos_count']), // Usar helper
+      idAutor: _parseInt(json['id_autor']),
+      apoyosCount: _parseInt(json['apoyos_count']),
       estado: json['estado'] ?? 'desconocido',
       esAnonimo: json['es_anonimo'] ?? false,
       categoria: json['categoria'] ?? 'Sin Categoría',
@@ -178,8 +192,11 @@ class ReporteDetallado {
       codigoReporte: json['codigo_reporte'],
       idReporteOriginal: _parseInt(json['id_reporte_original'], -1) == -1
           ? null
-          : _parseInt(json['id_reporte_original']), // Maneja null/int/string
+          : _parseInt(json['id_reporte_original']),
       reportesVinculadosCount: _parseInt(json['reportes_vinculados_count']),
+      // Nuevos campos para la lógica de "Unirse"
+      apoyosPendientes: _parseInt(json['apoyos_pendientes']),
+      usuarioActualUnido: json['usuario_actual_unido'], // Puede ser null, true o false
     );
   }
 }

@@ -1,3 +1,4 @@
+// src/components/Usuarios/PanelSolicitudesRol.jsx
 import React, { useState, useEffect } from 'react';
 import { 
   Box, 
@@ -10,7 +11,9 @@ import {
   Grid,
   Avatar,
   Divider,
-  useTheme
+  useTheme,
+  Chip,
+  Fade
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -19,61 +22,33 @@ import NotesIcon from '@mui/icons-material/Notes';
 import EmailIcon from '@mui/icons-material/Email';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
+import PersonIcon from '@mui/icons-material/Person';
 
-import adminService from '../../services/adminService'; // Asegúrate que la ruta sea correcta
+import adminService from '../../services/adminService';
 
-/**
- * Componente helper para mostrar una fila de información con ícono, etiqueta y valor.
- *
- * @param {object} props - Propiedades del componente.
- * @param {JSX.Element} props.icon - El elemento de ícono (ej: <MapIcon />).
- * @param {string} props.label - El texto de la etiqueta (ej: "Zona Propuesta").
- * @param {string|number|null} props.value - El valor a mostrar.
- * @returns {JSX.Element} Un componente Box con la información formateada.
- */
 const InfoRow = ({ icon, label, value }) => (
   <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-    {React.cloneElement(icon, { color: 'action', fontSize: 'small' })}
+    <Avatar sx={{ bgcolor: 'action.hover', width: 32, height: 32, color: 'text.secondary' }}>
+       {React.cloneElement(icon, { fontSize: 'small' })}
+    </Avatar>
     <Box>
-      <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
         {label}
       </Typography>
-      <Typography variant="body2" sx={{ wordBreak: 'break-word', fontWeight: 500 }}>
+      <Typography variant="body2" sx={{ wordBreak: 'break-word', fontWeight: 500, color: 'text.primary' }}>
         {value || 'N/A'}
       </Typography>
     </Box>
   </Box>
 );
 
-/**
- * Renderiza un panel que gestiona las solicitudes pendientes para nuevos roles (ej. Líder Vecinal).
- *
- * Este componente es autónomo y maneja su propio estado:
- * 1. Carga las solicitudes pendientes desde `adminService.getSolicitudesRol` al montarse.
- * 2. Muestra un estado de carga (`isLoading`), error (`error`) o un estado vacío
- * (si no hay solicitudes).
- * 3. Renderiza una tarjeta (Paper) por cada solicitud, mostrando detalles
- * del usuario, zona propuesta y motivación.
- * 4. Proporciona botones "Aprobar" y "Rechazar" que llaman a
- * `adminService.resolverSolicitudRol`.
- * 5. Muestra un indicador de carga (`isResolving`) en la tarjeta específica que
- * se está resolviendo, reduciendo su opacidad.
- *
- * No recibe props.
- *
- * @returns {JSX.Element} El panel de solicitudes de rol.
- */
 function PanelSolicitudesRol() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isResolving, setIsResolving] = useState(null); // Almacena el ID de la solicitud en proceso
+  const [isResolving, setIsResolving] = useState(null);
   const theme = useTheme();
 
-  /**
-   * Carga la lista de solicitudes de rol desde el servicio.
-   * Maneja los estados de carga y error.
-   */
   const fetchSolicitudes = () => {
     setIsLoading(true);
     setError(null);
@@ -86,159 +61,177 @@ function PanelSolicitudesRol() {
       .finally(() => setIsLoading(false));
   };
 
-  // Carga inicial al montar el componente
   useEffect(() => {
     fetchSolicitudes();
   }, []);
 
-  /**
-   * Maneja la acción de aprobar o rechazar una solicitud.
-   * Llama al servicio y, si tiene éxito, refresca la lista de solicitudes.
-   * @param {string|number} id - El ID de la solicitud a resolver.
-   * @param {'aprobar' | 'rechazar'} accion - La acción a tomar.
-   */
   const handleResolver = (id, accion) => {
-    setIsResolving(id); // Bloquea la tarjeta específica
+    setIsResolving(id);
     adminService.resolverSolicitudRol(id, accion)
       .then(() => {
-        fetchSolicitudes(); // Refrescar la lista (esto pondrá isLoading a true)
+        fetchSolicitudes();
       })
       .catch(err => {
-         // Si falla, desbloquea la tarjeta y muestra alerta
          alert(err.response?.data?.message || 'Error al resolver.');
          setIsResolving(null);
       });
   };
 
-  // --- Renderizado de Estados ---
-
-  // 1. Carga Inicial (distinto de "resolviendo")
   if (isLoading && !isResolving) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>;
+    return <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}><CircularProgress /></Box>;
   }
 
-  // 2. Estado de Error
   if (error) {
-    return <Alert severity="error" sx={{ m: 2 }}>{error}</Alert>;
+    return <Alert severity="error" sx={{ m: 2, borderRadius: 2 }}>{error}</Alert>;
   }
 
-  // 3. Estado Vacío
   if (solicitudes.length === 0) {
     return (
       <Paper 
         variant="outlined" 
-        sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, backgroundColor: 'background.default', borderStyle: 'dashed' }}
+        sx={{ 
+          p: 6, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          gap: 2, 
+          bgcolor: 'background.paper', 
+          borderStyle: 'dashed',
+          borderRadius: 3
+        }}
       >
-        <DoneAllIcon sx={{ fontSize: 48, color: 'text.secondary' }} />
-        <Typography variant="h6" color="text.secondary">
-          ¡Todo listo!
+        <Avatar sx={{ bgcolor: 'action.hover', width: 80, height: 80, mb: 1 }}>
+           <DoneAllIcon sx={{ fontSize: 40, color: 'success.main' }} />
+        </Avatar>
+        <Typography variant="h6" color="text.primary" fontWeight="bold">
+          ¡Todo al día!
         </Typography>
-        <Typography color="text.secondary">
-          No hay solicitudes de rol pendientes por revisar.
+        <Typography color="text.secondary" align="center">
+          No hay solicitudes de rol pendientes por revisar en este momento.
         </Typography>
       </Paper>
     );
   }
 
-  // 4. Lista de Solicitudes
   return (
-    <Stack spacing={2}>
-      {solicitudes.map((sol) => (
+    <Stack spacing={3}>
+      {solicitudes.map((sol, index) => (
+        <Fade in={true} key={sol.id} style={{ transitionDelay: `${index * 100}ms` }}>
         <Paper 
-          key={sol.id} 
-          variant="outlined" 
+          elevation={0}
+          variant="outlined"
           sx={{ 
-            p: 2, 
-            // Reduce opacidad si ESTA tarjeta se está resolviendo
+            p: 0, 
+            overflow: 'hidden',
+            borderRadius: 3,
+            border: `1px solid ${theme.palette.divider}`,
             opacity: isResolving === sol.id ? 0.6 : 1,
-            transition: 'opacity 0.3s'
+            pointerEvents: isResolving === sol.id ? 'none' : 'auto',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+                borderColor: theme.palette.primary.main,
+                boxShadow: theme.shadows[4]
+            }
           }}
         >
-          <Grid container spacing={2}>
+          <Grid container>
             
-            {/* Sección de Información (Izquierda) */}
-            <Grid item xs={12} md={8}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Avatar sx={{ bgcolor: 'primary.main' }}>
+            {/* IZQUIERDA: Información del Usuario */}
+            <Grid item xs={12} md={8} sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2.5, mb: 3 }}>
+                <Avatar 
+                  sx={{ 
+                    bgcolor: 'primary.main', 
+                    width: 56, height: 56,
+                    fontSize: '1.5rem',
+                    boxShadow: 2
+                  }}
+                >
                   {sol.nombre ? sol.nombre[0].toUpperCase() : (sol.alias ? sol.alias[0].toUpperCase() : '?')}
                 </Avatar>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                    {sol.alias || sol.nombre}
+                  <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+                    {sol.nombre || 'Usuario Desconocido'}
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <EmailIcon fontSize="small" color="action" />
-                    <Typography variant="body2" color="text.secondary">
-                      {sol.email}
-                    </Typography>
-                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                     {sol.alias ? `@${sol.alias}` : 'Sin alias'}
+                  </Typography>
+                  <Chip 
+                    icon={<EmailIcon fontSize="small"/>} 
+                    label={sol.email} 
+                    size="small" 
+                    variant="outlined" 
+                    sx={{ borderRadius: 1 }}
+                  />
                 </Box>
               </Box>
-              <Divider sx={{ mb: 2 }} />
-              <Stack spacing={2}>
-                <InfoRow 
-                  icon={<MapIcon />}
-                  label="Zona Propuesta"
-                  value={sol.zona_propuesta}
-                />
-                <InfoRow 
-                  icon={<NotesIcon />}
-                  label="Motivación"
-                  value={sol.motivacion}
-                />
-                <InfoRow 
-                  icon={<CalendarTodayIcon />}
-                  label="Fecha de Solicitud"
-                  value={sol.fecha} // Asumiendo que 'fecha' ya viene formateada
-                />
-              </Stack>
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                   <InfoRow icon={<MapIcon />} label="Zona Solicitada" value={sol.zona_propuesta} />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                   <InfoRow icon={<CalendarTodayIcon />} label="Fecha Solicitud" value={sol.fecha} />
+                </Grid>
+                <Grid item xs={12}>
+                   <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 2, mt: 1 }}>
+                      <Stack direction="row" spacing={1} mb={1}>
+                         <NotesIcon fontSize="small" color="action"/>
+                         <Typography variant="caption" fontWeight="bold" color="text.secondary">MOTIVACIÓN</Typography>
+                      </Stack>
+                      <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.primary' }}>
+                         "{sol.motivacion}"
+                      </Typography>
+                   </Box>
+                </Grid>
+              </Grid>
             </Grid>
             
-            {/* Sección de Acciones (Derecha) */}
-            <Grid item xs={12} md={4}>
-              <Stack 
-                spacing={1.5} 
-                sx={{ 
-                  height: '100%', 
-                  justifyContent: 'center', 
-                  alignItems: 'center',
-                  // Estilos responsivos para la división
-                  [theme.breakpoints.up('md')]: {
-                      borderLeft: `1px solid ${theme.palette.divider}`,
-                      pl: 2
-                  },
-                  [theme.breakpoints.down('md')]: {
-                      borderTop: `1px solid ${theme.palette.divider}`,
-                      pt: 2,
-                      flexDirection: 'row' // Botones uno al lado del otro en móvil
-                  }
-                }}
+            {/* DERECHA: Acciones */}
+            <Grid item xs={12} md={4} 
+               sx={{ 
+                 bgcolor: 'background.default', 
+                 borderLeft: { md: `1px solid ${theme.palette.divider}` },
+                 borderTop: { xs: `1px solid ${theme.palette.divider}`, md: 'none' },
+                 p: 3,
+                 display: 'flex',
+                 flexDirection: 'column',
+                 justifyContent: 'center',
+                 gap: 2
+               }}
+            >
+              <Typography variant="caption" color="text.secondary" align="center" display="block" fontWeight="bold">
+                 ACCIONES DE MODERACIÓN
+              </Typography>
+              
+              <Button 
+                variant="contained" 
+                color="success" 
+                size="large"
+                startIcon={isResolving === sol.id ? <CircularProgress size={20} color="inherit"/> : <CheckCircleIcon />}
+                onClick={() => handleResolver(sol.id, 'aprobar')}
+                fullWidth
+                sx={{ boxShadow: 2, fontWeight: 'bold' }}
               >
-                <Button 
-                  color="success" 
-                  variant="contained" 
-                  startIcon={<CheckCircleIcon />}
-                  onClick={() => handleResolver(sol.id, 'aprobar')}
-                  disabled={isResolving === sol.id} // Deshabilitar si se está resolviendo
-                  fullWidth
-                >
-                  Aprobar
-                </Button>
-                <Button 
-                  color="error" 
-                  variant="outlined" 
-                  startIcon={<CancelIcon />}
-                  onClick={() => handleResolver(sol.id, 'rechazar')}
-                  disabled={isResolving === sol.id} // Deshabilitar si se está resolviendo
-                  fullWidth
-                >
-                  Rechazar
-                </Button>
-              </Stack>
+                Aprobar Solicitud
+              </Button>
+
+              <Button 
+                variant="outlined" 
+                color="error" 
+                size="large"
+                startIcon={<CancelIcon />}
+                onClick={() => handleResolver(sol.id, 'rechazar')}
+                fullWidth
+                sx={{ borderWidth: 2, '&:hover': { borderWidth: 2 } }}
+              >
+                Rechazar
+              </Button>
             </Grid>
 
           </Grid>
         </Paper>
+        </Fade>
       ))}
     </Stack>
   );

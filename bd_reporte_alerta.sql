@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict 3iKSPptcXnA4i5RCwRm9abSxxKkQX4ja8FjjgjjyEnmr28CRchA4ozp8kkwAMxV
+\restrict t3Ne8zI8yUs6Bfd9z41CaPKOFwYbzhHVYUwdBkQltN5FYJYdEkRyYEFgxMEHI1j
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
 
--- Started on 2025-10-25 00:29:16
+-- Started on 2025-12-04 06:06:37
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -30,7 +30,7 @@ CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA public;
 
 
 --
--- TOC entry 6173 (class 0 OID 0)
+-- TOC entry 6182 (class 0 OID 0)
 -- Dependencies: 2
 -- Name: EXTENSION postgis; Type: COMMENT; Schema: -; Owner: 
 --
@@ -102,7 +102,7 @@ CREATE SEQUENCE public.categorias_id_seq
 ALTER SEQUENCE public.categorias_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6174 (class 0 OID 0)
+-- TOC entry 6183 (class 0 OID 0)
 -- Dependencies: 225
 -- Name: categorias_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -127,7 +127,7 @@ CREATE SEQUENCE public.categorias_orden_seq
 ALTER SEQUENCE public.categorias_orden_seq OWNER TO postgres;
 
 --
--- TOC entry 6175 (class 0 OID 0)
+-- TOC entry 6184 (class 0 OID 0)
 -- Dependencies: 255
 -- Name: categorias_orden_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -146,7 +146,9 @@ CREATE TABLE public.chat_messages (
     id_remitente integer NOT NULL,
     remitente_alias character varying(100) NOT NULL,
     mensaje text NOT NULL,
-    fecha_envio timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    fecha_envio timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    leido boolean DEFAULT false,
+    es_admin boolean DEFAULT false
 );
 
 
@@ -169,7 +171,7 @@ CREATE SEQUENCE public.chat_messages_id_seq
 ALTER SEQUENCE public.chat_messages_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6176 (class 0 OID 0)
+-- TOC entry 6185 (class 0 OID 0)
 -- Dependencies: 253
 -- Name: chat_messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -209,7 +211,7 @@ CREATE SEQUENCE public.comentario_apoyos_id_seq
 ALTER SEQUENCE public.comentario_apoyos_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6177 (class 0 OID 0)
+-- TOC entry 6186 (class 0 OID 0)
 -- Dependencies: 243
 -- Name: comentario_apoyos_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -251,7 +253,7 @@ CREATE SEQUENCE public.comentario_reportes_id_seq
 ALTER SEQUENCE public.comentario_reportes_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6178 (class 0 OID 0)
+-- TOC entry 6187 (class 0 OID 0)
 -- Dependencies: 235
 -- Name: comentario_reportes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -292,7 +294,7 @@ CREATE SEQUENCE public.comentarios_id_seq
 ALTER SEQUENCE public.comentarios_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6179 (class 0 OID 0)
+-- TOC entry 6188 (class 0 OID 0)
 -- Dependencies: 233
 -- Name: comentarios_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -333,7 +335,7 @@ CREATE SEQUENCE public.insignias_id_seq
 ALTER SEQUENCE public.insignias_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6180 (class 0 OID 0)
+-- TOC entry 6189 (class 0 OID 0)
 -- Dependencies: 230
 -- Name: insignias_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -372,7 +374,7 @@ CREATE SEQUENCE public.lider_zonas_asignadas_id_seq
 ALTER SEQUENCE public.lider_zonas_asignadas_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6181 (class 0 OID 0)
+-- TOC entry 6190 (class 0 OID 0)
 -- Dependencies: 270
 -- Name: lider_zonas_asignadas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -415,7 +417,7 @@ CREATE SEQUENCE public.metodos_pago_id_seq
 ALTER SEQUENCE public.metodos_pago_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6182 (class 0 OID 0)
+-- TOC entry 6191 (class 0 OID 0)
 -- Dependencies: 260
 -- Name: metodos_pago_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -460,7 +462,7 @@ CREATE SEQUENCE public.moderation_log_id_seq
 ALTER SEQUENCE public.moderation_log_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6183 (class 0 OID 0)
+-- TOC entry 6192 (class 0 OID 0)
 -- Dependencies: 256
 -- Name: moderation_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -480,7 +482,10 @@ CREATE TABLE public.notificaciones (
     cuerpo text,
     leido boolean DEFAULT false,
     fecha_envio timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    payload jsonb
+    payload jsonb,
+    archivado boolean DEFAULT false,
+    categoria character varying(50) DEFAULT 'Sistema'::character varying,
+    remitente_info jsonb DEFAULT '{}'::jsonb
 );
 
 
@@ -503,7 +508,7 @@ CREATE SEQUENCE public.notificaciones_id_seq
 ALTER SEQUENCE public.notificaciones_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6184 (class 0 OID 0)
+-- TOC entry 6193 (class 0 OID 0)
 -- Dependencies: 251
 -- Name: notificaciones_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -542,7 +547,7 @@ CREATE SEQUENCE public.pgmigrations_id_seq
 ALTER SEQUENCE public.pgmigrations_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6185 (class 0 OID 0)
+-- TOC entry 6194 (class 0 OID 0)
 -- Dependencies: 241
 -- Name: pgmigrations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -584,7 +589,7 @@ CREATE SEQUENCE public.planes_suscripcion_id_seq
 ALTER SEQUENCE public.planes_suscripcion_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6186 (class 0 OID 0)
+-- TOC entry 6195 (class 0 OID 0)
 -- Dependencies: 258
 -- Name: planes_suscripcion_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -629,7 +634,7 @@ CREATE TABLE public.reportes (
 ALTER TABLE public.reportes OWNER TO postgres;
 
 --
--- TOC entry 6187 (class 0 OID 0)
+-- TOC entry 6196 (class 0 OID 0)
 -- Dependencies: 228
 -- Name: COLUMN reportes.reportes_vinculados_count; Type: COMMENT; Schema: public; Owner: postgres
 --
@@ -654,7 +659,7 @@ CREATE SEQUENCE public.reportes_id_seq
 ALTER SEQUENCE public.reportes_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6188 (class 0 OID 0)
+-- TOC entry 6197 (class 0 OID 0)
 -- Dependencies: 227
 -- Name: reportes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -701,7 +706,8 @@ CREATE TABLE public.simulated_sms_log (
     contacto_nombre character varying(100),
     contacto_telefono character varying(20),
     mensaje text NOT NULL,
-    fecha_envio timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    fecha_envio timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    ubicacion_url text
 );
 
 
@@ -724,7 +730,7 @@ CREATE SEQUENCE public.simulated_sms_log_id_seq
 ALTER SEQUENCE public.simulated_sms_log_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6189 (class 0 OID 0)
+-- TOC entry 6198 (class 0 OID 0)
 -- Dependencies: 249
 -- Name: simulated_sms_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -766,7 +772,7 @@ CREATE SEQUENCE public.solicitudes_revision_id_seq
 ALTER SEQUENCE public.solicitudes_revision_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6190 (class 0 OID 0)
+-- TOC entry 6199 (class 0 OID 0)
 -- Dependencies: 239
 -- Name: solicitudes_revision_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -809,7 +815,7 @@ CREATE SEQUENCE public.solicitudes_rol_id_seq
 ALTER SEQUENCE public.solicitudes_rol_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6191 (class 0 OID 0)
+-- TOC entry 6200 (class 0 OID 0)
 -- Dependencies: 265
 -- Name: solicitudes_rol_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -856,7 +862,7 @@ CREATE SEQUENCE public.sos_alerts_id_seq
 ALTER SEQUENCE public.sos_alerts_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6192 (class 0 OID 0)
+-- TOC entry 6201 (class 0 OID 0)
 -- Dependencies: 245
 -- Name: sos_alerts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -896,7 +902,7 @@ CREATE SEQUENCE public.sos_location_updates_id_seq
 ALTER SEQUENCE public.sos_location_updates_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6193 (class 0 OID 0)
+-- TOC entry 6202 (class 0 OID 0)
 -- Dependencies: 247
 -- Name: sos_location_updates_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -971,7 +977,7 @@ CREATE SEQUENCE public.usuario_reportes_id_seq
 ALTER SEQUENCE public.usuario_reportes_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6194 (class 0 OID 0)
+-- TOC entry 6203 (class 0 OID 0)
 -- Dependencies: 237
 -- Name: usuario_reportes_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -1019,7 +1025,7 @@ CREATE SEQUENCE public.usuarios_id_seq
 ALTER SEQUENCE public.usuarios_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6195 (class 0 OID 0)
+-- TOC entry 6204 (class 0 OID 0)
 -- Dependencies: 223
 -- Name: usuarios_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -1061,7 +1067,7 @@ CREATE SEQUENCE public.zonas_seguras_id_seq
 ALTER SEQUENCE public.zonas_seguras_id_seq OWNER TO postgres;
 
 --
--- TOC entry 6196 (class 0 OID 0)
+-- TOC entry 6205 (class 0 OID 0)
 -- Dependencies: 267
 -- Name: zonas_seguras_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -1086,7 +1092,7 @@ ALTER TABLE ONLY public.categorias ALTER COLUMN orden SET DEFAULT nextval('publi
 
 
 --
--- TOC entry 5823 (class 2604 OID 31853)
+-- TOC entry 5826 (class 2604 OID 31853)
 -- Name: chat_messages id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1126,7 +1132,7 @@ ALTER TABLE ONLY public.insignias ALTER COLUMN id SET DEFAULT nextval('public.in
 
 
 --
--- TOC entry 5841 (class 2604 OID 32119)
+-- TOC entry 5846 (class 2604 OID 32119)
 -- Name: lider_zonas_asignadas id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1134,7 +1140,7 @@ ALTER TABLE ONLY public.lider_zonas_asignadas ALTER COLUMN id SET DEFAULT nextva
 
 
 --
--- TOC entry 5829 (class 2604 OID 31910)
+-- TOC entry 5834 (class 2604 OID 31910)
 -- Name: metodos_pago id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1142,7 +1148,7 @@ ALTER TABLE ONLY public.metodos_pago ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
--- TOC entry 5825 (class 2604 OID 31883)
+-- TOC entry 5830 (class 2604 OID 31883)
 -- Name: moderation_log id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1166,7 +1172,7 @@ ALTER TABLE ONLY public.pgmigrations ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
--- TOC entry 5827 (class 2604 OID 31898)
+-- TOC entry 5832 (class 2604 OID 31898)
 -- Name: planes_suscripcion id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1198,7 +1204,7 @@ ALTER TABLE ONLY public.solicitudes_revision ALTER COLUMN id SET DEFAULT nextval
 
 
 --
--- TOC entry 5835 (class 2604 OID 32052)
+-- TOC entry 5840 (class 2604 OID 32052)
 -- Name: solicitudes_rol id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1238,7 +1244,7 @@ ALTER TABLE ONLY public.usuarios ALTER COLUMN id SET DEFAULT nextval('public.usu
 
 
 --
--- TOC entry 5838 (class 2604 OID 32069)
+-- TOC entry 5843 (class 2604 OID 32069)
 -- Name: zonas_seguras id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1246,7 +1252,7 @@ ALTER TABLE ONLY public.zonas_seguras ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
--- TOC entry 5916 (class 2606 OID 32032)
+-- TOC entry 5925 (class 2606 OID 32032)
 -- Name: apoyos_pendientes apoyos_pendientes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1255,7 +1261,7 @@ ALTER TABLE ONLY public.apoyos_pendientes
 
 
 --
--- TOC entry 5867 (class 2606 OID 21813)
+-- TOC entry 5872 (class 2606 OID 21813)
 -- Name: apoyos apoyos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1264,7 +1270,7 @@ ALTER TABLE ONLY public.apoyos
 
 
 --
--- TOC entry 5857 (class 2606 OID 21614)
+-- TOC entry 5862 (class 2606 OID 21614)
 -- Name: categorias categorias_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1273,7 +1279,7 @@ ALTER TABLE ONLY public.categorias
 
 
 --
--- TOC entry 5859 (class 2606 OID 21612)
+-- TOC entry 5864 (class 2606 OID 21612)
 -- Name: categorias categorias_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1282,7 +1288,7 @@ ALTER TABLE ONLY public.categorias
 
 
 --
--- TOC entry 5900 (class 2606 OID 31858)
+-- TOC entry 5907 (class 2606 OID 31858)
 -- Name: chat_messages chat_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1291,7 +1297,7 @@ ALTER TABLE ONLY public.chat_messages
 
 
 --
--- TOC entry 5885 (class 2606 OID 21967)
+-- TOC entry 5890 (class 2606 OID 21967)
 -- Name: comentario_apoyos comentario_apoyos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1300,7 +1306,7 @@ ALTER TABLE ONLY public.comentario_apoyos
 
 
 --
--- TOC entry 5887 (class 2606 OID 21979)
+-- TOC entry 5892 (class 2606 OID 21979)
 -- Name: comentario_apoyos comentario_apoyos_unique_user_comment; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1309,7 +1315,7 @@ ALTER TABLE ONLY public.comentario_apoyos
 
 
 --
--- TOC entry 5877 (class 2606 OID 21895)
+-- TOC entry 5882 (class 2606 OID 21895)
 -- Name: comentario_reportes comentario_reportes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1318,7 +1324,7 @@ ALTER TABLE ONLY public.comentario_reportes
 
 
 --
--- TOC entry 5875 (class 2606 OID 21860)
+-- TOC entry 5880 (class 2606 OID 21860)
 -- Name: comentarios comentarios_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1327,7 +1333,7 @@ ALTER TABLE ONLY public.comentarios
 
 
 --
--- TOC entry 5869 (class 2606 OID 21834)
+-- TOC entry 5874 (class 2606 OID 21834)
 -- Name: insignias insignias_nombre_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1336,7 +1342,7 @@ ALTER TABLE ONLY public.insignias
 
 
 --
--- TOC entry 5871 (class 2606 OID 21832)
+-- TOC entry 5876 (class 2606 OID 21832)
 -- Name: insignias insignias_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1345,7 +1351,7 @@ ALTER TABLE ONLY public.insignias
 
 
 --
--- TOC entry 5927 (class 2606 OID 32123)
+-- TOC entry 5936 (class 2606 OID 32123)
 -- Name: lider_zonas_asignadas lider_zonas_asignadas_id_usuario_nombre_distrito_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1354,7 +1360,7 @@ ALTER TABLE ONLY public.lider_zonas_asignadas
 
 
 --
--- TOC entry 5929 (class 2606 OID 32121)
+-- TOC entry 5938 (class 2606 OID 32121)
 -- Name: lider_zonas_asignadas lider_zonas_asignadas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1363,7 +1369,7 @@ ALTER TABLE ONLY public.lider_zonas_asignadas
 
 
 --
--- TOC entry 5908 (class 2606 OID 31914)
+-- TOC entry 5917 (class 2606 OID 31914)
 -- Name: metodos_pago metodos_pago_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1372,7 +1378,7 @@ ALTER TABLE ONLY public.metodos_pago
 
 
 --
--- TOC entry 5902 (class 2606 OID 31888)
+-- TOC entry 5911 (class 2606 OID 31888)
 -- Name: moderation_log moderation_log_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1381,7 +1387,7 @@ ALTER TABLE ONLY public.moderation_log
 
 
 --
--- TOC entry 5898 (class 2606 OID 31829)
+-- TOC entry 5905 (class 2606 OID 31829)
 -- Name: notificaciones notificaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1390,7 +1396,7 @@ ALTER TABLE ONLY public.notificaciones
 
 
 --
--- TOC entry 5883 (class 2606 OID 21958)
+-- TOC entry 5888 (class 2606 OID 21958)
 -- Name: pgmigrations pgmigrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1399,7 +1405,7 @@ ALTER TABLE ONLY public.pgmigrations
 
 
 --
--- TOC entry 5904 (class 2606 OID 31905)
+-- TOC entry 5913 (class 2606 OID 31905)
 -- Name: planes_suscripcion planes_suscripcion_identificador_plan_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1408,7 +1414,7 @@ ALTER TABLE ONLY public.planes_suscripcion
 
 
 --
--- TOC entry 5906 (class 2606 OID 31903)
+-- TOC entry 5915 (class 2606 OID 31903)
 -- Name: planes_suscripcion planes_suscripcion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1417,7 +1423,7 @@ ALTER TABLE ONLY public.planes_suscripcion
 
 
 --
--- TOC entry 5863 (class 2606 OID 31836)
+-- TOC entry 5868 (class 2606 OID 31836)
 -- Name: reportes reportes_codigo_reporte_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1426,7 +1432,7 @@ ALTER TABLE ONLY public.reportes
 
 
 --
--- TOC entry 5865 (class 2606 OID 21626)
+-- TOC entry 5870 (class 2606 OID 21626)
 -- Name: reportes reportes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1435,7 +1441,7 @@ ALTER TABLE ONLY public.reportes
 
 
 --
--- TOC entry 5914 (class 2606 OID 31950)
+-- TOC entry 5923 (class 2606 OID 31950)
 -- Name: reportes_prioritarios reportes_prioritarios_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1444,7 +1450,7 @@ ALTER TABLE ONLY public.reportes_prioritarios
 
 
 --
--- TOC entry 5924 (class 2606 OID 32086)
+-- TOC entry 5933 (class 2606 OID 32086)
 -- Name: reportes_seguidos reportes_seguidos_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1453,7 +1459,7 @@ ALTER TABLE ONLY public.reportes_seguidos
 
 
 --
--- TOC entry 5896 (class 2606 OID 31813)
+-- TOC entry 5901 (class 2606 OID 31813)
 -- Name: simulated_sms_log simulated_sms_log_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1462,7 +1468,7 @@ ALTER TABLE ONLY public.simulated_sms_log
 
 
 --
--- TOC entry 5881 (class 2606 OID 21937)
+-- TOC entry 5886 (class 2606 OID 21937)
 -- Name: solicitudes_revision solicitudes_revision_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1471,7 +1477,7 @@ ALTER TABLE ONLY public.solicitudes_revision
 
 
 --
--- TOC entry 5918 (class 2606 OID 32058)
+-- TOC entry 5927 (class 2606 OID 32058)
 -- Name: solicitudes_rol solicitudes_rol_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1480,7 +1486,7 @@ ALTER TABLE ONLY public.solicitudes_rol
 
 
 --
--- TOC entry 5889 (class 2606 OID 31842)
+-- TOC entry 5894 (class 2606 OID 31842)
 -- Name: sos_alerts sos_alerts_codigo_alerta_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1489,7 +1495,7 @@ ALTER TABLE ONLY public.sos_alerts
 
 
 --
--- TOC entry 5891 (class 2606 OID 23391)
+-- TOC entry 5896 (class 2606 OID 23391)
 -- Name: sos_alerts sos_alerts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1498,7 +1504,7 @@ ALTER TABLE ONLY public.sos_alerts
 
 
 --
--- TOC entry 5894 (class 2606 OID 23406)
+-- TOC entry 5899 (class 2606 OID 23406)
 -- Name: sos_location_updates sos_location_updates_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1507,7 +1513,7 @@ ALTER TABLE ONLY public.sos_location_updates
 
 
 --
--- TOC entry 5910 (class 2606 OID 31928)
+-- TOC entry 5919 (class 2606 OID 31928)
 -- Name: transacciones_pago transacciones_pago_id_transaccion_pasarela_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1516,7 +1522,7 @@ ALTER TABLE ONLY public.transacciones_pago
 
 
 --
--- TOC entry 5912 (class 2606 OID 31926)
+-- TOC entry 5921 (class 2606 OID 31926)
 -- Name: transacciones_pago transacciones_pago_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1525,7 +1531,7 @@ ALTER TABLE ONLY public.transacciones_pago
 
 
 --
--- TOC entry 5873 (class 2606 OID 21840)
+-- TOC entry 5878 (class 2606 OID 21840)
 -- Name: usuario_insignias usuario_insignias_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1534,7 +1540,7 @@ ALTER TABLE ONLY public.usuario_insignias
 
 
 --
--- TOC entry 5879 (class 2606 OID 21916)
+-- TOC entry 5884 (class 2606 OID 21916)
 -- Name: usuario_reportes usuario_reportes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1543,7 +1549,7 @@ ALTER TABLE ONLY public.usuario_reportes
 
 
 --
--- TOC entry 5847 (class 2606 OID 21603)
+-- TOC entry 5852 (class 2606 OID 21603)
 -- Name: usuarios usuarios_alias_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1552,7 +1558,7 @@ ALTER TABLE ONLY public.usuarios
 
 
 --
--- TOC entry 5849 (class 2606 OID 21949)
+-- TOC entry 5854 (class 2606 OID 21949)
 -- Name: usuarios usuarios_alias_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1561,7 +1567,7 @@ ALTER TABLE ONLY public.usuarios
 
 
 --
--- TOC entry 5851 (class 2606 OID 21605)
+-- TOC entry 5856 (class 2606 OID 21605)
 -- Name: usuarios usuarios_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1570,7 +1576,7 @@ ALTER TABLE ONLY public.usuarios
 
 
 --
--- TOC entry 5853 (class 2606 OID 21951)
+-- TOC entry 5858 (class 2606 OID 21951)
 -- Name: usuarios usuarios_email_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1579,7 +1585,7 @@ ALTER TABLE ONLY public.usuarios
 
 
 --
--- TOC entry 5855 (class 2606 OID 21601)
+-- TOC entry 5860 (class 2606 OID 21601)
 -- Name: usuarios usuarios_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1588,7 +1594,7 @@ ALTER TABLE ONLY public.usuarios
 
 
 --
--- TOC entry 5922 (class 2606 OID 32074)
+-- TOC entry 5931 (class 2606 OID 32074)
 -- Name: zonas_seguras zonas_seguras_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1597,7 +1603,23 @@ ALTER TABLE ONLY public.zonas_seguras
 
 
 --
--- TOC entry 5925 (class 1259 OID 32129)
+-- TOC entry 5908 (class 1259 OID 32154)
+-- Name: idx_chat_leido; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_chat_leido ON public.chat_messages USING btree (leido);
+
+
+--
+-- TOC entry 5909 (class 1259 OID 32155)
+-- Name: idx_chat_reporte; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_chat_reporte ON public.chat_messages USING btree (id_reporte);
+
+
+--
+-- TOC entry 5934 (class 1259 OID 32129)
 -- Name: idx_lider_zonas_usuario; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1605,7 +1627,23 @@ CREATE INDEX idx_lider_zonas_usuario ON public.lider_zonas_asignadas USING btree
 
 
 --
--- TOC entry 5860 (class 1259 OID 32130)
+-- TOC entry 5902 (class 1259 OID 32152)
+-- Name: idx_notif_leido; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_notif_leido ON public.notificaciones USING btree (leido);
+
+
+--
+-- TOC entry 5903 (class 1259 OID 32151)
+-- Name: idx_notif_usuario_archivado; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_notif_usuario_archivado ON public.notificaciones USING btree (id_usuario_receptor, archivado);
+
+
+--
+-- TOC entry 5865 (class 1259 OID 32130)
 -- Name: idx_reportes_distrito; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1613,7 +1651,7 @@ CREATE INDEX idx_reportes_distrito ON public.reportes USING btree (distrito);
 
 
 --
--- TOC entry 5861 (class 1259 OID 21637)
+-- TOC entry 5866 (class 1259 OID 21637)
 -- Name: idx_reportes_location; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1621,7 +1659,7 @@ CREATE INDEX idx_reportes_location ON public.reportes USING gist (location);
 
 
 --
--- TOC entry 5892 (class 1259 OID 23412)
+-- TOC entry 5897 (class 1259 OID 23412)
 -- Name: idx_sos_location_updates_location; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1629,7 +1667,7 @@ CREATE INDEX idx_sos_location_updates_location ON public.sos_location_updates US
 
 
 --
--- TOC entry 5920 (class 1259 OID 32080)
+-- TOC entry 5929 (class 1259 OID 32080)
 -- Name: idx_zonas_seguras_centro; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1637,7 +1675,7 @@ CREATE INDEX idx_zonas_seguras_centro ON public.zonas_seguras USING gist (centro
 
 
 --
--- TOC entry 5919 (class 1259 OID 32064)
+-- TOC entry 5928 (class 1259 OID 32064)
 -- Name: uq_usuario_solicitud_pendiente; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1645,7 +1683,7 @@ CREATE UNIQUE INDEX uq_usuario_solicitud_pendiente ON public.solicitudes_rol USI
 
 
 --
--- TOC entry 5935 (class 2606 OID 21814)
+-- TOC entry 5944 (class 2606 OID 21814)
 -- Name: apoyos apoyos_id_reporte_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1654,7 +1692,7 @@ ALTER TABLE ONLY public.apoyos
 
 
 --
--- TOC entry 5936 (class 2606 OID 21819)
+-- TOC entry 5945 (class 2606 OID 21819)
 -- Name: apoyos apoyos_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1663,7 +1701,7 @@ ALTER TABLE ONLY public.apoyos
 
 
 --
--- TOC entry 5962 (class 2606 OID 32033)
+-- TOC entry 5971 (class 2606 OID 32033)
 -- Name: apoyos_pendientes apoyos_pendientes_id_reporte_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1672,7 +1710,7 @@ ALTER TABLE ONLY public.apoyos_pendientes
 
 
 --
--- TOC entry 5963 (class 2606 OID 32038)
+-- TOC entry 5972 (class 2606 OID 32038)
 -- Name: apoyos_pendientes apoyos_pendientes_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1681,7 +1719,7 @@ ALTER TABLE ONLY public.apoyos_pendientes
 
 
 --
--- TOC entry 5953 (class 2606 OID 31864)
+-- TOC entry 5962 (class 2606 OID 31864)
 -- Name: chat_messages chat_messages_id_remitente_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1690,7 +1728,7 @@ ALTER TABLE ONLY public.chat_messages
 
 
 --
--- TOC entry 5954 (class 2606 OID 31859)
+-- TOC entry 5963 (class 2606 OID 31859)
 -- Name: chat_messages chat_messages_id_reporte_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1699,7 +1737,7 @@ ALTER TABLE ONLY public.chat_messages
 
 
 --
--- TOC entry 5947 (class 2606 OID 21968)
+-- TOC entry 5956 (class 2606 OID 21968)
 -- Name: comentario_apoyos comentario_apoyos_id_comentario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1708,7 +1746,7 @@ ALTER TABLE ONLY public.comentario_apoyos
 
 
 --
--- TOC entry 5948 (class 2606 OID 21973)
+-- TOC entry 5957 (class 2606 OID 21973)
 -- Name: comentario_apoyos comentario_apoyos_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1717,7 +1755,7 @@ ALTER TABLE ONLY public.comentario_apoyos
 
 
 --
--- TOC entry 5941 (class 2606 OID 21896)
+-- TOC entry 5950 (class 2606 OID 21896)
 -- Name: comentario_reportes comentario_reportes_id_comentario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1726,7 +1764,7 @@ ALTER TABLE ONLY public.comentario_reportes
 
 
 --
--- TOC entry 5942 (class 2606 OID 21901)
+-- TOC entry 5951 (class 2606 OID 21901)
 -- Name: comentario_reportes comentario_reportes_id_reportador_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1735,7 +1773,7 @@ ALTER TABLE ONLY public.comentario_reportes
 
 
 --
--- TOC entry 5939 (class 2606 OID 21861)
+-- TOC entry 5948 (class 2606 OID 21861)
 -- Name: comentarios comentarios_id_reporte_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1744,7 +1782,7 @@ ALTER TABLE ONLY public.comentarios
 
 
 --
--- TOC entry 5940 (class 2606 OID 21866)
+-- TOC entry 5949 (class 2606 OID 21866)
 -- Name: comentarios comentarios_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1753,7 +1791,7 @@ ALTER TABLE ONLY public.comentarios
 
 
 --
--- TOC entry 5930 (class 2606 OID 32043)
+-- TOC entry 5939 (class 2606 OID 32043)
 -- Name: usuarios fk_plan_suscripcion; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1762,7 +1800,7 @@ ALTER TABLE ONLY public.usuarios
 
 
 --
--- TOC entry 5968 (class 2606 OID 32124)
+-- TOC entry 5977 (class 2606 OID 32124)
 -- Name: lider_zonas_asignadas lider_zonas_asignadas_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1771,7 +1809,7 @@ ALTER TABLE ONLY public.lider_zonas_asignadas
 
 
 --
--- TOC entry 5956 (class 2606 OID 31915)
+-- TOC entry 5965 (class 2606 OID 31915)
 -- Name: metodos_pago metodos_pago_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1780,7 +1818,7 @@ ALTER TABLE ONLY public.metodos_pago
 
 
 --
--- TOC entry 5955 (class 2606 OID 31889)
+-- TOC entry 5964 (class 2606 OID 31889)
 -- Name: moderation_log moderation_log_id_admin_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1789,7 +1827,7 @@ ALTER TABLE ONLY public.moderation_log
 
 
 --
--- TOC entry 5952 (class 2606 OID 31830)
+-- TOC entry 5961 (class 2606 OID 31830)
 -- Name: notificaciones notificaciones_id_usuario_receptor_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1798,7 +1836,7 @@ ALTER TABLE ONLY public.notificaciones
 
 
 --
--- TOC entry 5931 (class 2606 OID 21632)
+-- TOC entry 5940 (class 2606 OID 21632)
 -- Name: reportes reportes_id_categoria_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1807,7 +1845,7 @@ ALTER TABLE ONLY public.reportes
 
 
 --
--- TOC entry 5932 (class 2606 OID 31844)
+-- TOC entry 5941 (class 2606 OID 31844)
 -- Name: reportes reportes_id_lider_verificador_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1816,7 +1854,7 @@ ALTER TABLE ONLY public.reportes
 
 
 --
--- TOC entry 5933 (class 2606 OID 32109)
+-- TOC entry 5942 (class 2606 OID 32109)
 -- Name: reportes reportes_id_reporte_original_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1825,7 +1863,7 @@ ALTER TABLE ONLY public.reportes
 
 
 --
--- TOC entry 5934 (class 2606 OID 21627)
+-- TOC entry 5943 (class 2606 OID 21627)
 -- Name: reportes reportes_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1834,7 +1872,7 @@ ALTER TABLE ONLY public.reportes
 
 
 --
--- TOC entry 5960 (class 2606 OID 31951)
+-- TOC entry 5969 (class 2606 OID 31951)
 -- Name: reportes_prioritarios reportes_prioritarios_id_reporte_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1843,7 +1881,7 @@ ALTER TABLE ONLY public.reportes_prioritarios
 
 
 --
--- TOC entry 5961 (class 2606 OID 31956)
+-- TOC entry 5970 (class 2606 OID 31956)
 -- Name: reportes_prioritarios reportes_prioritarios_id_usuario_premium_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1852,7 +1890,7 @@ ALTER TABLE ONLY public.reportes_prioritarios
 
 
 --
--- TOC entry 5966 (class 2606 OID 32092)
+-- TOC entry 5975 (class 2606 OID 32092)
 -- Name: reportes_seguidos reportes_seguidos_id_reporte_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1861,7 +1899,7 @@ ALTER TABLE ONLY public.reportes_seguidos
 
 
 --
--- TOC entry 5967 (class 2606 OID 32087)
+-- TOC entry 5976 (class 2606 OID 32087)
 -- Name: reportes_seguidos reportes_seguidos_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1870,7 +1908,7 @@ ALTER TABLE ONLY public.reportes_seguidos
 
 
 --
--- TOC entry 5951 (class 2606 OID 31814)
+-- TOC entry 5960 (class 2606 OID 31814)
 -- Name: simulated_sms_log simulated_sms_log_id_usuario_sos_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1879,7 +1917,7 @@ ALTER TABLE ONLY public.simulated_sms_log
 
 
 --
--- TOC entry 5945 (class 2606 OID 21943)
+-- TOC entry 5954 (class 2606 OID 21943)
 -- Name: solicitudes_revision solicitudes_revision_id_lider_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1888,7 +1926,7 @@ ALTER TABLE ONLY public.solicitudes_revision
 
 
 --
--- TOC entry 5946 (class 2606 OID 21938)
+-- TOC entry 5955 (class 2606 OID 21938)
 -- Name: solicitudes_revision solicitudes_revision_id_reporte_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1897,7 +1935,7 @@ ALTER TABLE ONLY public.solicitudes_revision
 
 
 --
--- TOC entry 5964 (class 2606 OID 32059)
+-- TOC entry 5973 (class 2606 OID 32059)
 -- Name: solicitudes_rol solicitudes_rol_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1906,7 +1944,7 @@ ALTER TABLE ONLY public.solicitudes_rol
 
 
 --
--- TOC entry 5949 (class 2606 OID 23392)
+-- TOC entry 5958 (class 2606 OID 23392)
 -- Name: sos_alerts sos_alerts_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1915,7 +1953,7 @@ ALTER TABLE ONLY public.sos_alerts
 
 
 --
--- TOC entry 5950 (class 2606 OID 23407)
+-- TOC entry 5959 (class 2606 OID 32157)
 -- Name: sos_location_updates sos_location_updates_id_alerta_sos_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1924,7 +1962,7 @@ ALTER TABLE ONLY public.sos_location_updates
 
 
 --
--- TOC entry 5957 (class 2606 OID 32134)
+-- TOC entry 5966 (class 2606 OID 32134)
 -- Name: transacciones_pago transacciones_pago_id_metodo_pago_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1933,7 +1971,7 @@ ALTER TABLE ONLY public.transacciones_pago
 
 
 --
--- TOC entry 5958 (class 2606 OID 31934)
+-- TOC entry 5967 (class 2606 OID 31934)
 -- Name: transacciones_pago transacciones_pago_id_plan_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1942,7 +1980,7 @@ ALTER TABLE ONLY public.transacciones_pago
 
 
 --
--- TOC entry 5959 (class 2606 OID 31929)
+-- TOC entry 5968 (class 2606 OID 31929)
 -- Name: transacciones_pago transacciones_pago_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1951,7 +1989,7 @@ ALTER TABLE ONLY public.transacciones_pago
 
 
 --
--- TOC entry 5937 (class 2606 OID 21846)
+-- TOC entry 5946 (class 2606 OID 21846)
 -- Name: usuario_insignias usuario_insignias_id_insignia_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1960,7 +1998,7 @@ ALTER TABLE ONLY public.usuario_insignias
 
 
 --
--- TOC entry 5938 (class 2606 OID 21841)
+-- TOC entry 5947 (class 2606 OID 21841)
 -- Name: usuario_insignias usuario_insignias_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1969,7 +2007,7 @@ ALTER TABLE ONLY public.usuario_insignias
 
 
 --
--- TOC entry 5943 (class 2606 OID 21922)
+-- TOC entry 5952 (class 2606 OID 21922)
 -- Name: usuario_reportes usuario_reportes_id_reportador_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1978,7 +2016,7 @@ ALTER TABLE ONLY public.usuario_reportes
 
 
 --
--- TOC entry 5944 (class 2606 OID 21917)
+-- TOC entry 5953 (class 2606 OID 21917)
 -- Name: usuario_reportes usuario_reportes_id_usuario_reportado_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1987,7 +2025,7 @@ ALTER TABLE ONLY public.usuario_reportes
 
 
 --
--- TOC entry 5965 (class 2606 OID 32075)
+-- TOC entry 5974 (class 2606 OID 32075)
 -- Name: zonas_seguras zonas_seguras_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1995,11 +2033,11 @@ ALTER TABLE ONLY public.zonas_seguras
     ADD CONSTRAINT zonas_seguras_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES public.usuarios(id) ON DELETE CASCADE;
 
 
--- Completed on 2025-10-25 00:29:17
+-- Completed on 2025-12-04 06:06:37
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 3iKSPptcXnA4i5RCwRm9abSxxKkQX4ja8FjjgjjyEnmr28CRchA4ozp8kkwAMxV
+\unrestrict t3Ne8zI8yUs6Bfd9z41CaPKOFwYbzhHVYUwdBkQltN5FYJYdEkRyYEFgxMEHI1j
 

@@ -39,4 +39,6 @@ router.get('/:id/chat', reportesController.getChatHistory);
 // Permite al AUTOR editar su reporte SI está PENDIENTE
 router.put('/:id/author-edit', jsonParser, reportesController.editReportAuthor);
 
+router.put('/:id/chat/mark-read', reportesController.markChatAsReadUser);
+
 module.exports = router;

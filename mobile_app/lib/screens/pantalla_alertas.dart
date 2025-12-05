@@ -1,164 +1,196 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:mobile_app/api/perfil_service.dart';
 import 'package:mobile_app/models/notificacion_model.dart';
+import 'package:mobile_app/providers/notification_provider.dart';
+import 'package:mobile_app/screens/detalle_notificacion_screen.dart';
 import 'package:mobile_app/widgets/esqueletos/esqueleto_lista_notificaciones.dart';
+import 'package:mobile_app/widgets/notificaciones/notification_filter_bar.dart';
+import 'package:mobile_app/widgets/notificaciones/notification_tile.dart';
+import 'package:provider/provider.dart';
 
-/// {@template pantalla_alertas}
-/// Pantalla que muestra el historial de notificaciones del usuario.
-///
-/// Permite al usuario ver todas sus notificaciones y marcarlas todas como leídas.
-/// {@endtemplate}
 class PantallaAlertas extends StatefulWidget {
-  /// {@macro pantalla_alertas}
   const PantallaAlertas({super.key});
 
   @override
   State<PantallaAlertas> createState() => _PantallaAlertasState();
 }
 
-/// Estado para [PantallaAlertas].
 class _PantallaAlertasState extends State<PantallaAlertas> {
-  /// Futuro que contiene la lista de notificaciones.
-  late Future<List<Notificacion>> _notificationsFuture;
-  final PerfilService _perfilService = PerfilService();
-  
-  /// Flag para mostrar/ocultar el botón "Marcar todo como leído".
-  bool _hasUnread = false;
+  final Set<int> _selectedIds = {};
+  bool get _isSelectionMode => _selectedIds.isNotEmpty;
+  String _activeFilter = 'all'; 
 
   @override
   void initState() {
     super.initState();
-    _loadNotifications();
-  }
-
-  /// Carga o recarga la lista de notificaciones desde [PerfilService].
-  ///
-  /// También actualiza el estado [_hasUnread].
-  Future<void> _loadNotifications() async {
-    setState(() {
-      _notificationsFuture =
-          _perfilService.getMisNotificaciones().then((notifications) {
-        if (mounted) {
-          setState(() {
-            _hasUnread = notifications.any((n) => !n.leido);
-          });
-        }
-        return notifications;
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotificationProvider>().loadNotifications(refresh: true);
     });
   }
 
-  /// Llama a la API para marcar todas las notificaciones como leídas
-  /// y recarga la lista.
-  Future<void> _markAllAsRead() async {
-    final success = await _perfilService.marcarTodasComoLeidas();
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Todas las notificaciones marcadas como leídas.')),
-        );
-        _loadNotifications();
+  // ... (Métodos de selección _toggleSelection, _clearSelection, _selectAll IGUALES que antes) ...
+  void _toggleSelection(int id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Error al realizar la acción.'),
-              backgroundColor: Colors.red),
-        );
+        _selectedIds.add(id);
       }
+    });
+  }
+
+  void _clearSelection() {
+    setState(() => _selectedIds.clear());
+  }
+
+  void _selectAll(List<Notificacion> notificaciones) {
+    setState(() => _selectedIds.addAll(notificaciones.map((n) => n.id)));
+  }
+
+  // --- NUEVOS MÉTODOS CON DIÁLOGOS DE CONFIRMACIÓN ---
+
+  Future<void> _confirmarEliminarSeleccionados(NotificationProvider provider) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('¿Eliminar ${_selectedIds.length} notificaciones?'),
+        content: const Text('Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true), 
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red))
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await provider.deleteMultiple(_selectedIds.toList());
+      _clearSelection();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Eliminadas correctamente')));
+    }
+  }
+
+  Future<void> _confirmarMarcarTodoLeido(NotificationProvider provider) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Marcar todo como leído?'),
+        content: const Text('Todas las notificaciones visibles se marcarán como leídas.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirmar')),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await provider.markAllAsRead();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Todo marcado como leído')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<NotificationProvider>();
+    final notificaciones = provider.notificaciones;
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Alertas y Notificaciones'),
-        actions: [
-          if (_hasUnread)
-            Tooltip(
-              message: 'Marcar todo como leído',
-              child: IconButton(
-                icon: const Icon(Icons.mark_chat_read_outlined),
-                onPressed: _markAllAsRead,
-              ),
+      appBar: _isSelectionMode
+          ? AppBar(
+              backgroundColor: theme.colorScheme.primaryContainer,
+              leading: IconButton(icon: const Icon(Icons.close), onPressed: _clearSelection),
+              title: Text('${_selectedIds.length} seleccionadas'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.select_all),
+                  onPressed: () => _selectAll(notificaciones),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () => _confirmarEliminarSeleccionados(provider),
+                ),
+              ],
+            )
+          : AppBar(
+              title: const Text('Buzón de Alertas'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => provider.loadNotifications(refresh: true),
+                ),
+                // Menú de opciones
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'read_all') _confirmarMarcarTodoLeido(provider);
+                  },
+                  itemBuilder: (ctx) => [
+                    const PopupMenuItem(value: 'read_all', child: Text('Marcar todo como leído')),
+                  ],
+                )
+              ],
             ),
+      
+      body: Column(
+        children: [
+          if (!_isSelectionMode)
+            NotificationFilterBar(
+              currentFilter: _activeFilter,
+              onSearchChanged: (q) => provider.setFilters(search: q),
+              onFilterChanged: (f) {
+                setState(() { _activeFilter = f; _clearSelection(); });
+                provider.setFilters(filter: f);
+              },
+            ),
+
+          Expanded(
+            child: provider.isLoading && notificaciones.isEmpty
+                ? const EsqueletoListaNotificaciones()
+                : notificaciones.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        itemCount: notificaciones.length,
+                        itemBuilder: (context, index) {
+                          final notif = notificaciones[index];
+                          final isSelected = _selectedIds.contains(notif.id);
+
+                          return NotificationTile(
+                            notificacion: notif,
+                            isSelectionMode: _isSelectionMode,
+                            isSelected: isSelected,
+                            onTap: () {
+                              if (_isSelectionMode) {
+                                _toggleSelection(notif.id);
+                              } else {
+                                // Navegar y luego refrescar
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => DetalleNotificacionScreen(notificacion: notif),
+                                  ),
+                                ).then((_) => provider.loadNotifications()); // Refrescar al volver
+                              }
+                            },
+                            onLongPress: () => _toggleSelection(notif.id),
+                            // Swipe solo si no hay selección
+                            onDismissed: _isSelectionMode ? null : (direction) {
+                              if (direction == DismissDirection.startToEnd) {
+                                provider.archiveNotification(notif);
+                              } else {
+                                provider.deleteNotification(notif.id);
+                              }
+                            },
+                          );
+                        },
+                      ),
+          ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadNotifications,
-        child: FutureBuilder<List<Notificacion>>(
-          future: _notificationsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const EsqueletoListaNotificaciones();
-            }
-            if (snapshot.hasError) {
-              return Center(
-                  child:
-                      Text('Error al cargar notificaciones: ${snapshot.error}'));
-            }
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.0),
-                  child: Text(
-                    'No tienes notificaciones.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              );
-            }
-
-            final notifications = snapshot.data!;
-            return ListView.builder(
-              padding: const EdgeInsets.all(8.0),
-              itemCount: notifications.length,
-              itemBuilder: (context, index) {
-                final notif = notifications[index];
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
-                  color: notif.leido
-                      ? null
-                      : Theme.of(context).colorScheme.primaryContainer.withAlpha(77),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: notif.leido
-                          ? Colors.grey.shade300
-                          : Theme.of(context).colorScheme.primary,
-                      child: Icon(
-                        notif.leido
-                            ? Icons.notifications_off_outlined
-                            : Icons.notifications_active,
-                        color: notif.leido
-                            ? Colors.grey.shade700
-                            : Theme.of(context).colorScheme.onPrimary,
-                      ),
-                    ),
-                    title: Text(
-                      notif.titulo,
-                      style: TextStyle(
-                          fontWeight:
-                              notif.leido ? FontWeight.normal : FontWeight.bold),
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(notif.cuerpo),
-                    ),
-                    trailing: Text(
-                      DateFormat('dd MMM, HH:mm').format(notif.fechaEnvio),
-                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ),
     );
+  }
+
+  Widget _buildEmptyState() {
+      return const Center(child: Text("No tienes notificaciones.", style: TextStyle(color: Colors.grey)));
   }
 }

@@ -255,15 +255,28 @@ const rechazarReporte = async (req, res) => {
       reporteRechazado = result.rows[0];
       await client.query('COMMIT');
 
-      // Notificar fuera de TX
+      // Notificar al autor
       if (reporteRechazado.id_usuario) {
           const io = req.app.get('socketio');
           const title = `Reporte Rechazado: "${reporteRechazado.titulo}"`;
-          const body = 'Tu reporte ha sido revisado pero no pudo ser verificado.';
-          const payload = JSON.stringify({ type: 'my_reports' }); // O link a 'mi actividad'
+          const body = 'Tu reporte ha sido revisado pero no pudo ser verificado. Toca para ver detalles.';
+          
+          // --- CAMBIO: Payload directo al reporte ---
+          // Antes era 'my_reports', ahora es el ID específico
+          const payload = JSON.stringify({ type: 'report_detail', id: reporteRechazado.id });
+          const categoria = 'Sistema';
+
            try {
-              await db.query('INSERT INTO notificaciones (id_usuario_receptor, titulo, cuerpo, payload) VALUES ($1, $2, $3, $4)', [reporteRechazado.id_usuario, title, body, payload]);
-              socketNotificationService.sendNotification(io, reporteRechazado.id_usuario, { title, body, payload });
+              await db.query(
+                  'INSERT INTO notificaciones (id_usuario_receptor, titulo, cuerpo, payload, categoria) VALUES ($1, $2, $3, $4, $5)', 
+                  [reporteRechazado.id_usuario, title, body, payload, categoria]
+              );
+              socketNotificationService.sendNotification(io, reporteRechazado.id_usuario, { 
+                  title, 
+                  body, 
+                  payload,
+                  categoria 
+              });
            } catch (notifyError) { console.error(`Error al notificar rechazo:`, notifyError); }
       }
       res.status(200).json({ message: 'Reporte rechazado.' });

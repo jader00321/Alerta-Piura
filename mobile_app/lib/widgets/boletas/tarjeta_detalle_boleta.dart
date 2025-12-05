@@ -2,137 +2,126 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/models/boleta_detalle_model.dart';
 
 /// {@template tarjeta_detalle_boleta}
-/// Widget que renderiza una vista detallada (tipo boleta o factura)
-/// de una transacción de pago específica.
-///
-/// Utiliza el modelo [BoletaDetalle] para poblar los campos de forma
-/// estructurada, incluyendo información del cliente, servicio y pago.
-/// Se utiliza en [PantallaDetalleBoleta].
+/// Widget rediseñado que muestra el detalle de una transacción como un recibo digital.
+/// Incluye un sello visual de "PAGADO / APROBADO".
 /// {@endtemplate}
 class TarjetaDetalleBoleta extends StatelessWidget {
-  /// Los datos detallados de la boleta a mostrar.
   final BoletaDetalle boleta;
 
-  /// {@macro tarjeta_detalle_boleta}
   const TarjetaDetalleBoleta({super.key, required this.boleta});
-
-  /// Helper local para construir una fila de detalle estandarizada.
-  ///
-  /// Muestra un [title] a la izquierda y un [value] a la derecha.
-  /// [isBold] permite resaltar el valor (ej. para el total).
-  Widget _buildDetailRow(BuildContext context, String title, String value,
-      {bool isBold = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: Colors.grey[600])),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(fontWeight: isBold ? FontWeight.bold : FontWeight.normal),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    /// Determina el estilo del chip de estado.
-    final bool isApproved = boleta.estadoTransaccion == 'Aprobado';
 
     return Card(
+      margin: const EdgeInsets.all(16.0),
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            /// Cabecera de la Boleta: Título y Estado.
+            // --- Cabecera con Icono ---
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Boleta de Venta',
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                  softWrap: true,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.receipt_long, color: theme.colorScheme.primary, size: 28),
                 ),
-                const SizedBox(width: 4),
-                Chip(
-                  label: Text(boleta.estadoTransaccion),
-                  backgroundColor:
-                      isApproved ? Colors.green.shade100 : Colors.red.shade100,
-                  labelStyle: TextStyle(
-                      color: isApproved
-                          ? Colors.green.shade800
-                          : Colors.red.shade800,
-                      fontWeight: FontWeight.bold),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  visualDensity: VisualDensity.compact,
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Boleta de Venta',
+                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'ID: ${boleta.id.substring(0, 8).toUpperCase()}',
+                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                    ),
+                  ],
                 ),
               ],
             ),
-            Text(
-              'ID Transacción: ${boleta.idTransaccionPasarela}',
-              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
-            ),
-            const Divider(height: 30),
+            
+            const SizedBox(height: 16),
 
-            /// Detalles del Cliente.
-            Text('Facturado a:', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            _buildDetailRow(context, 'Cliente', boleta.nombreUsuario),
+            // --- SELLO DE APROBADO (NUEVO) ---
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle, size: 16, color: Colors.green.shade700),
+                    const SizedBox(width: 8),
+                    Text(
+                      "PAGO APROBADO",
+                      style: TextStyle(
+                        color: Colors.green.shade800,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const Divider(height: 40),
+
+            // --- Detalles del Cliente ---
+            _buildSectionTitle(context, 'Información del Cliente'),
+            _buildDetailRow(context, 'Titular', boleta.nombreUsuario),
             _buildDetailRow(context, 'Email', boleta.emailUsuario),
 
-            const Divider(height: 30),
+            const SizedBox(height: 20),
 
-            /// Detalles del Producto/Servicio.
-            Text('Descripción del Servicio:', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            _buildDetailRow(context, 'Plan Contratado', boleta.nombrePlan),
-            _buildDetailRow(
-                context, 'Fecha de Transacción', boleta.fechaCompleta),
+            // --- Detalles del Servicio ---
+            _buildSectionTitle(context, 'Detalle del Servicio'),
+            _buildDetailRow(context, 'Plan', boleta.nombrePlan),
+            _buildDetailRow(context, 'Fecha', boleta.fechaCompleta),
+            _buildDetailRow(context, 'Pasarela ID', boleta.idTransaccionPasarela, isMono: true),
 
-            const Divider(height: 30),
+            const SizedBox(height: 20),
 
-            /// Detalles del Pago.
-            Text('Método de Pago:', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            _buildDetailRow(context, 'Tarjeta',
-                '${boleta.tipoTarjeta} terminada en **** ${boleta.ultimosCuatroDigitos}'),
+            // --- Método de Pago ---
+            _buildSectionTitle(context, 'Método de Pago'),
+            Row(
+              children: [
+                Icon(Icons.credit_card, size: 20, color: Colors.grey[600]),
+                const SizedBox(width: 8),
+                Text(
+                  '${boleta.tipoTarjeta} •••• ${boleta.ultimosCuatroDigitos}',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
 
-            const Divider(height: 30),
+            const Divider(height: 40),
 
-            /// Total.
-            _buildDetailRow(context, 'Subtotal', 'S/ ${boleta.montoPagado}'),
-            _buildDetailRow(context, 'IGV (18%)', 'Incluido'),
-            const SizedBox(height: 8),
+            // --- Totales ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Total Pagado',
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Total Pagado', style: theme.textTheme.titleMedium?.copyWith(color: Colors.grey[700])),
                 Text(
                   'S/ ${boleta.montoPagado}',
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.primary,
                   ),
@@ -141,6 +130,45 @@ class TarjetaDetalleBoleta extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.secondary,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(BuildContext context, String label, String value, {bool isMono = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[600])),
+          const SizedBox(width: 16),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontFamily: isMono ? 'monospace' : null,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

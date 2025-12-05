@@ -56,6 +56,10 @@ class CapaMapaBase extends StatelessWidget {
         return Colors.brown.shade700;
       case 'basura':
         return Colors.grey.shade700;
+      case 'otro':
+        return Colors.blue.shade700;
+      case 'accidente':
+        return Colors.yellow.shade700;
       default:
         return Colors.purple.shade700; // Color por defecto para otras categorías
     }

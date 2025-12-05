@@ -64,6 +64,10 @@ const getLocationHistory = async (alertId) => {
   return response.data;
 };
 
+const deleteAlert = async (id) => {
+    return await axios.delete(`${API_URL_SOS}/${id}`, { headers: getAuthHeader() });
+};
+
 /**
  * Actualiza el estado (general, de atención o revisión) de una alerta SOS.
  * Llama al endpoint de SOS: `PUT /api/sos/:alertId/status`
@@ -92,6 +96,7 @@ const sosService = {
   getSosDashboardData,
   getLocationHistory,
   updateStatus,
+  deleteAlert,
 };
 
 export default sosService;

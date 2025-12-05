@@ -1,96 +1,61 @@
+// src/components/Usuarios/ModalAsignarZonas.jsx
 import React, { useState, useEffect } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, FormGroup,
+  Dialog, DialogContent, DialogActions, Button, FormGroup,
   FormControlLabel, Checkbox, CircularProgress, Alert, FormControl, FormLabel,
-  Typography, Box, Divider, DialogContentText, LinearProgress,
-  Grid,
-  Paper
+  Typography, Box, Paper, Slide, useTheme, alpha, IconButton, Grid, Avatar
 } from '@mui/material';
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import {
+  AssignmentTurnedIn as AssignmentIcon,
+  LocationOn as LocationIcon,
+  AdminPanelSettings as AdminIcon,
+  Close as CloseIcon,
+  Save as SaveIcon,
+  Map as MapIcon
+} from '@mui/icons-material';
 
-import adminService from '../../services/adminService'; // Asegúrate que la ruta sea correcta
+import adminService from '../../services/adminService';
 
-// Lista de distritos
+// Transición suave
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
+
 const DISTRITOS_PIURA = [
   'Piura', 'Castilla', 'Veintiséis de Octubre', 'Catacaos', 'Cura Mori',
   'El Tallán', 'La Arena', 'La Unión', 'Las Lomas', 'Tambo Grande',
 ];
 
-/**
- * Renderiza un modal (Dialog) para asignar zonas (distritos) a un Líder Vecinal.
- *
- * Al abrirse, este componente carga las zonas previamente asignadas al líder
- * usando `adminService.getZonasAsignadas`.
- *
- * Ofrece dos modos de asignación:
- * 1. "Asignar Todas las Zonas": Guarda un array con el comodín `['*']`.
- * 2. Selección Específica: Guarda un array con los nombres de los distritos
- * seleccionados (ej: `['Piura', 'Castilla']`).
- *
- * El estado de guardado (`isSaving`) y el de carga (`isLoadingZonas`) son
- * manejados para deshabilitar controles y mostrar indicadores de progreso.
- *
- * @param {object} props - Propiedades del componente.
- * @param {boolean} props.open - Controla si el modal está abierto.
- * @param {Function} props.onClose - Callback que se ejecuta al cerrar el modal (ej. clic en 'Cancelar' o fuera del modal).
- * @param {Function} props.onSave - Callback que se ejecuta al guardar. Recibe un array de strings con las
- * zonas seleccionadas (ej: `['Piura', 'Castilla']` o `['*']`).
- * **Nota:** Este componente *no* cierra el modal; el componente padre debe
- * manejar el cierre después de que la operación de guardado (asíncrona) termine.
- * @param {object | null} props.lider - El objeto del usuario (líder) al que se le están asignando zonas.
- * @param {string} [props.lider.id] - ID del líder, usado para cargar sus zonas.
- * @param {string} [props.lider.alias] - Alias del líder, para mostrar en el título.
- * @param {string} [props.lider.nombre] - Nombre del líder (fallback si no hay alias).
- * @param {boolean} props.isSaving - Indica si la operación de guardado (manejada por el padre)
- * está en progreso. Deshabilita botones y muestra un LinearProgress.
- * @returns {JSX.Element} El componente del modal de asignación de zonas.
- */
 function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
   const [selectedDistritos, setSelectedDistritos] = useState({});
   const [isTodasZonas, setIsTodasZonas] = useState(false);
   const [isLoadingZonas, setIsLoadingZonas] = useState(false);
   const [error, setError] = useState(null);
+  const theme = useTheme();
 
-  // Cargar zonas asignadas
   useEffect(() => {
-    // Solo cargar si el modal está abierto y hay un líder
     if (open && lider) {
       setIsLoadingZonas(true);
       setError(null);
-      
       adminService.getZonasAsignadas(lider.id)
         .then(zonas => {
-          // Si el líder tiene el comodín '*', marcar "Todas las Zonas"
           if (zonas.includes('*')) {
             setIsTodasZonas(true);
             setSelectedDistritos({});
           } else {
-            // Mapear el array de zonas a un objeto de estado
             const zonasMap = {};
             for (const distrito of zonas) {
-              if (DISTRITOS_PIURA.includes(distrito)) {
-                zonasMap[distrito] = true;
-              }
+              if (DISTRITOS_PIURA.includes(distrito)) zonasMap[distrito] = true;
             }
             setIsTodasZonas(false);
             setSelectedDistritos(zonasMap);
           }
         })
-        .catch(err => {
-          console.error("Error cargando zonas asignadas:", err);
-          setError("Error al cargar las zonas asignadas.");
-        })
-        .finally(() => {
-          setIsLoadingZonas(false);
-        });
+        .catch(() => setError("Error al cargar las zonas asignadas."))
+        .finally(() => setIsLoadingZonas(false));
     }
-  }, [open, lider]); // Dependencias: se recarga si cambia el líder o si se abre
+  }, [open, lider]);
 
-  /**
-   * Limpia el estado interno y llama al callback `onClose` del padre.
-   */
   const handleClose = () => {
     setSelectedDistritos({});
     setIsTodasZonas(false);
@@ -98,136 +63,116 @@ function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
     onClose();
   };
 
-  /**
-   * Manejador para los checkboxes de distritos individuales.
-   * Deshabilitado si "Todas las Zonas" está activo.
-   * @param {string} distrito - El nombre del distrito a marcar/desmarcar.
-   */
   const handleToggle = (distrito) => {
-    if (isTodasZonas) return; // No permitir selección individual si 'Todas' está activo
-    setSelectedDistritos(prev => ({
-      ...prev,
-      [distrito]: !prev[distrito],
-    }));
+    if (isTodasZonas) return;
+    setSelectedDistritos(prev => ({ ...prev, [distrito]: !prev[distrito] }));
   };
 
-  /**
-   * Manejador para el checkbox "Todas las Zonas".
-   * Si se marca, limpia las selecciones individuales.
-   * @param {React.ChangeEvent<HTMLInputElement>} e - Evento del checkbox.
-   */
   const handleToggleTodas = (e) => {
     const isChecked = e.target.checked;
     setIsTodasZonas(isChecked);
-    if (isChecked) {
-      setSelectedDistritos({}); // Limpiar selecciones específicas
-    }
+    if (isChecked) setSelectedDistritos({});
   };
 
-  /**
-   * Prepara los datos a guardar y llama al callback `onSave` del padre.
-   * Valida que se haya seleccionado al menos una opción.
-   */
   const handleSave = () => {
-    setError(null);
     const distritosArray = isTodasZonas 
-      ? ['*'] // Si 'Todas' está marcado, enviar el comodín
-      : Object.keys(selectedDistritos).filter(key => selectedDistritos[key]); // Filtrar solo los true
+      ? ['*'] 
+      : Object.keys(selectedDistritos).filter(key => selectedDistritos[key]);
         
-    // Validar que se haya seleccionado algo
     if (distritosArray.length === 0) {
-      setError('Debes seleccionar al menos una zona o marcar "Todas las Zonas".');
+      setError('Selecciona al menos una zona.');
       return;
     }
-    
-    // Llama al onSave del padre, pasando el array de zonas.
     onSave(distritosArray);
   };
 
-  // --- Helpers de Renderizado ---
-  const hasSpecificSelection = Object.values(selectedDistritos).some(val => val === true) && !isTodasZonas;
   const midPoint = Math.ceil(DISTRITOS_PIURA.length / 2);
   const column1 = DISTRITOS_PIURA.slice(0, midPoint);
   const column2 = DISTRITOS_PIURA.slice(midPoint);
 
   return (
-    <Dialog open={open} onClose={isSaving ? () => {} : handleClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <AssignmentTurnedInIcon />
-        Asignar Zonas a {lider?.alias || lider?.nombre}
-      </DialogTitle>
+    <Dialog 
+      open={open} 
+      onClose={isSaving ? undefined : handleClose} 
+      TransitionComponent={Transition}
+      fullWidth 
+      maxWidth="sm"
+      PaperProps={{
+        sx: { borderRadius: 3, overflow: 'hidden', boxShadow: theme.shadows[10] }
+      }}
+    >
+      {/* Encabezado */}
+      <Box sx={{ 
+        background: `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
+        p: 3, display: 'flex', alignItems: 'center', gap: 2, color: 'white', position: 'relative'
+      }}>
+        <Avatar sx={{ bgcolor: 'white', color: 'secondary.main' }}>
+          <MapIcon />
+        </Avatar>
+        <Box>
+          <Typography variant="h6" fontWeight="bold">Asignación de Territorio</Typography>
+          <Typography variant="caption" sx={{ opacity: 0.9 }}>
+            Líder: {lider?.alias || lider?.nombre}
+          </Typography>
+        </Box>
+        <IconButton onClick={handleClose} disabled={isSaving} sx={{ position: 'absolute', top: 8, right: 8, color: 'white' }}>
+          <CloseIcon />
+        </IconButton>
+      </Box>
       
-      <DialogContent dividers sx={{ minHeight: '350px', bgcolor: 'background.default' }}>
-        {/* Indicador de guardado (controlado por el padre) */}
-        {isSaving && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0 }} />}
-        
-        {/* Indicador de carga (controlado internamente) */}
+      <DialogContent sx={{ p: 3, minHeight: 300 }}>
         {isLoadingZonas ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
             <CircularProgress />
           </Box>
         ) : (
           <FormControl component="fieldset" variant="standard" disabled={isSaving} sx={{ width: '100%' }}>
             
-            <DialogContentText sx={{ mb: 2 }}>
-              Gestiona las zonas (distritos) que este líder podrá moderar.
-            </DialogContentText>
-            
-            {/* Opción "Asignar Todas" */}
+            {/* Opción Premium: Todas las Zonas */}
             <Paper 
-              elevation={0} 
+              elevation={isTodasZonas ? 4 : 0}
               sx={{ 
-                border: '1px solid', 
+                border: '1px solid',
                 borderColor: isTodasZonas ? 'secondary.main' : 'divider',
-                borderRadius: 1.5, p: 1.5, mb: 2,
-                bgcolor: isTodasZonas ? 'secondary.light' : 'transparent',
+                borderRadius: 2, p: 2, mb: 3,
+                bgcolor: isTodasZonas ? alpha(theme.palette.secondary.main, 0.05) : 'transparent',
                 transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                '&:hover': { bgcolor: alpha(theme.palette.secondary.main, 0.02) }
               }}
             >
-              <FormGroup>
-                <FormControlLabel
-                  control={ <Checkbox checked={isTodasZonas} onChange={handleToggleTodas} name="*" color="secondary" /> }
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AdminPanelSettingsIcon fontSize="small" />
-                      <Typography fontWeight="bold" color={isTodasZonas ? 'secondary.dark' : 'text.primary'}>
-                        Asignar Todas las Zonas (Nivel Admin)
+              <FormControlLabel
+                control={ <Checkbox checked={isTodasZonas} onChange={handleToggleTodas} color="secondary" /> }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AdminIcon color={isTodasZonas ? 'secondary' : 'action'} />
+                    <Box>
+                      <Typography fontWeight="bold" color={isTodasZonas ? 'secondary.main' : 'text.primary'}>
+                        Modo Administrador Regional
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Gestiona TODOS los distritos de Piura sin restricción.
                       </Typography>
                     </Box>
-                  }
-                />
-              </FormGroup>
+                  </Box>
+                }
+                sx={{ width: '100%', m: 0 }}
+              />
             </Paper>
 
-            {/* Label "O seleccionar" */}
-            <FormLabel 
-              component="legend" 
-              sx={{ 
-                mb: 1.5, mt: 1, display: 'flex', alignItems: 'center', gap: 0.5,
-                fontSize: '1rem',
-                fontWeight: hasSpecificSelection ? 'bold' : 'normal',
-                color: hasSpecificSelection ? 'primary.main' : 'text.secondary',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              <LocationOnIcon fontSize="small" />
-              O seleccionar distritos específicos:
+            <FormLabel component="legend" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <LocationIcon fontSize="small" /> Selección Manual de Distritos
             </FormLabel>
 
-            {/* Lista de Distritos en 2 columnas */}
-            <Paper 
-              variant="outlined" 
-              sx={{ p: 2, pt: 1, borderRadius: 1.5, maxHeight: '250px', overflowY: 'auto', bgcolor: 'background.paper' }}
-            >
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: isTodasZonas ? 'action.hover' : 'background.paper' }}>
               <Grid container spacing={1}>
                 <Grid item xs={6}>
                   <FormGroup>
                     {column1.map((distrito) => (
                       <FormControlLabel
                         key={distrito}
-                        sx={{ '& .Mui-disabled': { color: 'text.disabled' } }}
-                        control={ <Checkbox checked={selectedDistritos[distrito] || false} onChange={() => handleToggle(distrito)} name={distrito} disabled={isTodasZonas} /> }
-                        label={distrito}
+                        control={ <Checkbox checked={!!selectedDistritos[distrito]} onChange={() => handleToggle(distrito)} disabled={isTodasZonas} size="small" /> }
+                        label={<Typography variant="body2">{distrito}</Typography>}
                       />
                     ))}
                   </FormGroup>
@@ -237,9 +182,8 @@ function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
                     {column2.map((distrito) => (
                       <FormControlLabel
                         key={distrito}
-                        sx={{ '& .Mui-disabled': { color: 'text.disabled' } }}
-                        control={ <Checkbox checked={selectedDistritos[distrito] || false} onChange={() => handleToggle(distrito)} name={distrito} disabled={isTodasZonas} /> }
-                        label={distrito}
+                        control={ <Checkbox checked={!!selectedDistritos[distrito]} onChange={() => handleToggle(distrito)} disabled={isTodasZonas} size="small" /> }
+                        label={<Typography variant="body2">{distrito}</Typography>}
                       />
                     ))}
                   </FormGroup>
@@ -251,10 +195,16 @@ function ModalAsignarZonas({ open, onClose, onSave, lider, isSaving }) {
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </DialogContent>
       
-      <DialogActions sx={{ p: '16px 24px' }}>
-        <Button onClick={handleClose} disabled={isSaving}>Cancelar</Button>
-        <Button onClick={handleSave} variant="contained" disabled={isSaving || isLoadingZonas}>
-          {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Guardar Zonas'}
+      <DialogActions sx={{ p: 3, pt: 0 }}>
+        <Button onClick={handleClose} disabled={isSaving} color="inherit">Cancelar</Button>
+        <Button 
+          onClick={handleSave} 
+          variant="contained" 
+          disabled={isSaving || isLoadingZonas}
+          startIcon={!isSaving && <SaveIcon />}
+          sx={{ px: 4, borderRadius: 2 }}
+        >
+          {isSaving ? <CircularProgress size={24} color="inherit" /> : 'Guardar Cambios'}
         </Button>
       </DialogActions>
     </Dialog>

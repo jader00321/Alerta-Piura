@@ -1,43 +1,54 @@
-/// Representa una notificación individual enviada al usuario.
-///
-/// Este modelo se utiliza para poblar la lista del historial de
-/// notificaciones en el perfil del usuario.
+import 'dart:convert'; // <--- NECESARIO PARA jsonEncode
+
+/// Representa una notificación avanzada del sistema 2.0.
 class Notificacion {
-  /// El ID único de la notificación.
   final int id;
-
-  /// El título principal de la notificación.
   final String titulo;
-
-  /// El texto o cuerpo del mensaje de la notificación.
   final String cuerpo;
-
-  /// Indica si el usuario ya ha marcado esta notificación como leída.
-  final bool leido;
-
-  /// La fecha y hora en que se envió la notificación.
+  bool leido; // Mutable para actualización optimista
   final DateTime fechaEnvio;
+  
+  // --- Nuevos Campos Fase 2 ---
+  final String? payload; // Para navegación (Lo guardamos como String para compatibilidad)
+  final bool archivado;
+  final String categoria; 
+  final Map<String, dynamic>? remitenteInfo; 
 
-  /// Crea una instancia de [Notificacion].
   Notificacion({
     required this.id,
     required this.titulo,
     required this.cuerpo,
     required this.leido,
     required this.fechaEnvio,
+    this.payload,
+    required this.archivado,
+    required this.categoria,
+    this.remitenteInfo,
   });
 
-  /// Crea una instancia de [Notificacion] a partir de un mapa JSON.
-  ///
-  /// Este factory es utilizado para deserializar la respuesta de la API.
-  /// Parsea la cadena de fecha [fecha_envio] a un objeto [DateTime].
   factory Notificacion.fromJson(Map<String, dynamic> json) {
+    // Lógica de seguridad para el payload
+    String? safePayload;
+    if (json['payload'] != null) {
+      if (json['payload'] is Map) {
+        // Si viene como Objeto JSON, lo convertimos a String
+        safePayload = jsonEncode(json['payload']);
+      } else if (json['payload'] is String) {
+        // Si ya viene como String, lo usamos directo
+        safePayload = json['payload'];
+      }
+    }
+
     return Notificacion(
       id: json['id'],
       titulo: json['titulo'],
       cuerpo: json['cuerpo'],
-      leido: json['leido'],
+      leido: json['leido'] ?? false,
       fechaEnvio: DateTime.parse(json['fecha_envio']),
+      payload: safePayload, // Usamos la variable procesada
+      archivado: json['archivado'] ?? false,
+      categoria: json['categoria'] ?? 'General',
+      remitenteInfo: json['remitente_info'],
     );
   }
 }

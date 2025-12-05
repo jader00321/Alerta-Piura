@@ -44,6 +44,9 @@ import 'package:mobile_app/screens/pantalla_pago.dart';
 import 'package:mobile_app/screens/pantalla_buscar_reporte_original.dart';
 import 'package:mobile_app/screens/pantalla_insignias.dart';
 import 'package:mobile_app/navigator_key.dart';
+import 'package:mobile_app/providers/map_preferences_provider.dart';
+import 'package:mobile_app/screens/pantalla_gestionar_ubicaciones.dart';
+import 'package:mobile_app/providers/notification_provider.dart';
 
 /// {@template main}
 /// Punto de entrada principal de la aplicación Reporta Piura.
@@ -63,7 +66,7 @@ import 'package:mobile_app/navigator_key.dart';
 void main() async {
   // 1. Inicialización de Bindings
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // 2. Configuración de Localización
   await initializeDateFormatting('es_ES', null);
 
@@ -74,16 +77,25 @@ void main() async {
   // 4. Inicialización de Providers
   final themeProvider = ThemeProvider();
   final authProvider = AuthNotifier();
+  final mapProvider = MapPreferencesProvider();
+
+  /// Carga el tema desde SharedPreferences.
   await themeProvider.loadTheme();
+
   /// Carga el token desde SharedPreferences ANTES de construir la UI.
   await authProvider.checkAuthStatus();
+
+  /// Carga las preferencias del mapa (ubicaciones guardadas).
+  await mapProvider.loadPreferences();
 
   // 5. Configuración de Listeners Globales
   /// Si el usuario ya está autenticado al abrir la app, conectar el listener
   /// que escucha si un admin detiene su SOS remotamente.
   if (authProvider.isAuthenticated) {
     SocketService().onStopSos.listen((data) {
-      debugPrint("MAIN.DART: Evento stopSos recibido. Invocando al servicio de fondo.");
+      debugPrint(
+          "MAIN.DART: Evento stopSos recibido. Invocando al servicio de fondo.");
+
       /// Invoca al servicio en segundo plano (Isolate) para que se detenga.
       FlutterBackgroundService().invoke('serverForceStop', data);
     });
@@ -95,6 +107,8 @@ void main() async {
       providers: [
         ChangeNotifierProvider.value(value: themeProvider),
         ChangeNotifierProvider.value(value: authProvider),
+        ChangeNotifierProvider.value(value: mapProvider),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: const AlertaPiuraApp(),
     ),
@@ -122,11 +136,13 @@ class AlertaPiuraApp extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return MaterialApp(
           title: 'Reporta Piura',
+
           /// Asigna la clave global para navegación desde fuera del BuildContext.
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
-          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          
+          themeMode:
+              themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+
           /// Definición del Tema Claro
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
@@ -134,6 +150,7 @@ class AlertaPiuraApp extends StatelessWidget {
             useMaterial3: true,
             brightness: Brightness.light,
           ),
+
           /// Definición del Tema Oscuro
           darkTheme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
@@ -191,7 +208,10 @@ class AlertaPiuraApp extends StatelessWidget {
             '/buscar_reporte_original': (context) =>
                 const PantallaBuscarReporteOriginal(),
             '/insignias': (context) => const PantallaInsignias(),
+            '/gestionar_ubicaciones': (context) =>
+                const PantallaGestionarUbicaciones(),
           },
+
           /// Rutas Dinámicas (con argumentos)
           onGenerateRoute: (settings) {
             if (settings.name == '/reporte_detalle') {
@@ -206,17 +226,42 @@ class AlertaPiuraApp extends StatelessWidget {
                       VerificacionDetalleScreen(reporteId: args));
             }
             if (settings.name == '/detalle_pendiente_vista') {
-              final args = settings.arguments as int;
+              // 1. Obtenemos los argumentos sin forzar el tipo todavía
+              final args = settings.arguments;
+              int id;
+
+              // 2. Verificamos si es un Mapa (nueva lógica) o un Entero (lógica antigua/notificaciones)
+              if (args is Map) {
+                id = args['id']; // Extraemos el ID del mapa
+              } else {
+                id = args as int; // Asumimos que es solo el ID
+              }
+
+              // 3. Pasamos el ID al constructor. El widget leerá el resto de datos del mapa internamente.
               return MaterialPageRoute(
-                  builder: (context) =>
-                      PantallaDetallePendienteVista(reporteId: args));
+                builder: (_) => PantallaDetallePendienteVista(reporteId: id),
+                settings:
+                    settings, // IMPORTANTE: Pasar settings para que el widget pueda leer los argumentos extra
+              );
             }
             if (settings.name == '/chat') {
-              final args = settings.arguments as Map<String, dynamic>;
+              int rId = 0;
+              String rTitle = 'Chat';
+              bool fromDetails = false;
+
+              if (settings.arguments is Map) {
+                final args = settings.arguments as Map<String, dynamic>;
+                rId = args['reporteId'] ?? 0;
+                rTitle = args['reporteTitulo'] ?? 'Chat';
+                // Si viene desde una notificación, probablemente queremos que pueda ir al reporte
+                fromDetails = args['fromReportDetails'] ?? false;
+              }
+
               return MaterialPageRoute(
                   builder: (context) => ChatScreen(
-                      reporteId: args['reporteId'],
-                      reporteTitulo: args['reporteTitulo']));
+                      reporteId: rId,
+                      reporteTitulo: rTitle,
+                      fromReportDetails: fromDetails));
             }
             if (settings.name == '/detalle_boleta') {
               final args = settings.arguments as String;

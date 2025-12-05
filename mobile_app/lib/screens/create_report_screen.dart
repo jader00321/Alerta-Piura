@@ -3,6 +3,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mobile_app/api/reporte_service.dart';
+// --- NUEVO IMPORT: Servicio de IA ---
+import 'package:mobile_app/api/ai_service.dart'; 
 import 'package:permission_handler/permission_handler.dart';
 import 'package:mobile_app/models/categoria_model.dart';
 import 'package:provider/provider.dart';
@@ -15,11 +17,8 @@ import 'package:mobile_app/widgets/crear_reporte/seccion_acciones_finales.dart';
 /// {@template create_report_screen}
 /// Pantalla de formulario para que los usuarios creen un nuevo reporte.
 ///
-/// Organizada en secciones reutilizables:
-/// - [SeccionEvidencia]
-/// - [SeccionDetallesPrincipales]
-/// - [SeccionDetallesAdicionales]
-/// - [SeccionAccionesFinales]
+/// Organizada en secciones reutilizables.
+/// Actualización: Incluye asistencia por IA (Gemini) para mejorar descripciones.
 /// {@endtemplate}
 class CreateReportScreen extends StatefulWidget {
   /// {@macro create_report_screen}
@@ -30,9 +29,6 @@ class CreateReportScreen extends StatefulWidget {
 }
 
 /// Estado para [CreateReportScreen].
-///
-/// Maneja todos los controladores del formulario, la lógica de selección de imagen/ubicación,
-/// y la presentación del formulario a la API.
 class _CreateReportScreenState extends State<CreateReportScreen> {
   final _formKey = GlobalKey<FormState>();
 
@@ -46,6 +42,10 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   bool _isAnonimo = false;
   LatLng? _currentLocation;
   bool _isLoading = false;
+  
+  // --- NUEVO ESTADO: Cargando IA ---
+  bool _isImprovingText = false; 
+
   List<Categoria> _categorias = [];
   bool _isLoadingCategories = true;
   String _urgencia = 'Media';
@@ -55,12 +55,15 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   XFile? _imageFile;
 
   final ReporteService _reporteService = ReporteService();
+  // --- NUEVA INSTANCIA: Servicio IA ---
+  final AiService _aiService = AiService(); 
+
   final ImagePicker _picker = ImagePicker();
   final List<String> _distritosDePiura = [
     'Piura', 'Castilla', 'Veintiséis de Octubre', 'Catacaos', 'Cura Mori',
     'El Tallán', 'La Arena', 'La Unión', 'Las Lomas', 'Tambo Grande'
   ];
-  final List<String> _recommendedTags = ['peligroso', 'tráfico', 'niños', 'urgente'];
+  final List<String> _recommendedTags = ['peligroso', 'tráfico', 'seguridad', 'alumbrado', 'basura', 'ruido', 'urgente'];
 
   @override
   void initState() {
@@ -137,6 +140,51 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Se necesita permiso de ubicación.')));
+      }
+    }
+  }
+
+  // --- NUEVA FUNCIÓN: Mejorar descripción con IA ---
+  Future<void> _improveDescriptionWithAI() async {
+    final text = _descripcionController.text;
+    
+    // Validación simple antes de llamar a la API
+    if (text.trim().length < 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Escribe una descripción básica primero para que la IA pueda mejorarla.'),
+          backgroundColor: Colors.orange,
+        )
+      );
+      return;
+    }
+
+    setState(() => _isImprovingText = true);
+    
+    // Llamada al servicio
+    final improvedText = await _aiService.improveReportDescription(text);
+
+    if (mounted) {
+      setState(() => _isImprovingText = false);
+      
+      if (improvedText != null) {
+        // Actualizamos el controlador, esto refrescará el campo de texto visualmente
+        _descripcionController.text = improvedText;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Descripción mejorada con IA! ✨'),
+            backgroundColor: Colors.deepPurple,
+            duration: Duration(seconds: 2),
+          )
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo mejorar el texto. Verifica tu conexión.'),
+            backgroundColor: Colors.red,
+          )
+        );
       }
     }
   }
@@ -221,10 +269,13 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   @override
   Widget build(BuildContext context) {
     final authNotifier = context.watch<AuthNotifier>();
-    final otroCategoriaId = _categorias
-        .firstWhere((cat) => cat.nombre.toLowerCase() == 'otro',
-            orElse: () => Categoria(id: -1, nombre: ''))
-        .id;
+    // Manejo seguro si categorías aún no cargan
+    final int otroCategoriaId = _categorias.isNotEmpty 
+        ? _categorias.firstWhere(
+            (cat) => cat.nombre.toLowerCase() == 'otro',
+            orElse: () => Categoria(id: -1, nombre: '')
+          ).id
+        : -1;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Crear Nuevo Reporte')),
@@ -237,13 +288,13 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
             children: [
               if (authNotifier.isPremium)
                 Card(
-                  color: const Color.fromARGB(255, 204, 154, 3),
+                  color: const Color.fromARGB(255, 177, 133, 1),
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Row(
                       children: [
                         const Icon(Icons.star_border,
-                            color: Color.fromARGB(255, 224, 127, 0)),
+                            color: Color.fromARGB(255, 202, 115, 0)),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Text(
@@ -256,11 +307,15 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                   ),
                 ),
               const SizedBox(height: 16),
+              
+              // 1. Evidencia
               SeccionEvidencia(
                 imageFile: _imageFile,
                 onPickImage: _pickImage,
               ),
               const SizedBox(height: 16),
+              
+              // 2. Detalles Principales
               SeccionDetallesPrincipales(
                 tituloController: _tituloController,
                 urgenciaSeleccionada: _urgencia,
@@ -274,6 +329,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 categoriaSugeridaController: _categoriaSugeridaController,
               ),
               const SizedBox(height: 16),
+              
+              // 3. Detalles Adicionales (Descripción, Tags, etc.)
               SeccionDetallesAdicionales(
                 descripcionController: _descripcionController,
                 referenciaController: _referenciaController,
@@ -288,7 +345,35 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 recommendedTags: _recommendedTags,
                 onAddTag: _addTag,
               ),
+
+              // --- NUEVO: BOTÓN DE IA ---
+              // Se coloca justo después de los detalles adicionales donde está la descripción
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isImprovingText ? null : _improveDescriptionWithAI,
+                    icon: _isImprovingText 
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.auto_awesome, color: Color.fromARGB(255, 58, 108, 183)),
+                    label: Text(
+                        _isImprovingText ? "Mejorando redacción..." : "Mejorar descripción con IA ✨",
+                        style: const TextStyle(color: Color.fromARGB(255, 58, 108, 183), fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color.fromARGB(255, 58, 108, 183)),
+                      padding: const EdgeInsets.all(12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ),
+              // --------------------------
+
               const SizedBox(height: 16),
+              
+              // 4. Acciones Finales (Mapa y Enviar)
               SeccionAccionesFinales(
                 isAnonimo: _isAnonimo,
                 onAnonimoChanged: (value) => setState(() => _isAnonimo = value!),

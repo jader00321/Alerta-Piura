@@ -1,357 +1,313 @@
 // src/pages/PaginaAlertasSOS.jsx
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { Box, Typography, Grid, CircularProgress, Alert, Divider, Stack } from '@mui/material';
-import socketService from '../services/socketService';     // Asegúrate que la ruta sea correcta
-import sosService from '../services/sosService';         // Asegúrate que la ruta sea correcta
+import { 
+  Box, Typography, Grid, CircularProgress, Alert, Divider, Stack, Container, Fade 
+} from '@mui/material';
+import { 
+  Sos as SosIcon, 
+  History as HistoryIcon,
+  // Map as MapIcon, // (No usado en render, se puede quitar si no se usa)
+  // Info as InfoIcon // (No usado en render)
+} from '@mui/icons-material';
 
-// --- Importar Componentes ---
+// Importar date-fns
+import { subDays, startOfDay, endOfDay } from 'date-fns';
+
+// Servicios
+import socketService from '../services/socketService';
+import sosService from '../services/sosService';
+
+// Componentes
 import ListaAlertasSOS from '../components/SOS/ListaAlertasSOS';
 import DetalleAlertaSeleccionada from '../components/SOS/DetalleAlertaSeleccionada';
 import MapaAlertaSOS from '../components/SOS/MapaAlertaSOS';
 import PanelAlertaActiva from '../components/SOS/PanelAlertaActiva';
 import FiltrosHistorialSOS from '../components/SOS/FiltrosHistorialSOS';
 
-// Importar date-fns para fechas por defecto
-import { subDays, startOfDay, endOfDay } from 'date-fns';
-
 /**
- * Componente PaginaAlertasSOS: Página principal para gestionar alertas SOS.
- * Incluye carga de datos, filtros, selección de alertas, mapa con historial de ubicación,
- * temporizador para alertas activas, y actualizaciones en tiempo real vía sockets.
- * 
- * Funcionalidades principales:
- * - Carga inicial de alertas y configuración de sockets.
- * - Selección automática de la alerta más reciente si no hay filtros activos.
- * - Filtros para historial (usuario, fechas, estados).
- * - Temporizador countdown para alertas activas.
- * - Comunicación en vivo para nuevas alertas, actualizaciones de ubicación y estado.
+ * PaginaAlertasSOS - Panel de Control de Emergencias
+ * Diseño profesional enfocado en la respuesta rápida.
  */
 function PaginaAlertasSOS() {
-  // --- Estados Principales ---
-  const [allAlerts, setAllAlerts] = useState([]); // Todas las alertas recibidas del backend
-  const [selectedAlertId, setSelectedAlertId] = useState(null); // ID de la alerta actualmente seleccionada
-  const [locationHistory, setLocationHistory] = useState({}); // Historial de ubicaciones por alerta { alertId: [[lat, lon], ...], ... }
-  const [loading, setLoading] = useState(true); // Indicador de carga inicial
-  const [error, setError] = useState(''); // Mensajes de error para mostrar al usuario
-  const [activeSosTimer, setActiveSosTimer] = useState(null); // Temporizador activo en formato "MM:SS"
-  const countdownIntervalRef = useRef(null); // Ref para el intervalo del temporizador (para limpieza)
+  // --- Estados ---
+  const [allAlerts, setAllAlerts] = useState([]);
+  const [selectedAlertId, setSelectedAlertId] = useState(null);
+  const [locationHistory, setLocationHistory] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [activeSosTimer, setActiveSosTimer] = useState(null);
+  const countdownIntervalRef = useRef(null);
 
-  // --- Estado para Filtros con valor inicial (últimos 7 días) ---
+  // --- Filtros Iniciales ---
   const [filters, setFilters] = useState(() => {
-      const initialEndDate = endOfDay(new Date()); // Fin del día actual
-      const initialStartDate = startOfDay(subDays(initialEndDate, 6)); // Inicio de hace 7 días
+      const initialEndDate = endOfDay(new Date());
+      const initialStartDate = startOfDay(subDays(initialEndDate, 6));
       return {
-          userId: null, // Filtro por ID de usuario
-          startDate: initialStartDate, // Fecha de inicio por defecto
-          endDate: initialEndDate, // Fecha de fin por defecto
-          estado: '', // Estado de la alerta (e.g., 'activo', 'finalizado')
-          estado_atencion: '', // Estado de atención (e.g., 'En Espera', 'Atendiendo')
+          userId: null,
+          startDate: initialStartDate,
+          endDate: initialEndDate,
+          estado: '',
+          estado_atencion: '',
       };
   });
 
-  /**
-   * Función para seleccionar una alerta y cargar su historial de ubicación si no existe.
-   * Marca la alerta como revisada en segundo plano.
-   * 
-   * @param {Object} alert - Objeto de la alerta seleccionada.
-   */
+  // --- Lógica de Selección y Carga ---
   const handleSelectAlert = useCallback(async (alert) => {
-    if (!alert || alert.id === selectedAlertId) return; // Evita acciones innecesarias
-
-    console.log("Seleccionando alerta:", alert.id);
+    if (!alert || alert.id === selectedAlertId) return;
     setSelectedAlertId(alert.id);
 
-    // Marca como revisada sin bloquear la UI
     if (!alert.revisada) {
-      sosService.updateStatus(alert.id, { revisada: true }).catch(err => console.warn("Error al marcar como revisada:", err));
+      sosService.updateStatus(alert.id, { revisada: true }).catch(console.warn);
     }
 
-    // Carga el historial de ubicación si no está en el estado
     if (!locationHistory[alert.id]) {
         try {
-            console.log("Cargando historial de ubicación para:", alert.id);
             const history = await sosService.getLocationHistory(alert.id);
-            const path = history.map(p => [p.lat, p.lon]); // Convierte a array de coordenadas
-            // Actualiza el estado con el nuevo historial
+            const path = history.map(p => [p.lat, p.lon]);
             setLocationHistory(prev => ({ ...prev, [alert.id]: path }));
-        } catch(histError){
-             console.error(`Error cargando historial para alerta ${alert.id}:`, histError);
-             // Guarda array vacío para evitar reintentos y marcar que se intentó
+        // eslint-disable-next-line no-unused-vars
+        } catch(e) {
              setLocationHistory(prev => ({ ...prev, [alert.id]: [] }));
         }
     }
-  }, [selectedAlertId, locationHistory]); // Dependencias para optimización
+  }, [selectedAlertId, locationHistory]);
 
-  /**
-   * Función para cargar datos iniciales desde el backend.
-   * Ordena las alertas por fecha descendente y selecciona la más reciente si no hay filtros activos.
-   */
   const fetchData = useCallback(async () => {
-    console.log("FetchData SOS: Iniciando...");
     setLoading(true); setError('');
     try {
       const data = await sosService.getSosDashboardData();
-      // Ordena por fecha de inicio descendente (más reciente primero)
       const sortedData = data ? [...data].sort((a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio)) : [];
       setAllAlerts(sortedData);
-      console.log("FetchData SOS: Datos recibidos:", sortedData.length);
 
-      // --- Lógica de Selección Inicial ---
-      // Selecciona la alerta más reciente solo si no hay selección previa y no hay filtros específicos
       const specificFiltersActive = filters.userId || filters.estado || filters.estado_atencion;
       if (sortedData.length > 0 && selectedAlertId === null && !specificFiltersActive) {
-          console.log("Estableciendo alerta seleccionada por defecto (la más reciente):", sortedData[0]);
-          // Llama a handleSelectAlert con un pequeño delay para evitar conflictos
           setTimeout(() => handleSelectAlert(sortedData[0]), 0);
       } else if (sortedData.length === 0) {
-          setSelectedAlertId(null); // Limpia selección si no hay alertas
+          setSelectedAlertId(null);
       }
-
     } catch (err) {
-      console.error("Error fetching SOS data:", err);
-      setError("No se pudieron cargar las alertas SOS.");
-      setAllAlerts([]);
-      setSelectedAlertId(null);
+      console.error("Error fetching SOS:", err);
+      setError("No se pudo cargar el panel de emergencias.");
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handleSelectAlert]); // Solo depende de handleSelectAlert (estable con useCallback)
+  }, [handleSelectAlert, filters, selectedAlertId]); // Agregado filters a dependencias si es necesario, sino quitar
 
-  /**
-   * useEffect para carga inicial y configuración de sockets.
-   * Conecta al socket, configura listeners para eventos en tiempo real y limpia al desmontar.
-   */
+  // --- Sockets (LÓGICA MEJORADA AQUÍ) ---
   useEffect(() => {
-    fetchData(); // Carga inicial de datos
-
-    const token = localStorage.getItem('admin_token'); // Obtiene token para autenticación
-    if(token) {
-        socketService.connect(token); // Conecta y autentica el socket
-    } else {
-        console.error("PaginaAlertasSOS: No hay token para conectar socket.");
-        setError("Error de autenticación, no se pudo conectar al servidor en tiempo real.");
-        return; // No configura listeners sin conexión
+    fetchData();
+    
+    // Asegurar conexión
+    const token = localStorage.getItem('admin_token');
+    if(token && !socketService.socket?.connected) {
+        socketService.connect(token);
     }
 
-    // --- Listeners de Socket para actualizaciones en tiempo real ---
-    const handleNewAlert = (newAlert) => {
-        console.log("Nueva alerta SOS recibida por socket:", newAlert);
-        setAllAlerts(prev => {
-            const exists = prev.some(a => a.id === newAlert.id);
-            if (exists) return prev; // Evita duplicados
-            // Añade la nueva al principio de la lista
-            return [newAlert, ...prev];
-        });
-        // NO cambia la alerta seleccionada automáticamente
-    };
+    // 1. Nueva Alerta
+    const handleNewAlert = (newAlert) => setAllAlerts(prev => [newAlert, ...prev]);
+    
+    // 2. Actualización de Ubicación
     const handleLocationUpdate = (update) => {
-         console.log("Actualización de ubicación SOS recibida:", update);
-         if (!update || !update.alertId || !update.location) return; // Validación básica
-         setLocationHistory(prev => {
-             const current = prev[update.alertId] || [];
-             const newLoc = [update.location.lat, update.location.lon];
-             // Evita duplicados exactos de ubicación
-             if(current.length > 0 && current[current.length - 1][0] === newLoc[0] && current[current.length - 1][1] === newLoc[1]) {
-                 return prev;
-             }
-             return { ...prev, [update.alertId]: [...current, newLoc] };
-         });
+          if (!update?.alertId || !update?.location) return;
+          setLocationHistory(prev => {
+              const current = prev[update.alertId] || [];
+              const newLoc = [update.location.lat, update.location.lon];
+              // Evitar duplicados exactos
+              if(current.length > 0 && current[current.length - 1][0] === newLoc[0] && current[current.length - 1][1] === newLoc[1]) return prev;
+              return { ...prev, [update.alertId]: [...current, newLoc] };
+          });
     };
-     const handleAlertUpdate = (updatedAlert) => {
-         console.log("Actualización de estado SOS recibida:", updatedAlert);
-         if (!updatedAlert || !updatedAlert.id) return; // Validación básica
-         setAllAlerts(prev => prev.map(a => a.id === updatedAlert.id ? { ...a, ...updatedAlert } : a));
-     };
+    
+    // 3. Actualización General (ej. cambio de estado manual o automático)
+    const handleAlertUpdate = (updatedAlert) => {
+          if (!updatedAlert?.id) return;
+          setAllAlerts(prev => prev.map(a => a.id === updatedAlert.id ? { ...a, ...updatedAlert } : a));
+    };
 
-    // Registra los listeners
+    // 4. Finalización de Alerta (evento 'sos-alert-ended')
+    // Este evento lo emite el backend cuando se acaba el tiempo o el usuario cancela
+    const handleAlertEnded = (data) => {
+        if (!data?.id) return;
+        setAllAlerts(prev => prev.map(a => 
+            a.id === data.id 
+                ? { ...a, estado: 'finalizado', fecha_fin: new Date().toISOString() } 
+                : a
+        ));
+    };
+
+    // 5. Eliminación de Alerta (evento 'sos-alert-deleted')
+    const handleAlertDeleted = (data) => {
+         if (!data?.id) return;
+         setAllAlerts(prev => prev.filter(a => a.id !== data.id));
+         if (selectedAlertId === data.id) setSelectedAlertId(null);
+    };
+
+    // Registro de Listeners
     socketService.on('new-sos-alert', handleNewAlert);
     socketService.on('sos-location-update', handleLocationUpdate);
     socketService.on('sos-alert-updated', handleAlertUpdate);
+    socketService.on('sos-alert-ended', handleAlertEnded); // <-- MEJORA CRÍTICA
+    socketService.on('sos-alert-deleted', handleAlertDeleted); // <-- MEJORA ADICIONAL
 
-    // --- Limpieza al desmontar ---
     return () => {
-        console.log("Desmontando PaginaAlertasSOS, limpiando listeners...");
         socketService.off('new-sos-alert', handleNewAlert);
         socketService.off('sos-location-update', handleLocationUpdate);
         socketService.off('sos-alert-updated', handleAlertUpdate);
-        // NO desconectar socket aquí (debería manejarse globalmente)
-        clearInterval(countdownIntervalRef.current); // Limpia el intervalo del timer
+        socketService.off('sos-alert-ended', handleAlertEnded);
+        socketService.off('sos-alert-deleted', handleAlertDeleted);
+        clearInterval(countdownIntervalRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Solo ejecutar al montar
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-   // --- Datos Derivados (optimizados con useMemo para pasar a componentes hijos) ---
-   const selectedAlertData = useMemo(() => {
-       return allAlerts.find(a => a.id === selectedAlertId) || null; // Alerta seleccionada o null
-   }, [allAlerts, selectedAlertId]);
+  // --- Datos Derivados ---
+  const selectedAlertData = useMemo(() => allAlerts.find(a => a.id === selectedAlertId) || null, [allAlerts, selectedAlertId]);
+  const currentPath = useMemo(() => selectedAlertId ? locationHistory[selectedAlertId] || [] : [], [selectedAlertId, locationHistory]);
+  const latestLocation = useMemo(() => currentPath.length > 0 ? currentPath[currentPath.length - 1] : null, [currentPath]);
 
-   const currentPath = useMemo(() => selectedAlertId ? locationHistory[selectedAlertId] || [] : [], [selectedAlertId, locationHistory]); // Historial de la alerta seleccionada
-   const latestLocation = useMemo(() => currentPath.length > 0 ? currentPath[currentPath.length - 1] : null, [currentPath]); // Última ubicación
-
-   // Lista de alertas filtrada para el historial
-   const filteredAlerts = useMemo(() => {
+  const filteredAlerts = useMemo(() => {
        return allAlerts.filter(alert => {
            if (filters.userId && alert.id_usuario !== filters.userId) return false;
            if (filters.estado && alert.estado !== filters.estado) return false;
            if (filters.estado_atencion && (alert.estado_atencion || 'En Espera') !== filters.estado_atencion) return false;
            const alertDate = new Date(alert.fecha_inicio);
-           // Compara fechas usando funciones de date-fns para inclusión correcta
            if (filters.startDate && alertDate < startOfDay(filters.startDate)) return false;
            if (filters.endDate && alertDate > endOfDay(filters.endDate)) return false;
            return true;
        });
    }, [allAlerts, filters]);
 
-  /**
-   * useEffect para el temporizador countdown basado en la alerta seleccionada.
-   * Solo activa si la alerta está 'activa' y calcula el tiempo restante.
-   */
+  // --- Timer ---
   useEffect(() => {
-    clearInterval(countdownIntervalRef.current); // Limpia intervalo previo
+    clearInterval(countdownIntervalRef.current);
     setActiveSosTimer(null);
 
     if (selectedAlertData?.estado === 'activo') {
       const startTime = new Date(selectedAlertData.fecha_inicio).getTime();
-      // Usa la duración en segundos del backend
-      const sosDurationSeconds = selectedAlertData.duracion_segundos || 0; // Default a 0 si no existe
+      const sosDurationSeconds = selectedAlertData.duracion_segundos || 0;
 
       const updateTimer = () => {
           const now = Date.now();
           const elapsed = Math.floor((now - startTime) / 1000);
-          const remaining = Math.max(0, sosDurationSeconds - elapsed); // Evita negativos
-
+          const remaining = Math.max(0, sosDurationSeconds - elapsed);
           const minutes = Math.floor(remaining / 60).toString().padStart(2, '0');
           const seconds = (remaining % 60).toString().padStart(2, '0');
           setActiveSosTimer(`${minutes}:${seconds}`);
-
           if (remaining <= 0) {
-            clearInterval(countdownIntervalRef.current);
-            // Podrías forzar un refetch aquí si el backend no actualiza automáticamente
-            // fetchData();
+              clearInterval(countdownIntervalRef.current);
+              // Opcional: Forzar estado visual a finalizado si el contador llega a 0 localmente
+              // aunque es mejor esperar el evento del socket para confirmación real.
           }
       };
-
-      updateTimer(); // Ejecuta inmediatamente
+      updateTimer();
       countdownIntervalRef.current = setInterval(updateTimer, 1000);
     }
-
-    // Limpieza automática
     return () => clearInterval(countdownIntervalRef.current);
-  }, [selectedAlertData]); // Solo depende de la data de la alerta seleccionada
+  }, [selectedAlertData]);
 
-  // --- Handlers de Acciones ---
-  /**
-   * Handler para cambiar el estado de atención de una alerta.
-   * @param {number} alertId - ID de la alerta.
-   * @param {string} newStatus - Nuevo estado de atención.
-   */
+  // --- Acciones ---
   const handleAttentionChange = (alertId, newStatus) => {
       setError('');
-      sosService.updateStatus(alertId, { estado_atencion: newStatus })
-          .catch(err => {
-              setError("Error al actualizar estado de atención.");
-              console.error("Error updating attention status:", err);
-          });
-      // La actualización visual vendrá por socket 'sos-alert-updated'
+      sosService.updateStatus(alertId, { estado_atencion: newStatus }).catch(() => setError("Error al actualizar atención."));
   };
 
-  /**
-   * Handler para finalizar una alerta SOS con confirmación.
-   * @param {number} alertId - ID de la alerta.
-   */
   const handleFinishAlert = (alertId) => {
-    if (window.confirm('¿Está seguro de finalizar esta alerta SOS?')) {
-        setError('');
-        sosService.updateStatus(alertId, { estado: 'finalizado' })
-            .catch(err => {
-                setError("Error al finalizar la alerta.");
-                console.error("Error finishing alert:", err);
-            });
-         // Limpia el timer visual inmediatamente si es la alerta seleccionada
-         if (selectedAlertId === alertId) {
-             setActiveSosTimer(null);
-             clearInterval(countdownIntervalRef.current);
-         }
-         // La actualización visual completa vendrá por socket 'sos-alert-updated'
+    // Nota: Quitamos el window.confirm aquí si ya lo manejas en el componente DetalleAlertaSeleccionada
+    // O lo dejamos como doble seguridad. Asumiremos que DetalleAlertaSeleccionada ya tiene su modal.
+    
+    setError('');
+    // Enviamos 'finalizado' al backend. El backend emitirá 'sos-alert-ended' que capturamos arriba en el useEffect.
+    sosService.updateStatus(alertId, { estado: 'finalizado' }).catch(() => setError("Error al finalizar."));
+    
+    if (selectedAlertId === alertId) {
+         setActiveSosTimer(null);
+         clearInterval(countdownIntervalRef.current);
     }
   };
 
-  /**
-   * Handler para aplicar cambios en los filtros.
-   * @param {Object} newFilters - Nuevos filtros aplicados.
-   */
-   const handleFilterChange = (newFilters) => {
-       console.log("Aplicando filtros:", newFilters);
-       setFilters(newFilters);
-   };
+  const handleFilterChange = (newFilters) => setFilters(newFilters);
 
-  // --- Render Principal ---
+  // --- RENDER (Diseño Original Intacto) ---
   return (
-    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      {/* --- HEADER --- */}
-      <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Alertas SOS</Typography>
-      <Typography variant="body1" color="text.secondary" gutterBottom>
-        Monitoriza emergencias activas y revisa el historial. Selecciona una alerta para ver detalles y ubicación.
-      </Typography>
-      <Divider sx={{ my: 2 }}/>
-      {error && <Alert severity="error" onClose={() => setError('')} sx={{ mb: 2 }}>{error}</Alert>}
+    <Box sx={{ p: { xs: 2, md: 3 }, minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Container maxWidth="xl" disableGutters>
+        
+        {/* 1. Header Principal */}
+        <Box sx={{ mb: 4 }}>
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
+                <SosIcon sx={{ fontSize: 40, color: 'error.main' }} />
+                <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
+                    Centro de Emergencias
+                </Typography>
+            </Stack>
+            <Typography variant="body1" color="text.secondary" sx={{ maxWidth: '800px', ml: { sm: 7 } }}>
+                Monitoreo en tiempo real de alertas ciudadanas. Prioriza la atención inmediata y coordina la respuesta.
+            </Typography>
+        </Box>
 
-      {/* --- Layout Principal (Stack Vertical) --- */}
-      <Stack spacing={3}>
+        {error && <Fade in={true}><Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert></Fade>}
 
-          {/* --- Fila Superior: Panel Activa, Detalles, Mapa --- */}
-          <Grid container spacing={3} alignItems="stretch">
-              {/* Panel Alerta Activa */}
-              <Grid item xs={12} lg={3}>
-                  <PanelAlertaActiva alerts={allAlerts} />
-              </Grid>
-              {/* Detalles Alerta Seleccionada */}
-              <Grid item xs={12} md={6} lg={4}>
-                  <DetalleAlertaSeleccionada
-                      key={selectedAlertId || 'no-alert'} // Clave para forzar re-render al cambiar selección
-                      alert={selectedAlertData}
-                      timer={selectedAlertData?.estado === 'activo' ? activeSosTimer : null}
-                      loading={loading && !selectedAlertData} // Muestra skeleton si carga inicial y no hay selección
-                      onFinishAlert={handleFinishAlert}
-                  />
-              </Grid>
-              {/* Mapa */}
-              <Grid item xs={12} md={6} lg={5}>
-                  <MapaAlertaSOS
-                      alertId={selectedAlertId}
-                      locationHistory={currentPath}
-                      latestLocation={latestLocation}
-                      alertCode={selectedAlertData?.codigo_alerta}
-                       // Muestra skeleton si carga inicial y no hay selección
-                      loading={loading && !selectedAlertData}
-                  />
-              </Grid>
-          </Grid>
+        {/* 2. Panel de Control (Grid Principal) */}
+        <Grid container spacing={3} sx={{ mb: 5 }}>
+            
+            {/* Columna Izquierda: Estado Activo y Detalles */}
+            <Grid item xs={12} lg={4}>
+                <Stack spacing={3} height="100%">
+                    {/* Panel de Alerta Activa (KPI) */}
+                    <PanelAlertaActiva alerts={allAlerts} />
+                    
+                    {/* Detalles de la Selección */}
+                    <Box sx={{ flexGrow: 1 }}>
+                        <DetalleAlertaSeleccionada
+                            key={selectedAlertId || 'no-alert'}
+                            alert={selectedAlertData}
+                            timer={selectedAlertData?.estado === 'activo' ? activeSosTimer : null}
+                            loading={loading && !selectedAlertData}
+                            onFinishAlert={handleFinishAlert}
+                        />
+                    </Box>
+                </Stack>
+            </Grid>
 
-          {/* --- Fila Inferior: Historial --- */}
-          <Box>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'medium', mt: 2 }}>
-                  Historial de Alertas
-              </Typography>
-              {/* --- Componente de Filtros --- */}
-              <FiltrosHistorialSOS
-                  initialFilters={filters} // Pasa filtros iniciales (con fechas por defecto)
-                  onFilterChange={handleFilterChange}
-                  // Podríamos pasar 'loading' para deshabilitar mientras carga inicial
-                  // loading={loading}
-              />
-              {/* --- Lista ahora recibe las alertas filtradas --- */}
-              <ListaAlertasSOS
-                  alerts={filteredAlerts} // Pasar lista filtrada
-                  selectedAlertId={selectedAlertId}
-                  // Muestra skeleton solo si carga inicial Y la lista filtrada está vacía
-                  loading={loading && filteredAlerts.length === 0}
-                  onSelectAlert={handleSelectAlert}
-                  onAttentionChange={handleAttentionChange}
-              />
-          </Box>
-      </Stack>
+            {/* Columna Derecha: Mapa Táctico */}
+            <Grid item xs={12} lg={8}>
+                <Box height="100%" minHeight={500}>
+                    <MapaAlertaSOS
+                        alertId={selectedAlertId}
+                        locationHistory={currentPath}
+                        latestLocation={latestLocation}
+                        alertCode={selectedAlertData?.codigo_alerta}
+                        loading={loading && !selectedAlertData}
+                    />
+                </Box>
+            </Grid>
+        </Grid>
+
+        <Divider sx={{ my: 6, opacity: 0.6 }} />
+
+        {/* 3. Sección Historial */}
+        <Box>
+            <Stack direction="row" alignItems="center" spacing={1} mb={3}>
+                <HistoryIcon color="action" />
+                <Typography variant="h5" fontWeight="bold">Historial de Incidentes</Typography>
+            </Stack>
+
+            <FiltrosHistorialSOS
+                initialFilters={filters}
+                onFilterChange={handleFilterChange}
+            />
+
+            <Box sx={{ mt: 3 }}>
+                <ListaAlertasSOS
+                    alerts={filteredAlerts}
+                    selectedAlertId={selectedAlertId}
+                    loading={loading && filteredAlerts.length === 0}
+                    onSelectAlert={handleSelectAlert}
+                    onAttentionChange={handleAttentionChange}
+                />
+            </Box>
+        </Box>
+
+      </Container>
     </Box>
   );
 }

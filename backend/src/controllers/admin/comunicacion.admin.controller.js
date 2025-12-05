@@ -9,12 +9,16 @@ const getSimulatedSmsLog = async (req, res) => {
     const offset = (page - 1) * limit;
     let query = `
       SELECT 
-        log.id, log.contacto_telefono, log.mensaje, log.fecha_envio,
-        log.contacto_nombre, -- <-- CAMBIO: Añadir nombre del contacto
+        log.id, 
+        log.contacto_telefono, 
+        log.mensaje, 
+        log.ubicacion_url, -- <-- NUEVO CAMPO IMPORTANTE
+        log.fecha_envio,
+        log.contacto_nombre,
         u.alias as usuario_sos_alias,
-        u.telefono as telefono_usuario_sos, -- <-- CAMBIO: Añadir teléfono del usuario
-        u.email as usuario_sos_email,     -- <-- CAMBIO: Añadir email del usuario
-        u.rol as usuario_sos_rol         -- <-- CAMBIO: Añadir rol del usuario
+        u.telefono as telefono_usuario_sos,
+        u.email as usuario_sos_email,
+        u.rol as usuario_sos_rol
       FROM simulated_sms_log log
       LEFT JOIN usuarios u ON log.id_usuario_sos = u.id
     `;
@@ -186,9 +190,26 @@ const deleteNotification = async (req, res) => {
     }
 };
 
+const deleteSmsLog = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await db.query('DELETE FROM simulated_sms_log WHERE id = $1 RETURNING id', [id]);
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: 'Registro no encontrado.' });
+    }
+
+    res.status(200).json({ message: 'Registro de SMS eliminado correctamente.' });
+  } catch (error) {
+    console.error("Error en deleteSmsLog:", error);
+    res.status(500).json({ message: 'Error al eliminar el registro.' });
+  }
+};
+
 module.exports = {
   getSimulatedSmsLog,
   getNotificationHistory,
   sendNotification,
   deleteNotification,
+  deleteSmsLog,
 };

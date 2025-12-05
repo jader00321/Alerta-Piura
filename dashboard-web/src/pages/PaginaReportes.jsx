@@ -1,6 +1,16 @@
-// src/pages/ReportsManagementPage.jsx (renombrado a PaginaReportes en el export)
+// src/pages/PaginaReportes.jsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Box, Typography, CircularProgress, Divider } from '@mui/material';
+import { 
+  Box, Typography, CircularProgress, Alert, Fade, Container, Paper, Stack,
+  Tabs, Tab, Badge
+} from '@mui/material';
+import { 
+  Assessment as AssessmentIcon, 
+  RateReview as RateReviewIcon,
+  Dashboard as DashboardIcon,
+  CheckCircle as CheckIcon
+} from '@mui/icons-material';
+
 import adminService from '../services/adminService';
 import { useDebounce } from '../hooks/useDebounce';
 import ChatModal from '../components/ChatModal';
@@ -11,63 +21,47 @@ import ListaReportes from '../components/Reportes/ListaReportes';
 import DrawerDetalleReporte from '../components/Reportes/DrawerDetalleReporte';
 
 /**
- * Componente PaginaReportes: Página principal para la gestión general de reportes.
- * Incluye carga de reportes con filtros, paginación infinita, panel de solicitudes de revisión,
- * y modales para ver detalles de reportes y chatear con usuarios.
- * 
- * Funcionalidades principales:
- * - Carga inicial de categorías, reportes y solicitudes de revisión.
- * - Filtros avanzados con búsqueda debounced y opciones de ordenamiento.
- * - Paginación infinita para cargar más reportes.
- * - Panel para resolver solicitudes de revisión.
- * - Drawer para detalles de reporte y modal de chat.
+ * Componente PaginaReportes - Diseño con Pestañas (Tabs)
  */
 function PaginaReportes() {
-    // Estados para datos principales
-    const [reports, setReports] = useState([]); // Lista de reportes cargados
-    const [categories, setCategories] = useState([]); // Lista de categorías disponibles
-    const [reviewRequests, setReviewRequests] = useState([]); // Solicitudes de revisión pendientes
+    // --- Estados de Datos ---
+    const [reports, setReports] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [reviewRequests, setReviewRequests] = useState([]);
 
-    // Estados para filtros y búsqueda
-    const [filters, setFilters] = useState({ search: '', status: '', categoryId: '', sortBy: 'newest', distrito: '', planType: '', prioridad: '' }); // Filtros aplicados
-    const [showOnlySuggested, setShowOnlySuggested] = useState(false); // Flag para mostrar solo reportes sugeridos
+    // --- Estados de Filtros ---
+    const [filters, setFilters] = useState({ search: '', status: '', categoryId: '', sortBy: 'newest', distrito: '', planType: '', prioridad: '' });
+    const [showOnlySuggested, setShowOnlySuggested] = useState(false);
 
-    // Estados para paginación y carga
-    const [page, setPage] = useState(1); // Página actual para paginación
-    const [loading, setLoading] = useState(true); // Indicador de carga único
-    const [hasMore, setHasMore] = useState(true); // Indica si hay más páginas disponibles
+    // --- Estados UI ---
+    const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
+    const [globalError, setGlobalError] = useState('');
+    const [tabIndex, setTabIndex] = useState(0); // Estado para controlar las pestañas
 
-    // Estados para modales/drawers
-    const [drawerOpen, setDrawerOpen] = useState(false); // Estado del drawer de detalles
-    const [selectedReport, setSelectedReport] = useState(null); // Reporte seleccionado para detalles/chat
-    const [chatOpen, setChatOpen] = useState(false); // Estado del modal de chat
+    // --- Estados Modales ---
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [selectedReport, setSelectedReport] = useState(null);
+    const [chatOpen, setChatOpen] = useState(false);
 
-    // Búsqueda debounced para optimizar llamadas al servidor
     const debouncedSearch = useDebounce(filters.search, 500);
-    const isInitialMount = useRef(true); // Ref para controlar si es el montaje inicial
+    const isInitialMount = useRef(true);
 
-    /**
-     * useEffect para cargar categorías una sola vez al montar el componente.
-     * No depende de nada, se ejecuta solo una vez.
-     */
+    // --- Carga Inicial ---
     useEffect(() => {
         adminService.getAllCategories()
           .then(setCategories)
           .catch(err => console.error("Error fetching categories:", err));
     }, []);
 
-    /**
-     * Función centralizada para cargar reportes y solicitudes de revisión.
-     * Maneja paginación y reseteo de lista si es un nuevo filtro.
-     * 
-     * @param {boolean} isNewFilter - Si es true, resetea página y lista; si false, agrega a la existente.
-     */
+    // --- Carga de Datos Principal ---
     const fetchReportsAndRequests = useCallback((isNewFilter = false) => {
-        const pageToFetch = isNewFilter ? 1 : page; // Usa página 1 si es filtro nuevo, sino la actual
+        const pageToFetch = isNewFilter ? 1 : page;
         const currentFilters = {
             search: debouncedSearch,
             status: filters.status,
-            categoryId: showOnlySuggested ? '' : filters.categoryId, // Ignora categoría si solo sugeridos
+            categoryId: showOnlySuggested ? '' : filters.categoryId,
             sortBy: filters.sortBy,
             page: pageToFetch,
             suggestedOnly: showOnlySuggested ? 'true' : null,
@@ -76,186 +70,198 @@ function PaginaReportes() {
             prioridad: filters.prioridad,
         };
 
-        console.log("Fetching data with filters:", currentFilters, "Is New Filter:", isNewFilter); // Log para depuración
         setLoading(true);
+        setGlobalError('');
+
         if (isNewFilter) {
-            setPage(1); // Resetea página para filtros nuevos
-            setReports([]); // Limpia lista visualmente
-            setHasMore(true); // Asume que habrá resultados
+            setPage(1);
+            setReports([]);
+            setHasMore(true);
         }
 
-        // Carga reportes y solicitudes en paralelo
         Promise.all([
             adminService.getAllAdminReports(currentFilters),
             adminService.getReviewRequests()
         ]).then(([newReports, requests]) => {
-            console.log("Received new reports:", newReports.length, "Has More:", newReports.length === 10); // Log
-            setReports(prev => isNewFilter ? newReports : [...prev, ...newReports]); // Agrega o resetea lista
+            setReports(prev => isNewFilter ? newReports : [...prev, ...newReports]);
             setReviewRequests(requests);
-            setHasMore(newReports.length === 10); // Verifica si hay más (asumiendo PAGE_SIZE=10)
-            // El estado 'page' se actualiza en handleLoadMore antes si no es filtro nuevo
+            setHasMore(newReports.length === 10); 
         }).catch(error => {
             console.error("Error fetching data:", error);
+            setGlobalError("No se pudieron cargar los datos. Intente nuevamente.");
             setHasMore(false);
         }).finally(() => {
             setLoading(false);
-            // Marca que el montaje inicial terminó después de la primera carga
-            if (isInitialMount.current) {
-                isInitialMount.current = false;
-            }
+            if (isInitialMount.current) isInitialMount.current = false;
         });
-     
-    }, [page, debouncedSearch, filters, showOnlySuggested]); // Dependencias para optimización
+      
+    }, [page, debouncedSearch, filters, showOnlySuggested]);
 
-    /**
-     * useEffect para carga inicial y cambios en filtros.
-     * Se ejecuta cuando cambian los filtros, reseteando a página 1.
-     */
     useEffect(() => {
-        // Llama siempre que cambien los filtros, reseteando a página 1
-        console.log("Filter change detected, fetching page 1"); // Log
         fetchReportsAndRequests(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [debouncedSearch, filters.status, filters.categoryId, filters.sortBy, showOnlySuggested, filters.distrito, filters.planType, filters.prioridad]); // Dependencias de filtros
+    }, [debouncedSearch, filters.status, filters.categoryId, filters.sortBy, showOnlySuggested, filters.distrito, filters.planType, filters.prioridad, fetchReportsAndRequests]);
 
-     /**
-      * useEffect para paginación (cargar más reportes).
-      * Solo se ejecuta cuando cambia 'page', y no en montaje inicial o página 1.
-      */
-      useEffect(() => {
-          // No hacer nada en montaje inicial o si es página 1 (ya cargada por el effect de filtros)
-          if (isInitialMount.current || page === 1) return;
+    useEffect(() => {
+        if (isInitialMount.current || page === 1) return;
+        fetchReportsAndRequests(false);
+    }, [page, fetchReportsAndRequests]);
 
-          console.log(`Page changed to ${page}, fetching more...`); // Log
-          // Cargar la página actual (incrementada en handleLoadMore)
-          fetchReportsAndRequests(false); // 'false' indica que no es filtro nuevo
-
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [page]); // Solo depende de 'page'
-
-    // --- Handlers para filtros y acciones ---
-    /**
-     * Handler para cambios en filtros individuales.
-     * @param {string} name - Nombre del filtro (e.g., 'status').
-     * @param {any} value - Nuevo valor del filtro.
-     */
+    // --- Handlers UI ---
     const handleFilterChange = (name, value) => { setFilters(prev => ({ ...prev, [name]: value })); };
-
-    /**
-     * Handler para cambio de ordenamiento.
-     * @param {string} sortByValue - Valor de orden (e.g., 'newest').
-     */
     const handleSortChange = (sortByValue) => { setFilters(prev => ({ ...prev, sortBy: sortByValue })); };
-
-    /**
-     * Handler para toggle de "solo sugeridos".
-     * @param {boolean} isChecked - Si está activado.
-     */
     const handleToggleSuggested = (isChecked) => { setShowOnlySuggested(isChecked); };
-
-    /**
-     * Handler para limpiar todos los filtros.
-     */
     const handleClearFilters = () => {
          setFilters({ search: '', status: '', categoryId: '', sortBy: 'newest', distrito: '', planType: '', prioridad: '' });
          setShowOnlySuggested(false);
     };
-
-    /**
-     * Handler para cargar más reportes (paginación).
-     * Incrementa la página, lo que dispara el useEffect [page].
-     */
-    const handleLoadMore = () => {
-        if (!loading && hasMore) {
-            console.log("Load More clicked, incrementing page..."); // Log
-            // Actualiza el estado de la página, disparando el useEffect [page]
-            setPage(prevPage => prevPage + 1);
-        }
+    const handleLoadMore = () => { if (!loading && hasMore) setPage(prevPage => prevPage + 1); };
+    
+    // Handler de Pestañas
+    const handleTabChange = (event, newValue) => {
+        setTabIndex(newValue);
     };
 
-    // --- Handlers para drawer, chat y acciones (sin cambios significativos) ---
-    /**
-     * Handler para abrir el drawer de detalles.
-     * @param {Object} report - Reporte seleccionado.
-     */
+    // --- Handlers Modales ---
     const handleOpenDrawer = (report) => { setSelectedReport(report); setDrawerOpen(true); };
-
-    /**
-     * Handler para cerrar el drawer de detalles.
-     * Limpia el reporte seleccionado con delay para animación.
-     */
     const handleCloseDrawer = () => { setDrawerOpen(false); setTimeout(() => setSelectedReport(null), 300); };
-
-    /**
-     * Handler para abrir el modal de chat.
-     * Cierra el drawer y abre el chat.
-     * @param {Object} report - Reporte para chatear.
-     */
     const handleOpenChat = (report) => { setSelectedReport(report); setChatOpen(true); setDrawerOpen(false);};
-
-    /**
-     * Handler para cuando se completa una acción en el drawer.
-     * Cierra el drawer y recarga datos.
-     */
     const handleActionCompleted = () => { handleCloseDrawer(); fetchReportsAndRequests(true); };
+    const handleResolveRequest = (id, action) => { 
+        adminService.resolveReviewRequest(id, action)
+            .then(() => fetchReportsAndRequests(true))
+            .catch(err => alert(err.response?.data?.message || 'Error.')); 
+    };
 
-    /**
-     * Handler para resolver una solicitud de revisión.
-     * @param {number} id - ID de la solicitud.
-     * @param {string} action - Acción a realizar (e.g., 'approve').
-     */
-    const handleResolveRequest = (id, action) => { adminService.resolveReviewRequest(id, action).then(() => fetchReportsAndRequests(true)).catch(err => alert(err.response?.data?.message || 'Error.')); };
-
-    // --- Render Principal ---
+    // --- RENDER ---
     return (
-        <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-            {/* Título de la página */}
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-                Gestión General de Reportes
-            </Typography>
-
-            {/* Panel para solicitudes de revisión */}
-            <PanelSolicitudesRevision
-                reviewRequests={reviewRequests}
-                onResolveRequest={handleResolveRequest}
-            />
-
-            {/* Componente de filtros */}
-            <FiltrosReportes
-                filters={filters}
-                categories={categories}
-                showOnlySuggested={showOnlySuggested}
-                onFilterChange={handleFilterChange}
-                onSortChange={handleSortChange}
-                onToggleSuggested={handleToggleSuggested}
-                onClearFilters={handleClearFilters}
-                onLoadMore={handleLoadMore}
-                hasMore={hasMore}
-                loadingMore={loading && page > 0} // Indicador correcto para el botón de cargar más
-            />
-
-            {/* Carga inicial o lista de reportes */}
-            {loading && reports.length === 0 && page === 1 ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
-                    <CircularProgress size={50}/>
+        <Box sx={{ p: { xs: 2, md: 3 }, minHeight: '100vh', bgcolor: 'background.default' }}>
+            <Container maxWidth="xl" disableGutters>
+                
+                {/* 1. Header Principal */}
+                <Box sx={{ mb: 4 }}>
+                    <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
+                        <AssessmentIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                        <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.5px' }}>
+                            Control de Reportes
+                        </Typography>
+                    </Stack>
+                    <Typography variant="body1" color="text.secondary" sx={{ maxWidth: '800px', ml: { sm: 7 } }}>
+                        Supervisa, modera y gestiona todos los incidentes reportados por la ciudadanía.
+                    </Typography>
                 </Box>
-            ) : (
-                <ListaReportes
-                    reports={reports}
-                    onOpenDrawer={handleOpenDrawer}
-                    // No necesita props de carga/paginación
-                />
-            )}
 
-            {/* Modales y drawers */}
-            {selectedReport && chatOpen && (<ChatModal open={chatOpen} onClose={() => setChatOpen(false)} report={selectedReport} />)}
-            <DrawerDetalleReporte
-                report={selectedReport}
-                open={drawerOpen}
-                onClose={handleCloseDrawer}
-                onActionCompleted={handleActionCompleted}
-                onOpenChat={handleOpenChat}
-            />
+                {globalError && (
+                    <Fade in={true}>
+                        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{globalError}</Alert>
+                    </Fade>
+                )}
+
+                {/* 2. Pestañas de Navegación */}
+                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                    <Tabs 
+                        value={tabIndex} 
+                        onChange={handleTabChange}
+                        sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '1rem', minHeight: 48 } }}
+                    >
+                        <Tab 
+                            label="Explorador de Incidentes" 
+                            icon={<DashboardIcon sx={{mb:0, mr:1}}/>} 
+                            iconPosition="start" 
+                        />
+                        <Tab 
+                            label={
+                                <Badge 
+                                    badgeContent={reviewRequests.length} 
+                                    color="error" 
+                                    max={99}
+                                    sx={{ '& .MuiBadge-badge': { right: -15, top: 2, border: '2px solid white' } }}
+                                >
+                                    Solicitudes de Revisión
+                                </Badge>
+                            }
+                            icon={<RateReviewIcon sx={{mb:0, mr:1}}/>} 
+                            iconPosition="start" 
+                            sx={{ px: 4, overflow: 'visible' }} // Espacio para el badge
+                        />
+                    </Tabs>
+                </Box>
+
+                {/* 3. Contenido Pestaña 0: Explorador */}
+                {tabIndex === 0 && (
+                    <Box>
+                        <FiltrosReportes
+                            filters={filters}
+                            categories={categories}
+                            showOnlySuggested={showOnlySuggested}
+                            onFilterChange={handleFilterChange}
+                            onSortChange={handleSortChange}
+                            onToggleSuggested={handleToggleSuggested}
+                            onClearFilters={handleClearFilters}
+                            onLoadMore={handleLoadMore}
+                            hasMore={hasMore}
+                            loadingMore={loading && page > 0}
+                        />
+
+                        <Box sx={{ mt: 3 }}>
+                            {loading && reports.length === 0 && page === 1 ? (
+                                <Paper sx={{ p: 8, textAlign: 'center', borderRadius: 2 }} variant="outlined">
+                                    <CircularProgress size={40} thickness={4} />
+                                    <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+                                        Cargando reportes...
+                                    </Typography>
+                                </Paper>
+                            ) : (
+                                <ListaReportes
+                                    reports={reports}
+                                    onOpenDrawer={handleOpenDrawer}
+                                />
+                            )}
+                        </Box>
+                    </Box>
+                )}
+
+                {/* 4. Contenido Pestaña 1: Solicitudes de Revisión */}
+                {tabIndex === 1 && (
+                    <Box sx={{ minHeight: 400 }}>
+                        {reviewRequests.length > 0 ? (
+                            <PanelSolicitudesRevision
+                                reviewRequests={reviewRequests}
+                                onResolveRequest={handleResolveRequest}
+                            />
+                        ) : (
+                            // Estado vacío amigable para la pestaña de solicitudes
+                            <Paper 
+                                variant="outlined" 
+                                sx={{ p: 6, textAlign: 'center', borderRadius: 2, borderStyle: 'dashed' }}
+                            >
+                                <CheckIcon sx={{ fontSize: 60, color: 'success.light', mb: 2 }} />
+                                <Typography variant="h6" fontWeight="bold">Todo está al día</Typography>
+                                <Typography color="text.secondary">
+                                    No hay solicitudes de revisión pendientes en este momento.
+                                </Typography>
+                            </Paper>
+                        )}
+                    </Box>
+                )}
+
+                {/* --- Modales y Drawers --- */}
+                {selectedReport && chatOpen && (
+                    <ChatModal 
+                        open={chatOpen} 
+                        onClose={() => setChatOpen(false)} 
+                        report={selectedReport} 
+                    />
+                )}
+                
+                <DrawerDetalleReporte
+                    report={selectedReport}
+                    open={drawerOpen}
+                    onClose={handleCloseDrawer}
+                    onActionCompleted={handleActionCompleted}
+                    onOpenChat={handleOpenChat}
+                />
+
+            </Container>
         </Box>
     );
 }

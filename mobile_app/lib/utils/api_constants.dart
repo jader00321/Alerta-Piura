@@ -1,4 +1,4 @@
-import 'dart:io';
+/*import 'dart:io';
 
 /// Define las constantes estáticas para conectarse a la API.
 ///
@@ -30,5 +30,37 @@ class ApiConstants {
   static String registerEndpoint = '/api/auth/register';
 
   /// Endpoint para el inicio de sesión de usuarios.
+  static String loginEndpoint = '/api/auth/login';
+}*/
+
+import 'dart:io';
+
+class ApiConstants {
+  // --------------------------------------------------
+  // CONFIGURACIÓN DE IP (IMPORTANTE)
+  // --------------------------------------------------
+  // 1. Abre CMD en Windows y escribe: ipconfig
+  // 2. Copia la "Dirección IPv4" y pégala aquí abajo:
+  static const String _miIpLocal = '192.168.100.5'; // <--- ¡CAMBIA ESTO POR TU IP!
+  
+  // Puerto de tu servidor Node.js
+  static const String _puerto = '3000'; 
+
+  /// La URL base del servidor backend.
+  static String get baseUrl {
+    if (Platform.isAndroid) {
+      // Opción A: Celular Físico (Usa la IP de tu PC)
+      return 'http://$_miIpLocal:$_puerto';
+      
+      // Opción B: Emulador de Android (Descomenta si vuelves a usar emulador)
+      // return 'http://10.0.2.2:$_puerto'; 
+    }
+    
+    // iOS / Web / Desktop
+    return 'http://localhost:$_puerto';
+  }
+
+  // Endpoints
+  static String registerEndpoint = '/api/auth/register';
   static String loginEndpoint = '/api/auth/login';
 }

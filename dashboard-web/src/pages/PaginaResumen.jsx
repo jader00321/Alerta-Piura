@@ -1,16 +1,27 @@
 // src/pages/PaginaResumen.jsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { Grid, Typography, Box, CircularProgress, Alert, Divider, Skeleton, Paper} from '@mui/material';
+import { 
+  Grid, Typography, Box, CircularProgress, Alert, Divider, Skeleton, Paper, 
+  Stack, useTheme, Fade, Container
+} from '@mui/material';
+import { 
+  Dashboard as DashboardIcon, 
+  TrendingUp as TrendingUpIcon,
+  PieChart as PieChartIcon,
+  ListAlt as ListIcon // Icono para la sección de tabla
+} from '@mui/icons-material';
+
+// --- Recharts Imports ---
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
 import TarjetaEstadistica from '../components/Resumen/TarjetaEstadistica';
-import GraficoReportesDia from '../components/Resumen/GraficoReportesDia';
 import TablaUltimosReportes from '../components/Resumen/TablaUltimosReportes';
 import ModalDetalleReporteResumen from '../components/Resumen/ModalDetalleReporteResumen';
-// --- MODIFICADO: Importar GraficoBarrasSimple ---
-import GraficoBarrasSimple from '../components/Analisis/GraficoBarrasSimple'; // Assuming it's in Analisis folder
+import GraficoBarrasSimple from '../components/Analisis/GraficoBarrasSimple';
 import { useAuth } from '../context/AuthContext';
 import adminService from '../services/adminService';
 
-// (Importaciones de Iconos sin cambios)
+// Iconos
 import PeopleIcon from '@mui/icons-material/People';
 import ReportIcon from '@mui/icons-material/Report';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -24,10 +35,6 @@ import RejectedIcon from '@mui/icons-material/CancelOutlined';
 import HiddenIcon from '@mui/icons-material/VisibilityOff';
 import RoleRequestIcon from '@mui/icons-material/AssignmentInd';
 
-/**
- * Mapeo de colores para los estados de reportes
- * @type {Object}
- */
 const STATUS_COLORS = {
   Pendiente: '#ff9800',
   Verificado: '#4caf50',
@@ -36,11 +43,8 @@ const STATUS_COLORS = {
   Otro: '#607d8b',
 };
 
-/**
- * PaginaResumen - Página principal del dashboard con métricas y visualizaciones
- * @returns {JSX.Element}
- */
 function PaginaResumen() {
+  const theme = useTheme();
   const [stats, setStats] = useState(null);
   const [dailyChartData, setDailyChartData] = useState([]);
   const [statusChartData, setStatusChartData] = useState([]);
@@ -51,15 +55,11 @@ function PaginaResumen() {
   const [selectedReport, setSelectedReport] = useState(null);
   const { isAuthenticated } = useAuth();
 
-  /**
-   * Función para obtener todos los datos del dashboard
-   */
   const fetchData = useCallback(() => {
     if (!isAuthenticated) { setLoading(false); return; }
     setLoading(true);
     setError('');
     
-    // Reiniciar datos para asegurar que los Skeletons aparezcan
     setStats(null);
     setDailyChartData([]);
     setStatusChartData([]);
@@ -67,70 +67,45 @@ function PaginaResumen() {
 
     Promise.all([
       adminService.getDashboardStats(),
-      adminService.getReportsByDay(), // Obtiene últimos 7 días por defecto
+      adminService.getReportsByDay(),
       adminService.getLatestPendingReports(),
-      adminService.getReportsGroupedByStatus() // Obtiene todos los estados sin filtro
+      adminService.getReportsGroupedByStatus()
     ]).then(([statsData, reportsByDayData, latestReportsData, reportsByStatusData]) => {
       setStats(statsData);
-      setLatestReports(latestReportsData || []); // Asegurar array
+      setLatestReports(latestReportsData || []);
       
       const formattedDailyData = (reportsByDayData || []).map(d => ({
-        // Formateo de fecha más robusto
-        date: d.date ? new Intl.DateTimeFormat('es-ES', { month: 'short', day: 'numeric' }).format(new Date(d.date.replace(/-/g, '/'))) : 'Fecha Inválida',
+        date: d.date ? new Intl.DateTimeFormat('es-ES', { month: 'short', day: 'numeric' }).format(new Date(d.date.replace(/-/g, '/'))) : 'N/A',
         count: parseInt(d.count, 10) || 0
       }));
       setDailyChartData(formattedDailyData);
-      
-      // Asegurar que statusChartData siempre sea un array
       setStatusChartData(reportsByStatusData || []);
 
     }).catch(err => {
       console.error("Error fetching dashboard data:", err);
       setError('No se pudieron cargar los datos del resumen.');
-      // Mantener los arrays vacíos en caso de error
-      setStats({}); // Poner un objeto vacío para evitar errores en las tarjetas
-      setLatestReports([]);
-      setDailyChartData([]);
-      setStatusChartData([]);
+      setStats({});
     }).finally(() => setLoading(false));
   }, [isAuthenticated]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  /**
-   * Maneja la apertura del modal de detalle de reporte
-   * @param {Object} report - Reporte seleccionado
-   */
   const handleOpenModal = (report) => { setSelectedReport(report); setModalOpen(true); };
-  
-  /**
-   * Maneja el cierre del modal de detalle de reporte
-   */
   const handleCloseModal = () => { setModalOpen(false); setTimeout(() => setSelectedReport(null), 300);};
   
-  /**
-   * Maneja las acciones de moderación (aprobar/rechazar reportes)
-   * @param {string} reportId - ID del reporte
-   * @param {boolean} approve - True para aprobar, false para rechazar
-   */
   const handleModerationAction = (reportId, approve) => {
-    // Podrías poner un estado de carga específico para la tabla/modal aquí
     adminService.resolveReport(reportId, approve)
       .then(() => {
-          // Opcional: Actualizar solo la tabla o el estado local si es posible
-          // Por ahora, recarga todo para simplicidad
           fetchData(); 
-          handleCloseModal(); // Cerrar modal después de la acción
+          handleCloseModal();
       })
       .catch((err) => { 
           console.error("Error al moderar:", err);
           setError('Error al procesar la moderación.'); 
-          // Considera no poner setLoading(false) aquí si quieres que el spinner general siga
       });
   };
 
-  // Definir tarjetas (sin cambios lógicos, solo Skeletons)
-   const statCardsData = stats ? [
+  const statCardsData = stats ? [
     { title: "Reportes Pendientes", value: stats.reportesPendientes, icon: <ReportIcon />, color: "warning" },
     { title: "Alertas SOS Activas", value: stats.alertasSosActivas, icon: <SosIcon />, color: "error" },
     { title: "Comentarios Reportados", value: stats.comentariosReportados, icon: <CommentIcon />, color: "info" },
@@ -143,98 +118,134 @@ function PaginaResumen() {
     { title: "Categorías Sugeridas", value: stats.categoriasSugeridas, icon: <SuggestionIcon />, color: "info" },
     { title: "Reportes Rechazados", value: stats.reportesRechazados, icon: <RejectedIcon />, color: "error" },
     { title: "Reportes Ocultos", value: stats.reportesOcultos, icon: <HiddenIcon />, color: "default" },
-  ] : [...Array(12)].map((_, i) => ({ // 12 Skeletons
-      title: <Skeleton width="80%"/>,
-      value: <Skeleton width="40%"/>,
-      icon: <Skeleton variant="circular" width={40} height={40} />,
-      color: "default",
-      key: `skel-${i}`
+  ] : [...Array(12)].map((_, i) => ({ 
+      title: <Skeleton width="80%"/>, 
+      value: <Skeleton width="40%"/>, 
+      icon: <Skeleton variant="circular" width={24} height={24} />, 
+      color: "default", 
+      key: `skel-${i}` 
   }));
 
   const urgentCards = statCardsData.slice(0, 5);
   const generalCards = statCardsData.slice(5);
 
-  // Mostrar spinner solo en carga inicial completa
   if (loading && !stats && !error) {
       return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}><CircularProgress size={60}/></Box>;
   }
 
-
   return (
-    // --- MODIFICADO: Padding ajustado en contenedor principal ---
-    <Box sx={{ p: { xs: 1.5, sm: 2, md: 3 } }}> 
-      {/* --- MODIFICADO: Cabecera mejorada --- */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
-            Resumen General
+    <Box sx={{ p: { xs: 2, md: 3 }, minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Container maxWidth="xl" disableGutters>
+        
+        {/* --- HEADER --- */}
+        <Box sx={{ mb: 5 }}>
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
+             <DashboardIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+             <Typography variant="h4" sx={{ fontWeight: 800, letterSpacing: '-0.5px', color: 'text.primary' }}>
+                Panel de Control
+             </Typography>
+          </Stack>
+          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: '800px', ml: { sm: 7 } }}>
+             Visión general del estado de la plataforma Reporta Piura. Monitorea métricas clave y gestiona incidencias urgentes.
+          </Typography>
+        </Box>
+
+        {error && <Fade in={true}><Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>{error}</Alert></Fade>}
+
+        {/* --- SECCIÓN 1: ATENCIÓN REQUERIDA --- */}
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+            Requieren Atención
         </Typography>
-        <Typography variant="body1" color="text.secondary">
-            Bienvenido al panel de administrador. Aquí tienes una vista rápida del estado actual de la plataforma, 
-            incluyendo métricas clave, actividad reciente y reportes que requieren tu atención.
+        <Grid container spacing={3} sx={{ mb: 5 }}>
+          {urgentCards.map((card) => ( <TarjetaEstadistica key={card.key || card.title} {...card} loading={loading && !stats} /> ))}
+        </Grid>
+
+        {/* --- SECCIÓN 2 (MOVIDA): ÚLTIMOS REPORTES PENDIENTES --- */}
+        {/* Ahora está arriba para acceso rápido a la acción de verificación */}
+        <Box sx={{ mb: 6 }}>
+            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+               <ListIcon color="action" />
+               <Box>
+                   <Typography variant="h6" fontWeight="bold">Cola de Verificación Rápida</Typography>
+                    <Typography variant="body2" color="text.secondary">Revisa y modera los reportes pendientes más recientes.</Typography>
+               </Box>
+            </Stack>
+            
+            <TablaUltimosReportes
+                reports={latestReports}
+                loading={loading && latestReports.length === 0}
+                onReportClick={handleOpenModal}
+            />
+        </Box>
+
+        <Divider sx={{ my: 6, opacity: 0.5 }} />
+
+        {/* --- SECCIÓN 3: METRICAS GENERALES --- */}
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+            Estadísticas Globales
         </Typography>
-      </Box>
-      {/* --- Fin de Cabecera --- */}
+        <Grid container spacing={3} sx={{ mb: 5 }}>
+          {generalCards.map((card) => ( <TarjetaEstadistica key={card.key || card.title} {...card} loading={loading && !stats} /> ))}
+        </Grid>
 
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-
-      {/* --- SECCIÓN 1: MÉTRICAS URGENTES --- */}
-      <Typography variant="h6" gutterBottom sx={{ fontWeight: 'medium', mb: 2 }}>Métricas Clave</Typography>
-      <Grid container spacing={3} sx={{ mb: 5 }}>
-        {/* --- MODIFICADO: Se pasa 'loading' correctamente --- */}
-        {urgentCards.map((card) => ( <TarjetaEstadistica key={card.key || card.title} {...card} loading={loading && !stats} /> ))}
-      </Grid>
-
-      {/* --- SECCIÓN 2: ESTADÍSTICAS GENERALES --- */}
-      <Typography variant="h6" gutterBottom sx={{ fontWeight: 'medium', mb: 2 }}>Estadísticas Generales</Typography>
-      <Grid container spacing={3} sx={{ mb: 5 }}>
-        {/* --- MODIFICADO: Se pasa 'loading' correctamente --- */}
-        {generalCards.map((card) => ( <TarjetaEstadistica key={card.key || card.title} {...card} loading={loading && !stats} /> ))}
-      </Grid>
-
-      <Divider sx={{ my: 4 }} />
-
-      {/* --- SECCIÓN 3: VISUALIZACIONES --- */}
-       <Grid container spacing={4} sx={{ mb: 5 }}>
-            <Grid item xs={12} lg={7}>
-                 <GraficoReportesDia chartData={dailyChartData} loading={loading && dailyChartData.length === 0} />
+        {/* --- SECCIÓN 4 (MOVIDA): VISUALIZACIÓN DE DATOS (GRÁFICOS) --- */}
+        {/* Ahora están al final, como información de consulta/análisis */}
+        <Grid container spacing={3}>
+            {/* Gráfico 1 */}
+            <Grid item xs={12} lg={7} sx={{ overflow: 'hidden' }}>
+               <Paper elevation={0} sx={{ p: 3, height: 450, borderRadius: 3, border: `1px solid ${theme.palette.divider}`, display: 'flex', flexDirection: 'column', overflowX: 'auto' }}>
+                   <Stack direction="row" alignItems="center" spacing={1} mb={3}>
+                      <TrendingUpIcon color="primary" />
+                      <Typography variant="h6" fontWeight="bold">Actividad de Reportes (Últimos 7 días)</Typography>
+                   </Stack>
+                   <Box sx={{ flexGrow: 1, minWidth: '750px', height: '100%' }}>
+                      {loading && dailyChartData.length === 0 ? (
+                          <Skeleton variant="rectangular" width="100%" height="100%" />
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={dailyChartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
+                                <XAxis dataKey="date" tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} stroke={theme.palette.divider} axisLine={false} tickLine={false} />
+                                <YAxis tick={{ fill: theme.palette.text.secondary, fontSize: 12 }} stroke={theme.palette.divider} axisLine={false} tickLine={false} allowDecimals={false} />
+                                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} contentStyle={{ backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, borderRadius: '8px', boxShadow: theme.shadows[2] }} />
+                                <Bar dataKey="count" name="Reportes" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} barSize={50} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                   </Box>
+               </Paper>
             </Grid>
+
+            {/* Gráfico 2 */}
             <Grid item xs={12} lg={5}>
-                 {/* --- REEMPLAZADO: GraficoReportesEstado por GraficoBarrasSimple --- */}
-                 <Paper sx={{ p: 3, height: { xs: 300, md: 400 }, borderRadius: '12px', overflow: 'hidden', display:'flex', flexDirection:'column',minWidth:'500px' }} elevation={3}>
-                     <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, textAlign: 'center' }}>
-                         Distribución por Estado
-                     </Typography>
-                     {/* Pasamos los datos y configuramos para barras horizontales */}
-                     <GraficoBarrasSimple
-                         data={statusChartData}
-                         loading={loading && statusChartData.length === 0}
-                         dataKey="value"
-                         xAxisKey="name"
-                         // --- NUEVO: Pasar el mapeo de colores ---
-                         colorMapping={STATUS_COLORS}
-                         // layout="vertical" // Ya es vertical por defecto en el componente mejorado
-                         barName="Reportes" // Nombre para tooltip/leyenda (aunque leyenda está oculta)
-                     />
-                 </Paper>
+               <Paper elevation={0} sx={{ p: 3, height: 450, borderRadius: 3, border: `1px solid ${theme.palette.divider}`, display: 'flex', flexDirection: 'column' }}>
+                   <Stack direction="row" alignItems="center" spacing={1} mb={3}>
+                      <PieChartIcon color="secondary" />
+                      <Typography variant="h6" fontWeight="bold">Estado de Reportes</Typography>
+                   </Stack>
+                   <Box sx={{ flexGrow: 1, width: '100%', minWidth: 0 }}>
+                      <GraficoBarrasSimple
+                          data={statusChartData}
+                          loading={loading && statusChartData.length === 0}
+                          dataKey="value"
+                          xAxisKey="name"
+                          colorMapping={STATUS_COLORS}
+                          barName="Cantidad"
+                      />
+                   </Box>
+               </Paper>
             </Grid>
-       </Grid>
-      <Divider sx={{ my: 4 }} />
-      
-      {/* --- SECCIÓN 4: TABLA PENDIENTES --- */}
-      <TablaUltimosReportes
-          reports={latestReports}
-          // --- MODIFICADO: 'loading' más preciso ---
-          loading={loading && latestReports.length === 0}
-          onReportClick={handleOpenModal}
-      />
+        </Grid>
 
-      {/* Modal (sin cambios) */}
-      <ModalDetalleReporteResumen
-        report={selectedReport}
-        open={modalOpen}
-        onClose={handleCloseModal}
-        onAction={handleModerationAction}
-      />
+        {/* Modal de Detalle */}
+        <ModalDetalleReporteResumen
+          report={selectedReport}
+          open={modalOpen}
+          onClose={handleCloseModal}
+          onAction={handleModerationAction}
+        />
+
+      </Container>
     </Box>
   );
 }

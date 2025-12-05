@@ -112,19 +112,32 @@ class PerfilService {
   /// Lanza una [Exception] si el token es nulo o si la API devuelve un error.
   Future<List<Conversacion>> getMisConversaciones() async {
     final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
+    if (token == null) return [];
+    
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/conversaciones');
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => Conversacion.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) { return []; }
+  }
 
-    final url =
-        Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/conversaciones');
-    final response =
-        await http.get(url, headers: {'Authorization': 'Bearer $token'});
+  Future<List<ReporteSinChat>> getReportesSinChat() async {
+    final token = await _getToken();
+    if (token == null) return [];
 
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((c) => Conversacion.fromJson(c)).toList();
-    } else {
-      throw Exception('Error al cargar conversaciones');
-    }
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/reportes-sin-chat');
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => ReporteSinChat.fromJson(json)).toList();
+      }
+      return [];
+    } catch (e) { return []; }
   }
 
   /// Obtiene el historial de notificaciones del usuario.
@@ -529,6 +542,176 @@ class PerfilService {
     } catch (e) {
       print("Error en reportarUsuario Service: $e");
       return {'statusCode': 500, 'message': 'Error de conexión.'};
+    }
+  }
+
+  /// Obtiene el conteo rápido de notificaciones no leídas.
+  /// Usado para el globito rojo (Badge).
+  Future<int> getConteoNoLeidas() async {
+    final token = await _getToken();
+    if (token == null) return 0;
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones/count');
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      if (response.statusCode == 200) {
+        return json.decode(response.body)['count'] ?? 0;
+      }
+      return 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /// Obtiene notificaciones con filtros avanzados (Bandeja de entrada, Archivados, Búsqueda).
+  /*Future<List<Notificacion>> getNotificacionesAvanzadas({
+    int page = 1,
+    String filter = 'all', // 'all', 'unread', 'archived'
+    String? category,
+    String? search,
+  }) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No autenticado');
+
+    // Construcción dinámica de query params
+    final queryParams = {
+      'page': page.toString(),
+      'filter': filter,
+      if (category != null && category != 'Todas') 'category': category,
+      if (search != null && search.isNotEmpty) 'search': search,
+    };
+
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones-v2')
+        .replace(queryParameters: queryParams);
+
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      if (response.statusCode == 200) {
+        List jsonResponse = json.decode(response.body);
+        return jsonResponse.map((item) => Notificacion.fromJson(item)).toList();
+      } else {
+        throw Exception('Error cargando notificaciones');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión');
+    }
+  }*/
+  Future<List<Notificacion>> getNotificacionesAvanzadas({
+    int page = 1,
+    String filter = 'all',
+    String? category,
+    String? search,
+  }) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No autenticado');
+
+    final queryParams = {
+      'page': page.toString(),
+      'filter': filter,
+      if (category != null && category != 'Todas') 'category': category,
+      if (search != null && search.isNotEmpty) 'search': search,
+    };
+
+    // Construcción de la URL
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones-v2')
+        .replace(queryParameters: queryParams);
+
+    print("🔍 DEBUG: Solicitando URL: $url"); // <--- LOG 1
+
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      
+      print("🔍 DEBUG: Status Code: ${response.statusCode}"); // <--- LOG 2
+      print("🔍 DEBUG: Body: ${response.body}"); // <--- LOG 3
+
+      if (response.statusCode == 200) {
+        List jsonResponse = json.decode(response.body);
+        return jsonResponse.map((item) => Notificacion.fromJson(item)).toList();
+      } else {
+        // Si el servidor devuelve 404 o 500, lo veremos aquí
+        throw Exception('Error Servidor: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print("❌ ERROR REAL: $e"); // <--- LOG 4
+      // Relanzamos el error real para verlo en el widget
+      throw Exception(e.toString());
+    }
+  }
+
+  /// Marca una notificación específica como leída.
+  Future<bool> marcarLeida(int id) async {
+    final token = await _getToken();
+    if (token == null) return false;
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones/$id/read');
+    final response = await http.put(url, headers: {'Authorization': 'Bearer $token'});
+    return response.statusCode == 200;
+  }
+
+  /// Archiva (true) o Desarchiva (false) una notificación.
+  Future<bool> toggleArchivar(int id, bool archivar) async {
+    final token = await _getToken();
+    if (token == null) return false;
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones/$id/archive');
+    final response = await http.put(
+      url, 
+      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+      body: json.encode({'archivar': archivar})
+    );
+    return response.statusCode == 200;
+  }
+
+  /// Elimina una o varias notificaciones permanentemente.
+  Future<bool> eliminarNotificaciones(List<int> ids) async {
+    final token = await _getToken();
+    if (token == null) return false;
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/notificaciones/delete');
+    
+    final request = http.Request('DELETE', url);
+    request.headers.addAll({'Authorization': 'Bearer $token', 'Content-Type': 'application/json'});
+    request.body = json.encode({'ids': ids});
+    
+    final response = await http.Response.fromStream(await request.send());
+    return response.statusCode == 200;
+  }
+
+  /// Obtiene los reportes del usuario agrupados por estado (Verificado, Rechazado, Pendiente).
+  ///
+  /// Retorna una lista de [DatoGrafico] donde `name` es el estado y `value` la cantidad.
+  Future<List<DatoGrafico>> getMisReportesPorEstado() async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No autenticado');
+
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/estadisticas/por-estado');
+    
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => DatoGrafico.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar estadísticas por estado');
+      }
+    } catch (e) {
+      print("Error fetching reports by status: $e");
+      throw Exception('Error de conexión.');
+    }
+  }
+
+  Future<List<DatoGrafico>> getMisReportesPorMes() async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No autenticado');
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/perfil/me/estadisticas/por-mes');
+
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => DatoGrafico.fromJson(json)).toList();
+      } else {
+        throw Exception('Error cargando datos mensuales');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión.');
     }
   }
 }

@@ -411,6 +411,7 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
     Navigator.pushNamed(context, '/chat', arguments: {
       'reporteId': reporte.id,
       'reporteTitulo': reporte.titulo,
+      'fromReportDetails': true,
     });
   }
 
@@ -468,49 +469,38 @@ class _ReporteDetalleScreenState extends State<ReporteDetalleScreen> {
               title: const Text('Detalles del Reporte'),
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back),
-                // Botón de retroceso manual que respeta _dataChanged
                 onPressed: () => Navigator.pop(context, _dataChanged),
               ),
               actions: [
-                // Botón Seguir/Dejar de Seguir (condicional)
-                if (reporte != null &&
-                    reporte.estado == 'verificado' &&
-                    authNotifier.isAuthenticated)
+                if (reporte != null && reporte.estado == 'verificado' && authNotifier.isAuthenticated)
                   Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: _isLoadingFollow
-                        ? const Center(
-                            child: Padding(
-                                padding: EdgeInsets.all(14.0),
-                                child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2))))
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                         : TextButton.icon(
                             onPressed: _toggleFollow,
-                            icon: Icon(_isFollowing
-                                ? Icons.bookmark_added
-                                : Icons.bookmark_add_outlined),
+                            icon: Icon(_isFollowing ? Icons.bookmark_added : Icons.bookmark_add_outlined),
                             label: Text(_isFollowing ? 'Siguiendo' : 'Seguir'),
-                            style: TextButton.styleFrom(
-                                foregroundColor: Colors.white),
+                            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary),
                           ),
                   ),
-                // Botones Editar y Chat (solo para autor si está pendiente)
-                if (reporte != null &&
-                    reporte.estado == 'pendiente_verificacion' &&
-                    authNotifier.userId == reporte.idAutor) ...[
-                  IconButton(
-                    icon: const Icon(Icons.edit_note_outlined),
-                    onPressed: () => _handleEditReportAuthor(reporte!),
-                    tooltip: 'Editar Mi Reporte',
-                  ),
+                
+                // --- BOTONES DE EDICIÓN Y CHAT ---
+                if (reporte != null && authNotifier.userId == reporte.idAutor) ...[
+                  // Editar solo si es pendiente
+                  if (reporte.estado == 'pendiente_verificacion')
+                    IconButton(
+                      icon: const Icon(Icons.edit_note_outlined),
+                      onPressed: () => _handleEditReportAuthor(reporte!),
+                      tooltip: 'Editar Mi Reporte',
+                    ),
+                  
+                  // --- MODIFICACIÓN: CHAT SIEMPRE DISPONIBLE PARA EL AUTOR ---
+                  // Se muestra en cualquier estado (pendiente, verificado, rechazado, fusionado)
                   IconButton(
                     icon: const Icon(Icons.chat_bubble_outline),
                     onPressed: () => _handleChatAuthor(reporte!),
-                    tooltip: 'Abrir Chat',
+                    tooltip: 'Abrir Chat de Soporte',
                   ),
                 ],
               ],

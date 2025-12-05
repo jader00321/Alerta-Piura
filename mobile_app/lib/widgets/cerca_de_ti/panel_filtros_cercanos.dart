@@ -172,7 +172,7 @@ class _PanelFiltrosCercanosState extends State<PanelFiltrosCercanos> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Filtrar Reportes Cercanos',
+                  Text('Filtrar',
                       style: Theme.of(context).textTheme.titleLarge),
                   ElevatedButton(
                     onPressed: () {

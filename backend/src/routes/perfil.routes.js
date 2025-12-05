@@ -36,4 +36,20 @@ router.post('/postular-lider', jsonParser, perfilController.postularComoLider); 
 // Nueva ruta
 router.get('/me/stats/actividad', perfilController.getStatsActividad); // Para contadores "Mi Actividad"
 
+// Obtener lista avanzada (filtros, búsqueda)
+router.get('/me/notificaciones-v2', perfilController.getMisNotificacionesAvanzadas);
+
+// Obtener solo el numerito (badge)
+router.get('/me/notificaciones/count', perfilController.getConteoNoLeidas);
+
+// Acciones sobre una notificación
+router.put('/me/notificaciones/:id/read', perfilController.marcarUnaComoLeida);
+router.put('/me/notificaciones/:id/archive', jsonParser, perfilController.toggleArchivarNotificacion);
+
+// Eliminar (masivo o individual)
+router.delete('/me/notificaciones/delete', jsonParser, perfilController.eliminarNotificaciones);
+router.get('/me/estadisticas/por-estado', perfilController.getMisReportesPorEstado);
+router.get('/me/estadisticas/por-estado', perfilController.getMisReportesPorEstado);
+
+router.get('/me/reportes-sin-chat', perfilController.getReportesSinChat);
 module.exports = router;

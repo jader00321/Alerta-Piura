@@ -1,283 +1,286 @@
+// src/components/Usuarios/TarjetaUsuario.jsx
 import React from 'react';
 import { 
   Card, CardHeader, CardContent, CardActions, Chip, IconButton, 
-  Avatar, Tooltip, Typography, Box, Divider, Stack, useTheme
+  Avatar, Tooltip, Typography, Box, Divider, Stack, useTheme, alpha
 } from '@mui/material';
 import { 
   Person as PersonIcon, AdminPanelSettings as AdminIcon, Group as GroupIcon, 
   CheckCircle as CheckCircleIcon, Block as BlockIcon, Star as StarIcon, 
   Mic as MicIcon, MoreVert as MoreVertIcon, Map as MapIcon,
   WorkspacePremium as PremiumIcon,
-  CameraAlt as ReporteroIcon
+  CameraAlt as ReporteroIcon,
+  Email as EmailIcon
 } from '@mui/icons-material';
-// --- Import Actualizado ---
+
 import BotonConfirmacionMantenida from '../Comunes/BotonConfirmacionMantenida';
 
 /**
- * Componente Chip estilizado para mostrar el rol de un usuario.
- * Utiliza colores y un ícono específicos para cada rol.
- * Clona el ícono para forzar un color de ícono oscuro (#212121)
- * para un mejor contraste sobre fondos claros.
- *
- * @param {object} props - Propiedades del componente.
- * @param {string} props.role - El rol del usuario (ej: 'admin', 'lider_vecinal', 'ciudadano').
- * @returns {JSX.Element} Un componente Chip de MUI.
+ * RoleChip - Versión Mejorada
+ * Estilo más plano y moderno con colores semitransparentes.
  */
 const RoleChip = ({ role }) => {
   const theme = useTheme();
-  const roles = {
-    admin: { label: 'Admin', icon: <AdminIcon />, 
-             bgColor: theme.palette.secondary.light, color: theme.palette.secondary.dark },
-    lider_vecinal: { label: 'Líder Vecinal', icon: <GroupIcon />, 
-                     bgColor: theme.palette.primary.light, color: theme.palette.primary.dark },
-    reportero: { label: 'Reportero / Prensa', icon: <MicIcon />, 
-                 bgColor: theme.palette.info.light, color: theme.palette.info.dark },
-    ciudadano: { label: 'Ciudadano', icon: <PersonIcon />, 
-                 bgColor: theme.palette.grey[200], color: theme.palette.grey[800] }
-  };
-  const { label, icon, bgColor } = roles[role] || roles.ciudadano;
   
-  // --- FIX: Clonar el icono para forzar su color ---
-  const darkIcon = React.cloneElement(icon, { 
-    sx: { color: '#212121' } 
-  });
+  const configs = {
+    admin: { 
+        label: 'Admin', 
+        icon: <AdminIcon fontSize="small"/>, 
+        color: theme.palette.error.main,
+        bg: alpha(theme.palette.error.main, 0.1)
+    },
+    lider_vecinal: { 
+        label: 'Líder', 
+        icon: <GroupIcon fontSize="small"/>, 
+        color: theme.palette.success.main,
+        bg: alpha(theme.palette.success.main, 0.1)
+    },
+    reportero: { 
+        label: 'Reportero', 
+        icon: <MicIcon fontSize="small"/>, 
+        color: theme.palette.info.main,
+        bg: alpha(theme.palette.info.main, 0.1)
+    },
+    ciudadano: { 
+        label: 'Ciudadano', 
+        icon: <PersonIcon fontSize="small"/>, 
+        color: theme.palette.text.secondary,
+        bg: theme.palette.action.selected
+    }
+  };
+
+  const { label, icon, color, bg } = configs[role] || configs.ciudadano;
 
   return (
     <Chip 
-      icon={darkIcon} // <-- Usar el icono clonado
+      icon={React.cloneElement(icon, { style: { color: color } })} 
       label={label} 
       size="small" 
-      variant="filled" 
       sx={{ 
-        backgroundColor: bgColor, 
-        color: '#212121',
-        fontWeight: 'bold' 
+        bgcolor: bg, 
+        color: color,
+        fontWeight: 700,
+        borderRadius: '6px',
+        border: `1px solid ${alpha(color, 0.2)}`,
+        '& .MuiChip-icon': { marginLeft: '8px' }
       }} 
     />
   );
 };
 
 /**
- * Componente Chip estilizado para mostrar el estado de un usuario (Activo o Suspendido).
- * Utiliza colores de 'success' (activo) o 'error' (suspendido) y
- * aplica un color oscuro (#212121) a los íconos para contraste.
- *
- * @param {object} props - Propiedades del componente.
- * @param {string} props.status - El estado del usuario (ej: 'activo').
- * @returns {JSX.Element} Un componente Chip de MUI.
+ * StatusChip - Versión Minimalista
+ * Indicador visual tipo "punto" + texto.
  */
 const StatusChip = ({ status }) => {
   const theme = useTheme();
   const isActive = status === 'activo';
-  
-  const chipStyles = isActive 
-    ? { bgColor: theme.palette.success.light, color: theme.palette.success.dark }
-    : { bgColor: theme.palette.error.light, color: theme.palette.error.dark };
-
-  // --- FIX: Aplicar sx directo al icono ---
-  const darkIcon = isActive 
-    ? <CheckCircleIcon sx={{ color: '#212121' }} /> 
-    : <BlockIcon sx={{ color: '#212121' }} />;
+  const color = isActive ? theme.palette.success.main : theme.palette.error.main;
 
   return (
-    <Chip
-      icon={darkIcon} // <-- Usar el icono con sx
-      label={isActive ? 'Activo' : 'Suspendido'}
-      size="small"
-      variant="filled" 
-      sx={{ 
-        backgroundColor: chipStyles.bgColor, 
-        color: '#212121',
-        fontWeight: 'bold' 
-      }}
-    />
+    <Box sx={{ 
+      display: 'inline-flex', 
+      alignItems: 'center', 
+      gap: 0.5,
+      px: 1, py: 0.5,
+      borderRadius: 10,
+      bgcolor: alpha(color, 0.08)
+    }}>
+      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }} />
+      <Typography variant="caption" fontWeight="bold" color={color} sx={{ textTransform: 'capitalize' }}>
+        {status}
+      </Typography>
+    </Box>
   );
 };
 
 /**
- * Componente Chip estilizado para mostrar el plan de suscripción del usuario.
- * Muestra diferentes estilos (color, ícono, variante) para planes Premium.
- * Envuelve el Chip en un Tooltip que muestra la fecha de fin de la suscripción.
- * Retorna `null` si no se proporciona `planNombre`.
- *
- * @param {object} props - Propiedades del componente.
- * @param {string} [props.planNombre] - El nombre del plan (ej: 'Ciudadano Premium').
- * @param {string} [props.fechaFin] - La fecha de fin de suscripción (formateada), para el Tooltip.
- * @returns {JSX.Element | null} Un Tooltip con un Chip de MUI, o null.
+ * PlanChip - Versión Premium
+ * Estilo dorado para planes pagados.
  */
 const PlanChip = ({ planNombre, fechaFin }) => {
   if (!planNombre) return null;
-  let config = {
-    icon: <StarIcon />,
-    label: planNombre,
-    variant: 'outlined',
-    color: 'default',
-    title: 'Usuario con plan gratuito'
-  };
+  const isPremium = planNombre !== 'Plan Gratuito';
 
-  switch (planNombre) {
-    case 'Ciudadano Premium':
-      config = {
-        icon: <PremiumIcon />,
-        label: 'Ciudadano Premium',
-        variant: 'filled',
-        color: 'warning',
-        title: `Suscripción activa hasta: ${fechaFin || 'N/A'}`
-      };
-      break;
-    case 'Reportero Premium':
-      config = {
-        icon: <ReporteroIcon />,
-        label: 'Reportero Premium',
-        variant: 'filled',
-        color: 'info',
-        title: `Suscripción activa hasta: ${fechaFin || 'N/A'}`
-      };
-      break;
-    case 'Plan Gratuito':
-    default:
-      break;
+  // Configuración base
+  let icon = <StarIcon fontSize="small" />;
+  let sx = { fontWeight: 500 };
+  let color = "default";
+  let variant = "outlined";
+
+  if (isPremium) {
+    icon = <PremiumIcon fontSize="small" />;
+    color = "warning"; // Usualmente naranja/dorado en MUI
+    variant = "filled";
+    sx = { 
+      fontWeight: 'bold',
+      background: 'linear-gradient(45deg, #FFC107 30%, #FF8F00 90%)',
+      color: 'black',
+      border: 'none',
+      boxShadow: '0 2px 5px rgba(255, 193, 7, 0.4)'
+    };
   }
 
   return (
-    <Tooltip title={config.title}>
+    <Tooltip title={isPremium ? `Vence: ${fechaFin}` : 'Plan Básico'}>
       <Chip 
-        icon={config.icon} 
-        label={config.label} 
-        color={config.color} 
+        icon={icon} 
+        label={planNombre} 
         size="small" 
-        variant={config.variant}
-        sx={config.variant === 'filled' ? { fontWeight: 'bold' } : {}}
+        color={color}
+        variant={variant}
+        sx={sx}
       />
     </Tooltip>
   );
 };
 
-
 /**
- * Renderiza una tarjeta (Card) de MUI que resume la información de un usuario.
- *
- * Muestra:
- * - Avatar, Nombre y Alias/Email.
- * - Chips para Rol, Estado y Plan (usando los helpers RoleChip, StatusChip, PlanChip).
- * - Fecha de registro.
- *
- * Acciones:
- * - Un botón de "Ver Detalles" (ícono MoreVert) que llama a `onDetailOpen`.
- * - Un `BotonConfirmacionMantenida` para "Suspender" o "Reactivar" al usuario, llamando a `onStatusChange`.
- * - Un botón de "Asignar Zonas" (ícono MapIcon) si el rol es 'lider_vecinal', llamando a `onAssignZone`.
- *
- * Estilos:
- * - La tarjeta aparece con opacidad y en escala de grises si el usuario está 'suspendido'.
- *
- * @param {object} props - Propiedades del componente.
- * @param {object} props.user - El objeto de datos del usuario.
- * @param {string} props.user.id - ID del usuario.
- * @param {string} props.user.status - Estado (ej: 'activo', 'suspendido').
- * @param {string} [props.user.nombre] - Nombre del usuario.
- * @param {string} [props.user.alias] - Alias del usuario.
- * @param {string} props.user.email - Email del usuario.
- * @param {string} props.user.rol - Rol del usuario (ej: 'admin', 'lider_vecinal').
- * @param {string} [props.user.nombre_plan] - Nombre del plan de suscripción.
- * @param {string} [props.user.fecha_fin_suscripcion_formateada] - Fecha fin de plan (formateada).
- * @param {string} [props.user.fecha_registro_formateada] - Fecha de registro (formateada).
- * @param {Function} props.onStatusChange - Callback al confirmar cambio de estado. Recibe `(userId, currentStatus)`.
- * @param {Function} props.onDetailOpen - Callback al presionar 'Ver Detalles' (MoreVert). Recibe `(user)`.
- * @param {Function} props.onAssignZone - Callback al presionar 'Asignar Zonas'. Recibe `(user)`.
- * @returns {JSX.Element} Un componente Card de MUI.
+ * TarjetaUsuario - Componente Principal
  */
 const TarjetaUsuario = ({ user, onStatusChange, onDetailOpen, onAssignZone }) => {
+  const theme = useTheme();
   const isSuspended = user.status === 'suspendido';
 
   return (
-    <Card sx={{ 
-      height: '100%', 
-      display: 'flex', 
-      flexDirection: 'column',
-      transition: 'all 0.3s ease',
-      '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.08)' },
-      ...(isSuspended && { // Estilos si está suspendido
-        opacity: 0.6,
-        filter: 'grayscale(60%)',
-        '&:hover': { boxShadow: 'none' }
-      })
-    }}>
+    <Card 
+      elevation={0}
+      sx={{ 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: 'column',
+        borderRadius: 3, // Bordes más redondeados
+        border: `1px solid ${theme.palette.divider}`,
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        position: 'relative',
+        bgcolor: 'background.paper',
+        // Efectos condicionales
+        ...(isSuspended ? {
+            opacity: 0.75,
+            bgcolor: alpha(theme.palette.action.disabledBackground, 0.5),
+        } : {
+            '&:hover': { 
+                transform: 'translateY(-4px)', // Efecto de elevación
+                boxShadow: theme.shadows[8],
+                borderColor: 'primary.main'
+            }
+        })
+      }}
+    >
+      {/* 1. Encabezado */}
       <CardHeader
         avatar={
           <Avatar 
             sx={{ 
-              bgcolor: 'primary.dark', 
+              bgcolor: isSuspended ? 'action.disabled' : 'primary.main', 
               color: 'white', 
-              fontWeight: 'bold' 
+              fontWeight: 800,
+              width: 48, height: 48,
+              boxShadow: 2,
+              fontSize: '1.2rem'
             }}
           >
             {user.nombre ? user.nombre[0].toUpperCase() : '?'}
           </Avatar>
         }
         action={
-          <Tooltip title="Ver Detalles y Acciones">
-            <IconButton onClick={() => onDetailOpen(user)}><MoreVertIcon /></IconButton>
-          </Tooltip>
+          <IconButton onClick={() => onDetailOpen(user)} sx={{ color: 'text.secondary' }}>
+            <MoreVertIcon />
+          </IconButton>
         }
-        title={<Typography variant="h6" noWrap sx={{ fontWeight: 600 }}>{user.nombre || 'Sin Nombre'}</Typography>}
-        subheader={<Typography variant="body2" color="text.secondary" noWrap>{user.alias || user.email}</Typography>}
+        title={
+          <Typography variant="subtitle1" noWrap sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+            {user.nombre || 'Usuario Sin Nombre'}
+          </Typography>
+        }
+        subheader={
+          <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.5 }}>
+            <EmailIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 140 }}>
+               {user.email}
+            </Typography>
+          </Stack>
+        }
         sx={{ pb: 1 }}
       />
       
-      <CardContent sx={{ flexGrow: 1, pt: 1, display: 'flex', flexDirection: 'column' }}>
+      <Divider sx={{ mx: 2, opacity: 0.6 }} />
+
+      {/* 2. Contenido Principal */}
+      <CardContent sx={{ flexGrow: 1, pt: 2, pb: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         
-        {/* Chips de Rol y Estado */}
-        <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}>
-          <RoleChip role={user.rol} />
-          <StatusChip status={user.status} />
-        </Stack>
+        {/* Fila: Rol y Estado */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+           <RoleChip role={user.rol} />
+           <StatusChip status={user.status} />
+        </Box>
         
-        {/* Chip de Plan */}
-        <Box sx={{ mb: 2 }}>
+        {/* Fila: Plan (Si existe) */}
+        <Box>
           <PlanChip 
             planNombre={user.nombre_plan} 
             fechaFin={user.fecha_fin_suscripcion_formateada} 
           />
         </Box>
 
-        {/* Fecha de Registro (empujada al fondo) */}
-        <Box sx={{ mt: 'auto', pt: 1, borderTop: 1, borderColor: 'divider' }}>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-            Registrado: {user.fecha_registro_formateada}
-          </Typography>
+        {/* Fila: Fecha Registro (Al fondo) */}
+        <Box sx={{ mt: 'auto' }}>
+           <Typography variant="caption" display="block" color="text.disabled" sx={{ fontStyle: 'italic', fontSize: '0.7rem' }}>
+             Registrado: {user.fecha_registro_formateada}
+           </Typography>
         </Box>
         
       </CardContent>
       
-      <Divider sx={{ mt: 'auto' }} />
-      
-      {/* Acciones (Suspender/Reactivar y Asignar Zona) */}
-      <CardActions sx={{ px: 2, pb: 2, pt: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        {user.status === 'activo' ? (
-          <BotonConfirmacionMantenida 
-            onConfirm={() => onStatusChange(user.id, user.status)} 
-            label="Suspender" 
-            color="error" 
-            startIcon={<BlockIcon />}
-          />
-        ) : (
-          <BotonConfirmacionMantenida 
-            onConfirm={() => onStatusChange(user.id, user.status)} 
-            label="Reactivar" 
-            color="success" 
-            startIcon={<CheckCircleIcon />}
-          />
-        )}
-        
-        {/* Botón Asignar Zonas (solo para líderes) */}
-        {user.rol === 'lider_vecinal' && (
-          <Tooltip title="Asignar Zonas de Moderación">
-            <IconButton onClick={() => onAssignZone(user)} color="primary" size="small">
-              <MapIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-      </CardActions>
+      {/* 3. Acciones */}
+      <Box sx={{ p: 2, pt: 0 }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          {/* Botón Principal (Suspender/Activar) */}
+          <Box sx={{ flexGrow: 1 }}>
+             {user.status === 'activo' ? (
+              <BotonConfirmacionMantenida 
+                onConfirm={() => onStatusChange(user.id, user.status)} 
+                label="Suspender" 
+                color="error" 
+                variant="outlined" // Menos agresivo visualmente
+                size="small"
+                fullWidth
+                startIcon={<BlockIcon />}
+                sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+              />
+            ) : (
+              <BotonConfirmacionMantenida 
+                onConfirm={() => onStatusChange(user.id, user.status)} 
+                label="Reactivar" 
+                color="success" 
+                variant="contained"
+                size="small"
+                fullWidth
+                startIcon={<CheckCircleIcon />}
+                sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, color: 'white' }}
+              />
+            )}
+          </Box>
+          
+          {/* Botón Secundario (Asignar Zonas) - Solo líderes */}
+          {user.rol === 'lider_vecinal' && (
+            <Tooltip title="Gestionar Zonas">
+              <IconButton 
+                onClick={() => onAssignZone(user)} 
+                color="primary" 
+                sx={{ 
+                  bgcolor: alpha(theme.palette.primary.main, 0.1), 
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                  borderRadius: 2,
+                  '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.2) }
+                }}
+              >
+                <MapIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Stack>
+      </Box>
     </Card>
   );
 };

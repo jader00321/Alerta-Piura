@@ -459,52 +459,51 @@ class ReporteService {
     }
   }
 
-  /// Obtiene la lista de todas las categorías de reportes disponibles.
+  /// Obtiene la lista de categorías disponibles para los reportes.
   ///
-  /// Lanza una [Exception] si la API falla o hay un error de conexión.
+  /// Realiza una petición GET a `/api/categorias`.
+  /// **Lógica de Ordenamiento:** Ordena la lista localmente para garantizar
+  /// que la categoría "Otro" siempre aparezca al final, independientemente
+  /// del orden que envíe el servidor.
   Future<List<Categoria>> getCategorias() async {
+    // Nota: Categorías suele ser público, pero si requiere token, descomenta:
+    // final token = await _getToken();
+    // if (token == null) throw Exception('No autenticado');
+    
     final url = Uri.parse('${ApiConstants.baseUrl}/api/categorias');
+    
     try {
-      final response = await http.get(url);
+      final response = await http.get(url /*, headers: {'Authorization': 'Bearer $token'} */);
+      
       if (response.statusCode == 200) {
-        List jsonResponse = json.decode(response.body);
-        var categorias =
-            jsonResponse.map((cat) => Categoria.fromJson(cat)).toList();
-        // Ordenar por nombre como fallback
-        categorias.sort((a, b) => a.nombre.compareTo(b.nombre));
-        return categorias;
+        final List<dynamic> data = json.decode(response.body);
+        
+        // 1. Convertir a lista de objetos Dart
+        List<Categoria> listaCategorias = data.map((json) => Categoria.fromJson(json)).toList();
+
+        // 2. REORDENAMIENTO FORZADO EN EL CLIENTE
+        // Esto asegura que "Otro" vaya al final aunque el backend falle en el orden.
+        listaCategorias.sort((a, b) {
+          final nombreA = a.nombre.toLowerCase().trim();
+          final nombreB = b.nombre.toLowerCase().trim();
+
+          // Si A es "otro", A va después (1)
+          if (nombreA == 'otro') return 1;
+          // Si B es "otro", B va después (-1, o sea A va antes)
+          if (nombreB == 'otro') return -1;
+          
+          // Si ninguno es "otro", mantenemos el orden relativo original (preserva el 'orden' del backend)
+          return 0;
+        });
+
+        return listaCategorias;
       } else {
-        String errorMessage = 'Error al cargar categorías';
-        try {
-          errorMessage = json.decode(response.body)['message'] ?? errorMessage;
-        } catch (_) {}
-        throw Exception('Error ${response.statusCode}: $errorMessage');
+        throw Exception('Error al cargar categorías');
       }
     } catch (e) {
-      print("Error en getCategorias: $e");
-      throw Exception('Error de conexión al cargar categorías.');
-    }
-  }
-
-  /// Obtiene el historial de mensajes del chat de un reporte (para líderes).
-  ///
-  /// [idReporte]: El ID del reporte cuyo chat se quiere consultar.
-  ///
-  /// Lanza una [Exception] si el usuario no está autenticado o si la API falla.
-  Future<List<ChatMessage>> getChatHistory(int idReporte) async {
-    final token = await _getToken();
-    if (token == null) throw Exception('No autenticado');
-
-    final url =
-        Uri.parse(ApiConstants.baseUrl + '/api/reportes/$idReporte/chat');
-    final response =
-        await http.get(url, headers: {'Authorization': 'Bearer $token'});
-
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((msg) => ChatMessage.fromJson(msg)).toList();
-    } else {
-      throw Exception('Error al cargar historial del chat');
+      // Si falla la red, devolvemos lista vacía o lanzamos error según prefieras
+      // print("Error categorias: $e");
+      return [];
     }
   }
 
@@ -622,6 +621,43 @@ class ReporteService {
     } catch (e) {
       print("Error en editarReporteAutor Service: $e");
       return {'statusCode': 500, 'message': 'Error de conexión.'};
+    }
+  }
+
+  Future<void> markChatAsRead(int reporteId) async {
+    final token = await _getToken();
+    if (token == null) return;
+    
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/$reporteId/chat/mark-read');
+    
+    try {
+      await http.put(url, headers: {'Authorization': 'Bearer $token'});
+    } catch (e) {
+      print("Error marcando chat como leído: $e");
+    }
+  }
+
+  
+  /// Obtiene el historial de mensajes del chat de un reporte (para líderes).
+  ///
+  /// [idReporte]: El ID del reporte cuyo chat se quiere consultar.
+  ///
+  /// Lanza una [Exception] si el usuario no está autenticado o si la API falla.
+  Future<List<ChatMessage>> getChatHistory(int reporteId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('No autenticado');
+
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/reportes/$reporteId/chat');
+    try {
+      final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => ChatMessage.fromJson(json)).toList();
+      } else {
+        throw Exception('Error al cargar historial: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error de conexión.');
     }
   }
 } // Fin de la clase ReporteService

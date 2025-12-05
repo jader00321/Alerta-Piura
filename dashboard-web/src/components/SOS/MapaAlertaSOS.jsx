@@ -151,7 +151,7 @@ function MapaAlertaSOS({ alertId, locationHistory, latestLocation, alertCode, lo
   // --- Estado de Carga ---
   if(loading) {
        return (
-           <Paper sx={{ height: { xs: '40vh', md: '60vh' }, p: 2, display:'flex', flexDirection:'column' }}>
+           <Paper sx={{ height: { xs: '40vh', md: '70vh' }, p: 2, display:'flex', flexDirection:'column' }}>
                <Skeleton variant="text" width="40%"/>
                <Skeleton variant="rectangular" width="100%" sx={{flexGrow: 1, mt:1}} />
            </Paper>
@@ -160,7 +160,7 @@ function MapaAlertaSOS({ alertId, locationHistory, latestLocation, alertCode, lo
 
   // --- Renderizado Principal ---
   return (
-    <Paper sx={{ height: { xs: '40vh', md: '60vh' }, minWidth: '300px', position: 'relative', borderRadius: '12px', overflow: 'hidden' }} elevation={3}>
+    <Paper sx={{ height: { xs: '40vh', md: '80vh' }, minWidth: '450px', position: 'relative', borderRadius: '12px', overflow: 'hidden' }} elevation={3}>
       {/* --- Estado con Ubicación (Mapa) --- */}
       {latestLocation ? (
         <MapContainer

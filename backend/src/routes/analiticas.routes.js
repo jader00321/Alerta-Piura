@@ -1,3 +1,4 @@
+// backend/src/routes/analiticas.routes.js
 const { Router } = require('express');
 const analiticasController = require('../controllers/analiticas.controller');
 const authMiddleware = require('../middleware/auth.middleware');
@@ -5,18 +6,21 @@ const premiumMiddleware = require('../middleware/premium.middleware');
 
 const router = Router();
 
-// Aplicamos ambos middlewares a todas las rutas de este archivo
-// 1. El usuario debe estar autenticado (authMiddleware)
-// 2. El usuario debe tener un plan premium O ser reportero O ser admin (premiumMiddleware)
+// Seguridad: Usuario Logueado + Rol Premium/Reportero/Admin
 router.use(authMiddleware);
 router.use(premiumMiddleware);
 
-// Rutas para el panel analítico móvil
+// --- Gráficos Existentes ---
 router.get('/por-categoria', analiticasController.getReportesPorCategoria);
 router.get('/por-distrito', analiticasController.getReportesPorDistrito);
 router.get('/tendencia', analiticasController.getTendenciaReportes);
 
-// Ruta para la exportación de PDF
+// --- NUEVOS Gráficos para Reportero ---
+router.get('/mapa-calor', analiticasController.getHeatmapData);
+router.get('/tiempos-atencion', analiticasController.getTiemposAtencion);
+router.get('/por-urgencia', analiticasController.getReportesPorUrgencia);
+
+// --- Utilidades ---
 router.post('/exportar-pdf', analiticasController.solicitarExportacionPDF);
 
 module.exports = router;

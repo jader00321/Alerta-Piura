@@ -1,99 +1,87 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:mobile_app/api/analiticas_service.dart';
+import 'package:mobile_app/models/analiticas_dashboard_data.dart'; // <-- IMPORTAR EL NUEVO MODELO
+import 'package:mobile_app/models/analiticas_reportero_model.dart';
 import 'package:mobile_app/models/estadisticas_model.dart';
 import 'package:mobile_app/services/servicio_pdf.dart';
 import 'package:open_file/open_file.dart';
 
-/// Clase auxiliar para agrupar los datos cargados para las analíticas.
-class AnaliticasData {
-  final List<DatoGrafico> porCategoria;
-  final List<DatoGrafico> porDistrito;
-  final List<DatoGrafico> tendencia;
-  AnaliticasData(
-      {required this.porCategoria,
-      required this.porDistrito,
-      required this.tendencia});
-}
+// Importación de Widgets Modulares
+import 'package:mobile_app/widgets/analiticas/tarjeta_indicador_eficiencia.dart';
+import 'package:mobile_app/widgets/analiticas/tarjeta_torta_urgencia.dart';
+import 'package:mobile_app/widgets/analiticas/tarjeta_mapa_calor.dart';
+import 'package:mobile_app/widgets/analiticas/tarjeta_analitica_categorias.dart';
+import 'package:mobile_app/widgets/analiticas/tarjeta_analitica_distritos.dart';
+import 'package:mobile_app/widgets/analiticas/tarjeta_analitica_tendencia.dart';
 
-/// {@template pantalla_panel_analitico}
-/// Pantalla que muestra gráficos analíticos globales (función Premium/Reportero).
-///
-/// Obtiene datos agregados de [AnaliticasService] y los muestra usando [fl_chart].
-/// Permite generar y guardar un informe PDF de los datos mostrados
-/// utilizando [ServicioPdf].
-/// {@endtemplate}
 class PantallaPanelAnalitico extends StatefulWidget {
-  /// {@macro pantalla_panel_analitico}
   const PantallaPanelAnalitico({super.key});
+
   @override
-  State<PantallaPanelAnalitico> createState() =>
-      _PantallaPanelAnaliticoState();
+  State<PantallaPanelAnalitico> createState() => _PantallaPanelAnaliticoState();
 }
 
-/// Estado para [PantallaPanelAnalitico].
-///
-/// Maneja la carga de los datos analíticos y la generación del PDF.
 class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
-  final AnaliticasService _analiticasService = AnaliticasService();
+  final AnaliticasService _service = AnaliticasService();
   final ServicioPdf _pdfService = ServicioPdf();
   
-  /// Futuro que contiene los datos combinados para los gráficos.
-  late Future<AnaliticasData> _analyticsFuture;
-  /// Indica si se está generando el archivo PDF.
+  late Future<AnaliticasDashboardData> _dashboardFuture;
   bool _isExporting = false;
 
   @override
   void initState() {
     super.initState();
-    _analyticsFuture = _loadAllAnalytics();
+    _loadAllAnalytics();
   }
 
-  /// Carga simultáneamente todos los datos necesarios para los gráficos.
-  Future<AnaliticasData> _loadAllAnalytics() async {
-    // Se usan Futures en paralelo para optimizar la carga
-    final results = await Future.wait([
-      _analiticasService.getReportesPorCategoria(),
-      _analiticasService.getReportesPorDistrito(),
-      _analiticasService.getTendenciaReportes(),
-    ]);
-    return AnaliticasData(
-      porCategoria: results[0],
-      porDistrito: results[1],
-      tendencia: results[2],
-    );
+  void _loadAllAnalytics() {
+    setState(() {
+      _dashboardFuture = _fetchAllData();
+    });
   }
 
-  /// Genera el informe PDF usando [ServicioPdf], lo guarda localmente
-  /// y ofrece abrirlo.
-  Future<void> _handleExportPDF(AnaliticasData data) async {
-    setState(() => _isExporting = true);
-
+  Future<AnaliticasDashboardData> _fetchAllData() async {
     try {
+      final results = await Future.wait([
+        _service.getReportesPorCategoria(), // 0
+        _service.getReportesPorDistrito(),  // 1
+        _service.getTendenciaReportes(),    // 2
+        _service.getReportesPorUrgencia(),  // 3
+        _service.getTiemposAtencion(),      // 4
+        _service.getMapaCalor(),            // 5
+      ]);
+
+      return AnaliticasDashboardData(
+        porCategoria: results[0] as List<DatoGrafico>,
+        porDistrito: results[1] as List<DatoGrafico>,
+        tendencia: results[2] as List<DatoGrafico>,
+        porUrgencia: results[3] as List<DatoGrafico>,
+        eficiencia: results[4] as TiemposAtencion,
+        mapaCalor: results[5] as List<PuntoMapaCalor>,
+      );
+    } catch (e) {
+      throw Exception(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  Future<void> _handleExportPDF(AnaliticasDashboardData data) async {
+    setState(() => _isExporting = true);
+    try {
+      // Ahora pasamos el objeto COMPLETO al servicio PDF
       final file = await _pdfService.generarInformeAnalitico(data);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Informe guardado en "Mis Informes"'),
-            action: SnackBarAction(
-              label: 'Abrir',
-              onPressed: () => OpenFile.open(file.path),
-            ),
-          ),
-        );
-      }
+      
+      // Registrar en backend
+      _service.solicitarExportacionPDF();
+
+      await OpenFile.open(file.path);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Error al generar PDF: $e'),
-              backgroundColor: Colors.red),
+          SnackBar(content: Text('Error exportando PDF: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isExporting = false);
-      }
+      if (mounted) setState(() => _isExporting = false);
     }
   }
 
@@ -101,233 +89,104 @@ class _PantallaPanelAnaliticoState extends State<PantallaPanelAnalitico> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Panel Analítico'),
+        title: const Text('Panel de Prensa y Datos'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                _analyticsFuture = _loadAllAnalytics();
-              });
-            },
-            tooltip: 'Refrescar datos',
-          ),
+            onPressed: _loadAllAnalytics,
+            tooltip: 'Actualizar datos',
+          )
         ],
       ),
-      body: FutureBuilder<AnaliticasData>(
-        future: _analyticsFuture,
+      body: FutureBuilder<AnaliticasDashboardData>(
+        future: _dashboardFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
           if (snapshot.hasError) {
             return Center(
-                child: Text('Error al cargar analíticas: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData) {
-            return const Center(
-                child: Text('No hay datos analíticos disponibles.'));
-          }
-
-          final data = snapshot.data!;
-          // Muestra los gráficos en un ListView
-          return ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              _buildTrendChart(context, data.tendencia),
-              const SizedBox(height: 24),
-              _buildCategoryChart(context, data.porCategoria),
-              const SizedBox(height: 24),
-              _buildDistrictChart(context, data.porDistrito),
-            ],
-          );
-        },
-      ),
-      floatingActionButton: FutureBuilder<AnaliticasData>(
-          future: _analyticsFuture,
-          builder: (context, snapshot) {
-            // Muestra el FAB solo si los datos están cargados y no se está exportando
-            if (snapshot.hasData && !_isExporting) {
-              return FloatingActionButton.extended(
-                onPressed: () => _handleExportPDF(snapshot.data!),
-                label: const Text('Exportar PDF'),
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                tooltip: 'Generar y guardar informe en PDF',
-              );
-            }
-            if (_isExporting) {
-              return const FloatingActionButton(
-                onPressed: null,
-                child: CircularProgressIndicator(color: Colors.white),
-              );
-            }
-            return const SizedBox.shrink(); // Oculta el FAB si no hay datos
-          }),
-    );
-  }
-
-  /// Construye el gráfico de líneas para la tendencia.
-  Widget _buildTrendChart(BuildContext context, List<DatoGrafico> data) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Tendencia de Reportes (Últimos 30 días)',
-                style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: const FlTitlesData(
-                    leftTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
-                    rightTitles:
-                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles:
-                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles:
-                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  ),
-                  borderData: FlBorderData(
-                      show: true, border: Border.all(color: Colors.grey.shade300)),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.value)).toList(),
-                      isCurved: true,
-                      color: Theme.of(context).colorScheme.primary,
-                      barWidth: 4,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                          show: true,
-                          color: Theme.of(context).colorScheme.primary.withAlpha(51)),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('${snapshot.error}', textAlign: TextAlign.center),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _loadAllAnalytics,
+                      child: const Text('Reintentar'),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            );
+          }
 
-  /// Construye el gráfico de barras para categorías.
-  Widget _buildCategoryChart(BuildContext context, List<DatoGrafico> data) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Reportes por Categoría',
-                style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 250,
-              child: BarChart(
-                BarChartData(
-                  alignment: BarChartAlignment.spaceAround,
-                  gridData: const FlGridData(show: true, drawVerticalLine: false),
-                  titlesData: FlTitlesData(
-                    leftTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
-                    rightTitles:
-                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles:
-                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) => SideTitleWidget(
-                        meta: meta,
-                        child: Text(data[value.toInt()].name,
-                            style: const TextStyle(fontSize: 10)),
-                      ),
-                      reservedSize: 30,
-                    )),
-                  ),
-                  barGroups: data.asMap().entries.map((entry) {
-                    return BarChartGroupData(
-                      x: entry.key,
-                      barRods: [
-                        BarChartRodData(
-                          toY: entry.value.value,
-                          color: Colors.primaries[entry.key % Colors.primaries.length],
-                          width: 16,
-                          borderRadius:
-                              const BorderRadius.vertical(top: Radius.circular(4)),
-                        )
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+          final data = snapshot.data!;
 
-  /// Construye el gráfico de barras para los 5 distritos principales.
-  Widget _buildDistrictChart(BuildContext context, List<DatoGrafico> data) {
-    // Tomar solo los 5 distritos con más reportes
-    final topData = data.length > 5 ? data.sublist(0, 5) : data;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Top 5 Reportes por Distrito',
-                style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 250,
-              child: BarChart(
-                BarChartData(
-                  titlesData: FlTitlesData(
-                    leftTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: true, reservedSize: 28)),
-                    rightTitles:
-                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles:
-                        const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) => SideTitleWidget(
-                        meta: meta,
-                        child: Text(topData[value.toInt()].name,
-                            style: const TextStyle(fontSize: 10)),
-                      ),
-                      reservedSize: 30,
-                    )),
-                  ),
-                  barGroups: topData.asMap().entries.map((entry) {
-                    return BarChartGroupData(
-                      x: entry.key,
-                      barRods: [
-                        BarChartRodData(
-                          toY: entry.value.value,
-                          color: Colors.accents[entry.key % Colors.accents.length],
-                          width: 16,
-                          borderRadius:
-                              const BorderRadius.vertical(top: Radius.circular(4)),
-                        )
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 100.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Eficiencia
+                TarjetaIndicadorEficiencia(tiempos: data.eficiencia),
+                const SizedBox(height: 16),
+                
+                // 2. Mapa de Calor
+                TarjetaMapaCalor(puntos: data.mapaCalor),
+                const SizedBox(height: 16),
+
+                // 3. Categorías y Urgencia
+                LayoutBuilder(builder: (context, constraints) {
+                   if (constraints.maxWidth > 600) {
+                     return Row(
+                       crossAxisAlignment: CrossAxisAlignment.start,
+                       children: [
+                         Expanded(child: TarjetaAnaliticaCategorias(datos: data.porCategoria)),
+                         const SizedBox(width: 16),
+                         Expanded(child: TarjetaTortaUrgencia(datos: data.porUrgencia)),
+                       ],
+                     );
+                   }
+                   return Column(
+                     children: [
+                       TarjetaAnaliticaCategorias(datos: data.porCategoria),
+                       const SizedBox(height: 16),
+                       TarjetaTortaUrgencia(datos: data.porUrgencia),
+                     ],
+                   );
+                }),
+                
+                const SizedBox(height: 16),
+                
+                // 4. Distritos y Tendencia
+                TarjetaAnaliticaDistritos(datos: data.porDistrito),
+                const SizedBox(height: 16),
+                TarjetaAnaliticaTendencia(datos: data.tendencia),
+
+                const SizedBox(height: 32),
+              ],
             ),
-          ],
-        ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _isExporting 
+          ? null 
+          : () async {
+              final data = await _dashboardFuture;
+              _handleExportPDF(data);
+            },
+        icon: _isExporting 
+          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+          : const Icon(Icons.picture_as_pdf),
+        label: Text(_isExporting ? 'Generando...' : 'Exportar Informe'),
+        backgroundColor: Colors.red.shade700,
       ),
     );
   }

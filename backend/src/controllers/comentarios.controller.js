@@ -99,14 +99,15 @@ const apoyarComentario = async (req, res) => {
 };
 
 /**
- * Crea un comentario, otorga puntos, verifica insignias y notifica al autor del reporte.
- * AHORA OBTIENE id_reporte del BODY.
+ * Crea un comentario, otorga puntos, verifica insignias y notifica al autor.
+ * ACTUALIZADO: Inyecta categoría, remitente y payload para navegación inteligente.
  */
 const createComentario = async (req, res) => {
-  // --- CAMBIO AQUÍ ---
-  const { id_reporte, comentario } = req.body; // Obtiene id_reporte del body
-  // --- FIN CAMBIO ---
+  const { id_reporte, comentario } = req.body;
   const id_usuario_comenta = req.user.userId;
+  // Obtenemos alias y rol del token o req.user para guardar en la notificación
+  const remitenteAlias = req.user.alias || 'Usuario'; 
+  const remitenteRol = req.user.rol || 'ciudadano';
 
   if (!id_reporte || !comentario || comentario.trim() === '') {
     return res.status(400).json({ message: 'Se requiere ID del reporte y el comentario no puede estar vacío.' });
@@ -116,44 +117,81 @@ const createComentario = async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // La inserción sigue igual
-    const result = await client.query('INSERT INTO comentarios (id_reporte, id_usuario, comentario) VALUES ($1, $2, $3) RETURNING *', [id_reporte, id_usuario_comenta, comentario]);
+    // 1. Insertar Comentario
+    const result = await client.query(
+      'INSERT INTO comentarios (id_reporte, id_usuario, comentario) VALUES ($1, $2, $3) RETURNING *', 
+      [id_reporte, id_usuario_comenta, comentario]
+    );
 
-    // Otorgar puntos y verificar insignias (sin cambios)
+    // 2. Gamificación
     await client.query('UPDATE usuarios SET puntos = puntos + 5 WHERE id = $1', [id_usuario_comenta]);
     await gamificacionService.verificarYOtorgarInsignias(client, id_usuario_comenta);
 
+    // 3. Obtener datos del reporte para notificar
     const reporteResult = await client.query('SELECT id_usuario, titulo FROM reportes WHERE id = $1', [id_reporte]);
     const reporte = reporteResult.rows[0];
     const io = req.app.get('socketio');
 
-    // Lógica de notificación (sin cambios)
+    // --- PREPARACIÓN DE DATOS RICOS PARA NOTIFICACIÓN ---
     const title = `Nuevo comentario en: "${reporte.titulo}"`;
-    const body = `${req.user.alias} ha comentado.`;
-    const payload = JSON.stringify({ type: 'report_detail', id: id_reporte });
+    const body = `${remitenteAlias} ha comentado: "${comentario.substring(0, 30)}${comentario.length > 30 ? '...' : ''}"`;
+    
+    // Payload: JSON que le dice a la App a dónde ir
+    const payloadObj = { 
+      type: 'report_detail', 
+      id: id_reporte 
+    };
+    const payload = JSON.stringify(payloadObj);
+    
+    // Info del Remitente: Para mostrar avatar o nombre sin consultas extra
+    const remitenteInfo = JSON.stringify({
+      alias: remitenteAlias,
+      rol: remitenteRol,
+      id: id_usuario_comenta
+    });
 
+    const categoria = 'Comentario'; // Para el icono y filtro
+
+    // Función auxiliar para insertar notificación enriquecida
+    const notificarUsuario = async (receptorId) => {
+      await client.query(
+        `INSERT INTO notificaciones 
+        (id_usuario_receptor, titulo, cuerpo, payload, categoria, remitente_info, archivado, leido) 
+        VALUES ($1, $2, $3, $4, $5, $6, false, false)`, 
+        [receptorId, title, body, payload, categoria, remitenteInfo]
+      );
+      
+      socketNotificationService.sendNotification(io, receptorId, { 
+        title, 
+        body, 
+        payload, 
+        categoria,
+        remitenteInfo: JSON.parse(remitenteInfo) // Enviamos objeto al socket
+      });
+    };
+
+    // 4. Notificar al Dueño del Reporte
     if (reporte && reporte.id_usuario !== id_usuario_comenta) {
-      await client.query('INSERT INTO notificaciones (id_usuario_receptor, titulo, cuerpo, payload) VALUES ($1, $2, $3, $4)', [reporte.id_usuario, title, body, payload]);
-      socketNotificationService.sendNotification(io, reporte.id_usuario, { title, body, payload });
+      await notificarUsuario(reporte.id_usuario);
     }
 
+    // 5. Notificar a Seguidores
     const seguidoresResult = await client.query('SELECT id_usuario FROM reportes_seguidos WHERE id_reporte = $1', [id_reporte]);
     for (const seguidor of seguidoresResult.rows) {
       if (seguidor.id_usuario !== reporte.id_usuario && seguidor.id_usuario !== id_usuario_comenta) {
-        await client.query('INSERT INTO notificaciones (id_usuario_receptor, titulo, cuerpo, payload) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING', [seguidor.id_usuario, title, body, payload]);
-        socketNotificationService.sendNotification(io, seguidor.id_usuario, { title, body, payload });
+        await notificarUsuario(seguidor.id_usuario);
       }
     }
 
     await client.query('COMMIT');
     res.status(201).json({ message: 'Comentario añadido y +5 puntos obtenidos.', comentario: result.rows[0] });
+
   } catch (error) {
     await client.query('ROLLBACK');
-    // Verificar si el reporte existe antes de intentar comentar
-    if (error.code === '23503') { // foreign key violation
+    if (error.code === '23503') {
         return res.status(404).json({ message: 'El reporte especificado no existe.' });
     }
-    console.error("Error creating comment:", error); // Log para depuración
+    console.error("Error creating comment:", error);
     res.status(500).json({ message: 'Error interno del servidor.' });
   } finally {
     client.release();
@@ -166,5 +204,5 @@ module.exports = {
   eliminarComentario,
   reportarComentario,
   apoyarComentario,
-  createComentario, // Exportamos la función
+  createComentario, 
 };

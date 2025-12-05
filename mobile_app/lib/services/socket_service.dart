@@ -8,9 +8,7 @@ import 'package:mobile_app/services/notification_service.dart';
 /// Servicio Singleton para gestionar la conexión WebSocket (Socket.IO).
 ///
 /// Maneja la conexión, autenticación, y la escucha de eventos en tiempo real
-/// desde el servidor. Proporciona métodos `emit` para enviar eventos
-/// y `Streams` públicos para que la UI reaccione a eventos específicos
-/// (como [onStopSos]).
+/// desde el servidor.
 /// {@endtemplate}
 class SocketService {
   /// Instancia Singleton del servicio.
@@ -22,67 +20,35 @@ class SocketService {
   io.Socket? _socket;
 
   /// StreamController para el evento 'stopSos' (cuando un admin detiene el SOS).
-  /// Es broadcast para permitir múltiples listeners (ej. en `main.dart`).
   final StreamController<Map<String, dynamic>> _stopSosController =
       StreamController.broadcast();
   
-  /// Stream público para que la UI (u otros servicios) escuche el evento 'stopSos'.
+  /// Stream público para que la UI escuche el evento 'stopSos'.
   Stream<Map<String, dynamic>> get onStopSos => _stopSosController.stream;
 
-  /// {@template socket_service.connect}
-  /// Inicia la conexión con el servidor Socket.IO.
+  /// Inicializa la conexión con el servidor.
   ///
-  /// Envía automáticamente el [token] de autenticación en la query
-  /// de la conexión para una autenticación inmediata.
-  /// Si ya existe una conexión, no hace nada.
-  ///
-  /// [token]: El token JWT del usuario autenticado.
-  /// {@endtemplate}
+  /// [token]: El JWT del usuario para autenticarse en el handshake.
   void connect(String token) {
-    if (_socket?.connected ?? false) {
-      debugPrint('Socket ya conectado.');
-      return;
-    }
+    if (_socket != null && _socket!.connected) return;
 
-    /// Configura el socket para conectarse a la [ApiConstants.baseUrl]
-    /// enviando el token en la query de autenticación.
     _socket = io.io(ApiConstants.baseUrl, <String, dynamic>{
       'transports': ['websocket'],
-      'autoConnect': true,
-      'query': {'token': token} // Autenticación inmediata
+      'autoConnect': false,
+      'query': {'token': token}, // Enviar token en el handshake
     });
 
-    _setupListeners();
     _socket!.connect();
-  }
 
-  /// Configura todos los listeners para los eventos entrantes del servidor.
-  void _setupListeners() {
-    _socket?.onConnect((_) {
-      debugPrint('Socket conectado: ${_socket!.id}');
+    _socket!.onConnect((_) {
+      debugPrint('SocketService: Conectado al servidor.');
     });
 
-    _socket?.on('authenticated', (_) {
-      debugPrint('Socket autenticado exitosamente!');
+    _socket!.onDisconnect((_) {
+      debugPrint('SocketService: Desconectado del servidor.');
     });
 
-    _socket?.on('unauthorized', (data) {
-      debugPrint('Fallo en la autenticación del socket: ${data['message']}');
-      // Podría implementarse un reintento de logout/login aquí si es necesario.
-    });
-
-    _socket?.onDisconnect((_) {
-      debugPrint('Socket desconectado.');
-    });
-
-    _socket?.onError((error) {
-      debugPrint('Error de Socket: $error');
-    });
-
-    /// Listener para notificaciones push en tiempo real.
-    /// Recibe la data y la pasa a [NotificationService] para mostrarla.
-    _socket?.on('notification', (data) {
-      debugPrint('Notificación recibida vía socket: $data');
+    _socket!.on('notification', (data) {
       if (data is Map<String, dynamic>) {
         final title = data['title'] as String?;
         final body = data['body'] as String?;
@@ -94,24 +60,19 @@ class SocketService {
       }
     });
 
-    /// Listener para el evento de detención forzada de SOS (enviado por un admin).
-    _socket?.on('stopSos', (data) {
+    _socket!.on('stopSos', (data) {
       debugPrint('Evento stopSos recibido del servidor: $data');
       if (data is Map<String, dynamic>) {
-        /// Añade el evento al stream [onStopSos] para que `main.dart`
-        /// pueda reaccionar e invocar al [BackgroundService].
         _stopSosController.add(data);
       }
     });
   }
 
-  /// Desconecta manualmente el socket del servidor.
   void disconnect() {
     _socket?.disconnect();
     _socket = null;
   }
 
-  /// Libera los recursos (cierra los [StreamController]s).
   void dispose() {
     _stopSosController.close();
   }
@@ -126,13 +87,18 @@ class SocketService {
   }
 
   /// Registra un [handler] para escuchar un [event] del servidor.
-  /// (Usado por [ChatScreen] para `receive-message`).
+  /// 
+  /// [handler] debe ser una función que reciba datos dinámicos.
   void on(String event, Function(dynamic) handler) {
     _socket?.on(event, handler);
   }
 
-  /// Deja de escuchar un [event] específico del servidor.
-  void off(String event) {
-    _socket?.off(event);
+  /// Elimina un listener para un evento.
+  ///
+  /// **CORRECCIÓN:** Ahora acepta un segundo parámetro opcional [handler].
+  /// Si se pasa [handler], solo elimina esa función específica.
+  /// Si no se pasa, elimina todos los listeners del evento.
+  void off(String event, [dynamic Function(dynamic)? handler]) {
+    _socket?.off(event, handler);
   }
 }

@@ -164,41 +164,67 @@ const apoyarReporte = async (req, res) => {
   }
 };
 
-// --- FUNCIÓN getReporteById CORREGIDA ---
-// Usa nombres de tabla en minúsculas y formato de fecha ISO para comentarios
+/**
+ * Obtiene un reporte específico por su ID con detalles completos.
+ *
+ * Incluye verificación de si el usuario solicitante (autenticado)
+ * ha apoyado el reporte (para reportes pendientes) o ha dado like
+ * a comentarios.
+ */
 const getReporteById = async (req, res) => {
   const { id } = req.params;
-  const id_usuario_actual = req.user?.userId; // Obtener ID (puede ser null)
+  const id_usuario_actual = req.user?.userId; // Obtener ID del token (puede ser null)
 
   try {
-    // --- CORRECCIÓN: Nombres de tabla en minúsculas ---
+    // Consulta principal: Datos del reporte + Estado de apoyo del usuario actual
     const reporteQuery = `
       SELECT
-        r.id, r.titulo, r.descripcion, r.estado, r.foto_url, r.id_reporte_original,
-        r.urgencia, r.distrito, r.referencia_ubicacion, r.tags, r.impacto, r.codigo_reporte,
+        r.id,
+        r.titulo,
+        r.descripcion,
+        r.estado,
+        r.foto_url,
+        r.id_reporte_original,
+        r.urgencia,
+        r.distrito,
+        r.referencia_ubicacion,
+        r.tags,
+        r.impacto,
+        r.codigo_reporte,
+        r.apoyos_pendientes, -- Contador total de apoyos
         to_char(r.hora_incidente, 'HH24:MI') as hora_incidente,
         c.nombre as categoria,
         to_char(r.fecha_creacion, 'DD Mon YYYY, HH24:MI') as fecha_creacion,
         r.es_anonimo,
-        CASE WHEN r.es_anonimo = true THEN 'Anónimo' ELSE COALESCE(u.alias, u.nombre) END as autor,
+        CASE
+          WHEN r.es_anonimo = true THEN 'Anónimo'
+          ELSE COALESCE(u.alias, u.nombre)
+        END as autor,
         u.id as id_autor,
         (SELECT COUNT(*) FROM apoyos WHERE id_reporte = r.id) as apoyos_count,
         ST_AsGeoJSON(r.location) as location,
-        r.reportes_vinculados_count -- Campo añadido en Hoja de Trabajo #7
+        r.reportes_vinculados_count,
+        -- Campo booleano: true si el usuario actual está en la tabla de apoyos pendientes para este reporte
+        CASE
+          WHEN ap.id_usuario IS NOT NULL THEN true
+          ELSE false
+        END as usuario_actual_unido
       FROM reportes r
       LEFT JOIN usuarios u ON r.id_usuario = u.id
       LEFT JOIN categorias c ON r.id_categoria = c.id
+      -- JOIN específico para verificar si EL USUARIO ACTUAL apoya este reporte
+      LEFT JOIN apoyos_pendientes ap ON r.id = ap.id_reporte AND ap.id_usuario = $2
       WHERE r.id = $1
     `;
-    // --- FIN CORRECCIÓN ---
-    const reporteResult = await db.query(reporteQuery, [id]);
+
+    const reporteResult = await db.query(reporteQuery, [id, id_usuario_actual]);
 
     if (reporteResult.rows.length === 0) {
       return res.status(404).json({ message: 'Reporte no encontrado.' });
     }
     const reporte = reporteResult.rows[0];
 
-    // --- CORRECCIÓN: Nombres de tabla en minúsculas y formato de fecha ISO ---
+    // Consulta secundaria: Comentarios asociados
     const comentariosQuery = `
       SELECT
         c.id, c.comentario, c.id_usuario,
@@ -213,10 +239,12 @@ const getReporteById = async (req, res) => {
       WHERE c.id_reporte = $1
       ORDER BY c.fecha_creacion ASC
     `;
-    // --- FIN CORRECCIÓN ---
+
     const comentariosResult = await db.query(comentariosQuery, [id, id_usuario_actual]);
 
     reporte.comentarios = comentariosResult.rows;
+
+    // Parsear GeoJSON de ubicación si existe
     if (reporte.location) {
         reporte.location = JSON.parse(reporte.location);
     }
@@ -224,6 +252,105 @@ const getReporteById = async (req, res) => {
     res.status(200).json(reporte);
   } catch (error) {
     console.error('Error al obtener el reporte por ID:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
+/**
+ * Obtiene reportes cercanos a una ubicación (lat, lon) con filtros opcionales.
+ *
+ * Lógica de Ordenamiento:
+ * 1. Primero: Reportes a los que el usuario actual YA se ha unido (usuario_actual_unido = true).
+ * 2. Segundo: Distancia (de más cercano a más lejano).
+ */
+const getReportesCercanos = async (req, res) => {
+  const { lat, lon, radius = 500 } = req.query;
+  const { categoriaId, estado, urgencia, dias } = req.query;
+  const id_usuario_solicitante = req.user?.userId;
+
+  if (!lat || !lon) {
+    return res.status(400).json({ message: 'Se requieren latitud y longitud.' });
+  }
+
+  try {
+    const params = [lon, lat, radius];
+    let paramIndex = 4;
+
+    let query = `
+      SELECT
+        r.id,
+        r.titulo,
+        c.nombre as categoria,
+        r.estado,
+        r.foto_url,
+        r.apoyos_pendientes,
+        r.id_usuario,
+        CASE WHEN r.es_anonimo = true THEN 'Anónimo' ELSE COALESCE(u.alias, u.nombre) END as autor,
+        to_char(r.fecha_creacion, 'DD Mon YYYY') as fecha_creacion_formateada,
+        CASE WHEN rp.id_reporte IS NOT NULL THEN true ELSE false END as es_prioritario,
+        r.urgencia,
+        ST_Distance(r.location, ST_MakePoint($1, $2)::geography) as distancia_metros,
+        -- Booleano para saber si el usuario ya apoyó este reporte
+        CASE WHEN ap.id_usuario IS NOT NULL THEN true ELSE false END as usuario_actual_unido
+      FROM reportes r
+      JOIN categorias c ON r.id_categoria = c.id
+      JOIN usuarios u ON r.id_usuario = u.id
+      LEFT JOIN reportes_prioritarios rp ON r.id = rp.id_reporte
+      -- Left Join filtrado por el usuario solicitante para saber su estado de apoyo
+      LEFT JOIN apoyos_pendientes ap ON r.id = ap.id_reporte AND ap.id_usuario = $${paramIndex++}
+      WHERE
+        ST_DWithin(r.location, ST_MakePoint($1, $2)::geography, $3)
+    `;
+
+    // Añadir ID de usuario a los parámetros (será el $4)
+    params.push(id_usuario_solicitante || null);
+
+    // --- Aplicación de Filtros ---
+    if (categoriaId) {
+       query += ` AND r.id_categoria = $${paramIndex++}`;
+       params.push(categoriaId);
+    }
+
+    if (estado && (estado === 'pendiente_verificacion' || estado === 'verificado')) {
+       query += ` AND r.estado = $${paramIndex++}`;
+       params.push(estado);
+    } else {
+       // Por defecto mostramos ambos estados si no se filtra
+       query += ` AND r.estado IN ('pendiente_verificacion', 'verificado')`;
+    }
+
+    if (urgencia && ['Baja', 'Media', 'Alta'].includes(urgencia)) {
+       query += ` AND r.urgencia = $${paramIndex++}`;
+       params.push(urgencia);
+    }
+
+    if (dias) {
+       const d = parseInt(dias);
+       if (!isNaN(d)) {
+          query += ` AND r.fecha_creacion >= NOW() - interval '${d} days'`;
+       }
+    }
+
+    // --- ORDENAMIENTO CRÍTICO ---
+    // 1. usuario_actual_unido DESC: Los 'true' van primero.
+    // 2. distancia_metros ASC: Los más cercanos van después.
+    query += ` ORDER BY usuario_actual_unido DESC, distancia_metros ASC LIMIT 20;`;
+
+    const result = await db.query(query, params);
+
+    const reportes = result.rows.map(r => ({
+      ...r,
+      // Lógica calculada para el frontend:
+      // Puede unirse SI: hay usuario logueado, es pendiente, NO es el autor, y NO se ha unido aún.
+      puede_unirse: !!id_usuario_solicitante &&
+                    r.estado === 'pendiente_verificacion' &&
+                    r.id_usuario !== id_usuario_solicitante &&
+                    !r.usuario_actual_unido
+    }));
+
+    res.status(200).json(reportes);
+  } catch (error) {
+    console.error('Error al obtener reportes cercanos:', error);
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };
@@ -353,66 +480,6 @@ const getDatosMapaDeCalor = async (req, res) => {
     res.status(200).json(heatmapData);
   } catch (error) {
     console.error('Error al obtener datos del mapa de calor:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
-  }
-};
-
-// --- FUNCIÓN getReportesCercanos CORREGIDA ---
-// Usa nombres de tabla en minúsculas
-const getReportesCercanos = async (req, res) => {
-  const { lat, lon, radius = 500 } = req.query;
-  const { categoriaId, estado, urgencia, dias } = req.query;
-  const id_usuario_solicitante = req.user?.userId;
-
-  if (!lat || !lon) {
-    return res.status(400).json({ message: 'Se requieren latitud y longitud.' });
-  }
-
-  try {
-    const params = [lon, lat, radius];
-    let paramIndex = 4;
-    // --- CORRECCIÓN: Nombres de tabla en minúsculas ---
-    let query = `
-      SELECT
-        r.id, r.titulo, c.nombre as categoria, r.estado, r.foto_url,
-        r.apoyos_pendientes, r.id_usuario,
-        CASE WHEN r.es_anonimo = true THEN 'Anónimo' ELSE COALESCE(u.alias, u.nombre) END as autor,
-        to_char(r.fecha_creacion, 'DD Mon YYYY') as fecha_creacion_formateada,
-        CASE WHEN rp.id_reporte IS NOT NULL THEN true ELSE false END as es_prioritario,
-        r.urgencia,
-        ST_Distance(r.location, ST_MakePoint($1, $2)::geography) as distancia_metros,
-        CASE WHEN ap.id_usuario IS NOT NULL THEN true ELSE false END as usuario_actual_unido
-      FROM reportes r
-      JOIN categorias c ON r.id_categoria = c.id
-      JOIN usuarios u ON r.id_usuario = u.id
-      LEFT JOIN reportes_prioritarios rp ON r.id = rp.id_reporte
-      LEFT JOIN apoyos_pendientes ap ON r.id = ap.id_reporte AND ap.id_usuario = $${paramIndex++}
-      WHERE
-        ST_DWithin(r.location, ST_MakePoint($1, $2)::geography, $3)
-    `;
-    // --- FIN CORRECCIÓN ---
-
-    params.push(id_usuario_solicitante || null);
-
-    // ... (lógica de filtros sin cambios) ...
-    if (categoriaId) { /* ... */ }
-    if (estado && (estado === 'pendiente_verificacion' || estado === 'verificado')) { /* ... */ }
-    else { query += ` AND r.estado IN ('pendiente_verificacion', 'verificado')`; }
-    if (urgencia && ['Baja', 'Media', 'Alta'].includes(urgencia)) { /* ... */ }
-    if (dias) { /* ... */ }
-
-    query += ` ORDER BY distancia_metros ASC LIMIT 20;`;
-
-    const result = await db.query(query, params);
-
-    const reportes = result.rows.map(r => ({
-      ...r,
-      puede_unirse: !!id_usuario_solicitante && r.estado === 'pendiente_verificacion' && r.id_usuario !== id_usuario_solicitante && !r.usuario_actual_unido
-    }));
-
-    res.status(200).json(reportes);
-  } catch (error) {
-    console.error('Error al obtener reportes cercanos:', error);
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };
@@ -622,6 +689,23 @@ const editReportAuthor = async (req, res) => {
   }
 };
 
+const markChatAsReadUser = async (req, res) => {
+  const { id: id_reporte } = req.params;
+  // El usuario (ciudadano) quiere marcar como leídos los mensajes del ADMIN
+  try {
+    await db.query(
+      `UPDATE chat_messages 
+       SET leido = true 
+       WHERE id_reporte = $1 AND es_admin = true AND leido = false`,
+      [id_reporte]
+    );
+    res.status(200).json({ message: 'Chat marcado como leído.' });
+  } catch (error) {
+    console.error('Error marking chat read:', error);
+    res.status(500).json({ message: 'Error servidor.' });
+  }
+};
+
 // Exportar todas las funciones
 module.exports = {
   getAllReports,
@@ -630,7 +714,6 @@ module.exports = {
   getReporteById,
   eliminarReporte,
   getRiesgoZona,
-  // checkAndAwardBadges no se exporta porque es un helper interno
   getChatHistory, 
   getZonasPeligrosas,
   getReportesCercanos,
@@ -638,4 +721,5 @@ module.exports = {
   getDatosMapaDeCalor,
   quitarApoyoPendiente,
   editReportAuthor,
+  markChatAsReadUser,
 };

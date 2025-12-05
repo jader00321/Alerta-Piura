@@ -1,6 +1,6 @@
 const db = require('../config/db');
 
-// (buildDateFilter se mantiene igual)
+// Helper para filtros de fecha
 const buildDateFilter = (startDate, endDate, params, dateColumn = 'r.fecha_creacion') => {
   if (startDate && endDate) {
     params.push(startDate);
@@ -10,13 +10,15 @@ const buildDateFilter = (startDate, endDate, params, dateColumn = 'r.fecha_creac
   return '';
 };
 
-// (getReportesPorCategoria se mantiene igual)
+// 1. Reportes por Categoría
 const getReportesPorCategoria = async (req, res) => {
-  const { startDate, endDate } = req.query;
-  const params = [];
-  const dateFilter = buildDateFilter(startDate, endDate, params);
+  if (res.headersSent) return; // Protección inicial
 
   try {
+    const { startDate, endDate } = req.query;
+    const params = [];
+    const dateFilter = buildDateFilter(startDate, endDate, params);
+
     const query = `
       SELECT c.nombre as name, COUNT(r.id) as value
       FROM reportes r
@@ -26,19 +28,21 @@ const getReportesPorCategoria = async (req, res) => {
       ORDER BY value DESC
     `;
     const result = await db.query(query, params);
-    if (!res.headersSent) res.status(200).json(result.rows);
+    return res.status(200).json(result.rows);
   } catch (error) {
-    if (!res.headersSent) res.status(500).json({ message: 'Error al obtener reportes por categoría.' });
+    console.error('Error en getReportesPorCategoria:', error);
+    if (!res.headersSent) return res.status(500).json({ message: 'Error servidor' });
   }
 };
 
-// (getReportesPorDistrito se mantiene igual)
+// 2. Reportes por Distrito
 const getReportesPorDistrito = async (req, res) => {
-  const { startDate, endDate } = req.query;
-  const params = [];
-  const dateFilter = buildDateFilter(startDate, endDate, params);
-
+  if (res.headersSent) return;
   try {
+    const { startDate, endDate } = req.query;
+    const params = [];
+    const dateFilter = buildDateFilter(startDate, endDate, params);
+
     const query = `
       SELECT distrito as name, COUNT(id) as value
       FROM reportes r
@@ -47,63 +51,99 @@ const getReportesPorDistrito = async (req, res) => {
       ORDER BY value DESC
     `;
     const result = await db.query(query, params);
-    if (!res.headersSent) res.status(200).json(result.rows);
+    return res.status(200).json(result.rows);
   } catch (error) {
-    if (!res.headersSent) res.status(500).json({ message: 'Error al obtener reportes por distrito.' });
+    console.error('Error en getReportesPorDistrito:', error);
+    if (!res.headersSent) return res.status(500).json({ message: 'Error servidor' });
   }
 };
 
-// --- FUNCIÓN CORREGIDA Y OPTIMIZADA ---
+// 3. Tendencia Temporal
 const getTendenciaReportes = async (req, res) => {
+  if (res.headersSent) return;
   try {
     const query = `
-      SELECT 
-        to_char(d.day, 'YYYY-MM-DD') AS name,
-        COUNT(r.id) as value
-      FROM 
-        generate_series(
-          current_date - interval '29 days', 
-          current_date, 
-          '1 day'
-        ) AS d(day)
-      LEFT JOIN 
-        reportes r ON to_char(r.fecha_creacion, 'YYYY-MM-DD') = to_char(d.day, 'YYYY-MM-DD')
-        AND r.estado = 'verificado' -- <<< CORRECCIÓN: Añadido filtro de estado
-      GROUP BY 
-        d.day
-      ORDER BY 
-        d.day ASC;
+      SELECT to_char(d.day, 'YYYY-MM-DD') AS name, COUNT(r.id) as value
+      FROM generate_series(current_date - interval '29 days', current_date, '1 day') AS d(day)
+      LEFT JOIN reportes r ON to_char(r.fecha_creacion, 'YYYY-MM-DD') = to_char(d.day, 'YYYY-MM-DD') AND r.estado = 'verificado'
+      GROUP BY d.day
+      ORDER BY d.day ASC;
     `;
     const result = await db.query(query);
-    if (!res.headersSent) {
-      res.status(200).json(result.rows);
-    }
+    return res.status(200).json(result.rows);
   } catch (error) {
-    console.error('Error al obtener la tendencia de reportes:', error);
-    if (!res.headersSent) {
-      res.status(500).json({ message: 'Error al obtener la tendencia de reportes.' });
-    }
+    console.error('Error en getTendenciaReportes:', error);
+    if (!res.headersSent) return res.status(500).json({ message: 'Error servidor' });
   }
 };
 
-// --- ESTA FUNCIÓN AHORA ES UN PLACEHOLDER ---
-// La lógica real de PDF se moverá a la app, como solicitaste.
-const solicitarExportacionPDF = async (req, res) => {
-  const { email } = req.user; 
+// 4. Mapa de Calor
+const getHeatmapData = async (req, res) => {
+  if (res.headersSent) return;
   try {
-    res.status(200).json({ 
-      message: `La generación de PDF ahora se maneja localmente en la app.` 
+    const query = `
+      SELECT ST_Y(location) as lat, ST_X(location) as lon
+      FROM reportes WHERE estado = 'verificado' AND location IS NOT NULL LIMIT 1000;
+    `;
+    const result = await db.query(query);
+    return res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error en getHeatmapData:', error);
+    if (!res.headersSent) return res.status(500).json({ message: 'Error servidor' });
+  }
+};
+
+// 5. Eficiencia (Tiempo Promedio)
+const getTiemposAtencion = async (req, res) => {
+  if (res.headersSent) return;
+  try {
+    const query = `
+      SELECT AVG(EXTRACT(EPOCH FROM (fecha_actualizacion - fecha_creacion))) as segundos_promedio
+      FROM reportes WHERE estado IN ('verificado', 'rechazado') AND fecha_actualizacion IS NOT NULL
+    `;
+    const result = await db.query(query);
+    
+    // CORRECCIÓN NaN: Si no hay datos, segundos_promedio es null.
+    const segundos = result.rows[0].segundos_promedio !== null ? parseFloat(result.rows[0].segundos_promedio) : 0;
+    const horas = (segundos / 3600).toFixed(1);
+
+    return res.status(200).json({ 
+      tiempoPromedioHoras: horas,
+      totalProcesados: result.rowCount 
     });
   } catch (error) {
-    if (!res.headersSent) {
-      res.status(500).json({ message: 'Error al procesar la solicitud.' });
-    }
+    console.error('Error en getTiemposAtencion:', error);
+    if (!res.headersSent) return res.status(500).json({ message: 'Error servidor' });
   }
+};
+
+// 6. Urgencia
+const getReportesPorUrgencia = async (req, res) => {
+  if (res.headersSent) return;
+  try {
+    const query = `
+      SELECT urgencia as name, COUNT(*) as value
+      FROM reportes WHERE estado = 'verificado' AND urgencia IS NOT NULL
+      GROUP BY urgencia ORDER BY value DESC
+    `;
+    const result = await db.query(query);
+    return res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error en getReportesPorUrgencia:', error);
+    if (!res.headersSent) return res.status(500).json({ message: 'Error servidor' });
+  }
+};
+
+const solicitarExportacionPDF = async (req, res) => {
+  return res.status(200).json({ message: 'PDF generado localmente.' });
 };
 
 module.exports = {
   getReportesPorCategoria,
   getReportesPorDistrito,
   getTendenciaReportes,
-  solicitarExportacionPDF // La mantenemos por completitud
+  getHeatmapData,
+  getTiemposAtencion,
+  getReportesPorUrgencia,
+  solicitarExportacionPDF
 };

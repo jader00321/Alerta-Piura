@@ -510,7 +510,7 @@ const deleteNotification = async (id) => {
  * @param {Object} filters - Filtros para la búsqueda
  * @returns {Promise<Object>} Log de SMS
  */
-const getSmsLog = async (filters = {}) => {
+const getSimulatedSmsLog = async (filters = {}) => {
   const queryString = buildQueryString(filters);
   const response = await axios.get(`${API_URL}/sms-log${queryString}`, { headers: getAuthHeader() });
   return response.data;
@@ -572,6 +572,36 @@ const getVerificationTimeTrend = async (dateRange) => {
   return response.data;
 };
 
+const getAllConversations = async () => {
+    const response = await axios.get(`${API_URL}/conversations`, { headers: getAuthHeader() });
+    return response.data;
+};
+
+const markChatAsRead = async (reportId) => {
+  const response = await axios.put(`${API_URL}/reports/${reportId}/chat/mark-read`, {}, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getReportById = async (id) => {
+  // Asegúrate de tener esta ruta en backend/src/routes/reportes.routes.js (pública) o admin
+  // Si usas la pública:
+  const response = await axios.get(`http://localhost:3000/api/reportes/${id}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
+const getUnreadChatCount = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/conversations/unread-count`, { headers: getAuthHeader() });
+    return response.data.count;
+  // eslint-disable-next-line no-unused-vars
+  } catch (e) { return 0; }
+};
+
+const deleteSmsLog = async (id) => {
+  const response = await axios.delete(`${API_URL}/sms-log/${id}`, { headers: getAuthHeader() });
+  return response.data;
+};
+
 const adminService = {
   // Login
   login,
@@ -629,11 +659,17 @@ const adminService = {
   sendNotification,
   getNotificationHistory,
   deleteNotification,
-  getSmsLog,
+  getSimulatedSmsLog,
+  deleteSmsLog,
   // SOS
   getSosDashboardData,
   // Chat
   getChatHistory,
+  getAllConversations,
+
+  getReportById,
+  markChatAsRead,
+  getUnreadChatCount,
 };
 
 export default adminService;

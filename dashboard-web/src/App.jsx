@@ -4,7 +4,8 @@ import { ThemeProvider, CssBaseline, Box, CircularProgress } from '@mui/material
 import theme from './theme';
 import LoginPage from './pages/LoginPage';
 import DashboardLayout from './pages/DashboardLayout';
-import { AuthProvider, useAuth } from './context/AuthContext'; // Assuming context is set up
+import { AuthProvider, useAuth } from './context/AuthContext'; 
+import { ChatProvider } from './context/ChatContext';
 
 // --- RENAMED IMPORT ---
 import PaginaHistorialNotificaciones from './pages/PaginaHistorialNotificaciones';
@@ -109,6 +110,7 @@ function App() {
       <CssBaseline />
       <Router>
         <AuthProvider>
+          <ChatProvider>
           {/* Usar AuthConsumer para acceder a loading e isAuthenticated */}
           <AuthConsumer>
             {({ loading, isAuthenticated, logout }) => (
@@ -150,6 +152,7 @@ function App() {
               )
             )}
           </AuthConsumer>
+          </ChatProvider>
         </AuthProvider>
       </Router>
     </ThemeProvider>

@@ -1,25 +1,55 @@
-/// Representa un resumen de una conversación (chat) asociada a un reporte.
-///
-/// Este modelo se usa en la lista de chats del líder, mostrando
-/// el reporte al que pertenece la conversación.
 class Conversacion {
-  /// El ID del reporte al que está vinculada esta conversación.
   final int idReporte;
-
-  /// El título del reporte, usado para identificar la conversación.
   final String tituloReporte;
+  final String? fotoUrl;
+  final String codigoReporte;
+  final String ultimoMensaje;
+  final DateTime fechaUltimoMensaje;
+  final int unreadCount;
+  final bool ultimoEsAdmin; // Para saber si dice "Tú:" o "Soporte:"
 
-  /// Crea una instancia de [Conversacion].
-  Conversacion({required this.idReporte, required this.tituloReporte});
+  Conversacion({
+    required this.idReporte,
+    required this.tituloReporte,
+    this.fotoUrl,
+    required this.codigoReporte,
+    required this.ultimoMensaje,
+    required this.fechaUltimoMensaje,
+    required this.unreadCount,
+    required this.ultimoEsAdmin,
+  });
 
-  /// Crea una instancia de [Conversacion] a partir de un mapa JSON.
-  ///
-  /// Este factory es utilizado para deserializar la respuesta de la API.
-  /// Mapea 'id' (del reporte) a [idReporte] y 'titulo' a [tituloReporte].
   factory Conversacion.fromJson(Map<String, dynamic> json) {
     return Conversacion(
-      idReporte: json['id'],
-      tituloReporte: json['titulo'],
+      idReporte: json['id_reporte'],
+      tituloReporte: json['titulo_reporte'] ?? 'Sin título',
+      fotoUrl: json['foto_url'],
+      codigoReporte: json['codigo_reporte'] ?? '---',
+      ultimoMensaje: json['ultimo_mensaje'] ?? '',
+      fechaUltimoMensaje: DateTime.parse(json['fecha_ultimo_mensaje']).toLocal(),
+      unreadCount: int.parse(json['unread_count'].toString()),
+      ultimoEsAdmin: json['ultimo_es_admin'] ?? false,
+    );
+  }
+}
+
+// Modelo simple para la lista "Iniciar Chat"
+class ReporteSinChat {
+  final int id;
+  final String titulo;
+  final String estado;
+  final String fecha;
+  final String? fotoUrl;
+
+  ReporteSinChat({required this.id, required this.titulo, required this.estado, required this.fecha, this.fotoUrl});
+
+  factory ReporteSinChat.fromJson(Map<String, dynamic> json) {
+    return ReporteSinChat(
+      id: json['id'],
+      titulo: json['titulo'],
+      estado: json['estado'],
+      fecha: json['fecha_creacion'],
+      fotoUrl: json['foto_url'],
     );
   }
 }

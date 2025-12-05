@@ -21,4 +21,6 @@ router.get('/all', adminMiddleware, sosController.getAllSosAlerts);
 router.get('/:alertId/history', adminMiddleware, sosController.getSosLocationHistory);
 router.put('/:id/status', jsonParser, adminMiddleware, sosController.updateSosStatus);
 
+router.delete('/:id', adminMiddleware, sosController.deleteSosAlert);
+
 module.exports = router;

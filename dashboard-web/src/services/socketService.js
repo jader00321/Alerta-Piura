@@ -204,7 +204,7 @@ class SocketService {
    * @param {object} messageData - Datos del mensaje (e.g., { id_reporte, message_text }).
    */
   sendMessage(messageData) {
-      console.log(`SocketService: Enviando mensaje:`, messageData);
+      console.log(`SocketService: Mensaje enviado:`, messageData);
       // 'emit' ya verifica conexión/autenticación
       this.emit('send-message', messageData);
   }

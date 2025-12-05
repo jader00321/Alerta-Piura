@@ -1,257 +1,259 @@
-/**
-
-* Componente: ListaAlertasSOS
-* ---
-* Muestra el historial de alertas SOS emitidas por usuarios, con posibilidad de visualizar su estado,
-* revisar si fueron atendidas y actualizar su estado de atención.
-*
-* Incluye tres componentes principales:
-* 1. EstadoAlertaChip → Indica si la alerta está activa o finalizada.
-* 2. EstadoAtencionControl → Permite cambiar entre los estados de atención ("En Espera", "En Curso", "Atendida").
-* 3. Lista principal → Renderiza cada alerta con sus detalles y controles.
-     */
-
-import React from 'react';
+// src/components/SOS/ListaAlertasSOS.jsx
+import React, { useState } from 'react';
 import {
-    List, ListItemButton, ListItemText, Typography, Box, Chip,
-    Skeleton, Paper, Stack, Tooltip, ButtonGroup, Button, useTheme
+    List, Typography, Box, Chip, Skeleton, Paper, Stack, Tooltip, IconButton, 
+    useTheme, alpha, Fade, Divider, Button
 } from '@mui/material';
 import {
-    Warning as WarningIcon, CheckCircle as CheckIcon,
-    RadioButtonChecked as ActiveIcon, RadioButtonUnchecked as WaitingIcon,
-    Autorenew as InProgressIcon, DoneAll as AttendedIcon,
-    Visibility as VisibleIcon, VisibilityOff as NotVisibleIcon
+    WarningAmber as ActiveIcon, CheckCircleOutline as FinishedIcon,
+    RadioButtonUnchecked as WaitingIcon, Autorenew as InProgressIcon, CheckCircle as AttendedIcon,
+    DeleteOutline as DeleteIcon, Person as PersonIcon, AccessTime as TimeIcon,
+    ContactPhone as ContactIcon
 } from '@mui/icons-material';
 
-/*                    Componente auxiliar: EstadoAlertaChip                   */
-/**
+import sosService from '../../services/sosService';
+import ModalConfirmacion from '../Comunes/ModalConfirmacion';
 
-* Muestra el estado general de la alerta (activa o finalizada)
-  */
-const EstadoAlertaChip = ({ estado }) => {
-    const active = estado === 'activo';
+// --- SUBCOMPONENTES ---
+
+const StatusBadge = ({ isActive }) => {
+    const theme = useTheme();
     return (
         <Chip
-            label={active ? 'Activa' : 'Finalizada'}
-            color={active ? 'error' : 'default'}
+            icon={isActive ? <ActiveIcon style={{ fontSize: 16 }} /> : <FinishedIcon style={{ fontSize: 16 }} />}
+            label={isActive ? 'ACTIVA' : 'FINALIZADA'}
             size="small"
-            icon={active ? <WarningIcon /> : <CheckIcon />}
-            variant="filled"
             sx={{
-                mr: 1,
-                color: active ? '#fff' : 'text.primary',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                fontSize: '0.65rem',
+                height: 24,
+                bgcolor: isActive ? alpha(theme.palette.error.main, 0.1) : alpha(theme.palette.grey[500], 0.1),
+                color: isActive ? 'error.main' : 'text.secondary',
+                border: `1px solid ${isActive ? alpha(theme.palette.error.main, 0.2) : theme.palette.divider}`
             }}
         />
     );
 };
 
-/*                Componente auxiliar: EstadoAtencionControl                  */
-/**
-
-* Permite modificar el estado de atención de una alerta SOS.
-* Los tres estados disponibles son: "En Espera", "En Curso", "Atendida".
-  */
-const EstadoAtencionControl = ({ estado, alertId, onChange }) => {
+const AttentionControl = ({ status, onChange }) => {
     const theme = useTheme();
-    const statuses = [
-        { value: 'En Espera', icon: <WaitingIcon />, color: 'error', activeIcon: <ActiveIcon sx={{ color: theme.palette.error.contrastText }} /> },
-        { value: 'En Curso', icon: <InProgressIcon />, color: 'warning', activeIcon: <InProgressIcon sx={{ color: theme.palette.warning.contrastText }} /> },
-        { value: 'Atendida', icon: <AttendedIcon />, color: 'success', activeIcon: <AttendedIcon sx={{ color: theme.palette.success.contrastText }} /> },
-    ];
-    const currentStatusValue = estado || 'En Espera';
+    const config = {
+        'En Espera': { color: theme.palette.error.main, bg: alpha(theme.palette.error.main, 0.1), icon: <WaitingIcon fontSize="small"/> },
+        'En Curso': { color: theme.palette.warning.main, bg: alpha(theme.palette.warning.main, 0.1), icon: <InProgressIcon fontSize="small"/> },
+        'Atendida': { color: theme.palette.success.main, bg: alpha(theme.palette.success.main, 0.1), icon: <AttendedIcon fontSize="small"/> },
+    };
+    
+    // Ciclo de estados para clic rápido: Espera -> Curso -> Atendida -> Espera
+    const nextStatus = {
+        'En Espera': 'En Curso',
+        'En Curso': 'Atendida',
+        'Atendida': 'En Espera'
+    };
 
-    return (<ButtonGroup variant="outlined" size="small" aria-label="Estado de atención SOS">
-        {statuses.map(s => {
-            const isSelected = currentStatusValue === s.value;
-            return (<Tooltip title={s.value} key={s.value}>
-                <Button
-                    onClick={(e) => { e.stopPropagation(); onChange(alertId, s.value); }}
-                    color={s.color}
-                    variant={isSelected ? 'contained' : 'outlined'}
-                    sx={{
-                        minWidth: 40,
-                        px: 1,
-                        boxShadow: isSelected ? 'none' : undefined,
-                        '& .MuiButton-startIcon': {
-                            color: isSelected
-                                ? theme.palette[s.color].contrastText
-                                : theme.palette[s.color].main
-                        }
-                    }}
-                    startIcon={isSelected ? s.activeIcon : s.icon}
-                /> </Tooltip>
-            );
-        })} </ButtonGroup>
+    const current = config[status] || config['En Espera'];
+
+    return (
+        <Tooltip title={`Estado actual: ${status} (Clic para cambiar)`}>
+            <Button
+                size="small"
+                onClick={(e) => { e.stopPropagation(); onChange(nextStatus[status] || 'En Espera'); }}
+                startIcon={current.icon}
+                sx={{
+                    bgcolor: current.bg,
+                    color: current.color,
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold',
+                    textTransform: 'none',
+                    px: 1.5,
+                    borderRadius: 1.5,
+                    border: `1px solid ${alpha(current.color, 0.2)}`,
+                    '&:hover': {
+                        bgcolor: alpha(current.color, 0.2),
+                        borderColor: current.color
+                    }
+                }}
+            >
+                {status}
+            </Button>
+        </Tooltip>
     );
 };
 
-/*                      Componente principal: ListaAlertasSOS                 */
-/**
+// --- ITEM DE LISTA (TARJETA) ---
 
-* Props:
-* * alerts: Array con las alertas SOS
-* * selectedAlertId: ID de la alerta seleccionada actualmente
-* * loading: Booleano que indica si se están cargando las alertas
-* * onSelectAlert: Callback ejecutado al seleccionar una alerta
-* * onAttentionChange: Callback ejecutado al cambiar el estado de atención
-    */
-function ListaAlertasSOS({ alerts, selectedAlertId, loading, onSelectAlert, onAttentionChange }) {
+const AlertListItem = ({ alert, isSelected, onSelect, onDelete, onAttentionChange }) => {
+    const theme = useTheme();
+    const isActive = alert.estado === 'activo';
 
-    /* ----------------------------- Estado: cargando ----------------------------- */
-    if (loading) {
-        return (<Paper variant="outlined">
-            <Stack spacing={1} sx={{ p: 1 }}>
-                {[...Array(5)].map((_, i) => (<Skeleton key={i} variant="rounded" height={80} />
-                ))} </Stack> </Paper>
-        );
-    }
-
-    /* ----------------------------- Estado: vacío -------------------------------- */
-    if (!alerts || alerts.length === 0) {
-        return (
-            <Paper
-                variant="outlined"
-                sx={{
-                    p: 3,
-                    textAlign: 'center',
-                    borderStyle: 'dashed',
-                    bgcolor: 'action.hover'
-                }}
-            > <Typography color="text.secondary">
-                    No hay historial de alertas SOS. </Typography> </Paper>
-        );
-    }
-
-    /* ------------------------- Renderizado principal --------------------------- */
-    return (<Paper variant="outlined">
-        <List
+    return (
+        <Paper
+            elevation={0}
+            onClick={() => onSelect(alert)}
             sx={{
-                p: 0,
-                maxHeight: { xs: '50vh', md: '75vh' },
-                overflowY: 'auto'
+                p: 2,
+                mb: 1.5,
+                borderRadius: 2,
+                border: `1px solid ${isSelected ? theme.palette.primary.main : theme.palette.divider}`,
+                bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.04) : 'background.paper',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                '&:hover': {
+                    borderColor: theme.palette.primary.main,
+                    transform: 'translateY(-2px)',
+                    boxShadow: theme.shadows[2]
+                },
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2
             }}
         >
-            {alerts.map((alert, index) => (
-                <ListItemButton
-                    key={alert.id}
-                    selected={selectedAlertId === alert.id}
-                    onClick={() => onSelectAlert(alert)}
-                    divider={index < alerts.length - 1}
-                    sx={{
-                        py: 1.5,
-                        bgcolor: !alert.revisada ? 'warning.lighter' : 'inherit',
-                        '&.Mui-selected': {
-                            bgcolor: 'action.selected',
-                            '&:hover': { bgcolor: 'action.selected' }
-                        }
-                    }}
-                    alignItems="flex-start"
-                >
-                    <ListItemText
-                        disableTypography
-                        primary={
-                            <Box sx={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                mb: 1
-                            }}> <Stack
-                                direction="row"
-                                spacing={1}
-                                alignItems="center"
-                                flexWrap="wrap"
-                            > <EstadoAlertaChip estado={alert.estado} />
-                                    <Typography
-                                        variant="body1"
-                                        sx={{ fontWeight: 'bold' }}
-                                    >
-                                        {alert.alias || alert.nombre} </Typography>
-                                    {!alert.revisada && (
-                                        <Chip
-                                            label="Nueva"
-                                            color="warning"
-                                            size="small"
-                                            sx={{ ml: 1, height: 'auto' }}
-                                        />
-                                    )} </Stack>
-                                <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                    sx={{ flexShrink: 0, ml: 1 }}
-                                >
-                                    {new Date(alert.fecha_inicio).toLocaleString()} </Typography> </Box>
-                        }
-                        secondary={
-                            <Stack spacing={1} sx={{ mt: 0.5 }}>
-                                {/* Línea con código y estado de revisión */}
-                                <Stack
-                                    direction={{ xs: 'column', sm: 'row' }}
-                                    justifyContent="space-between"
-                                    alignItems={{ xs: 'flex-start', sm: 'center' }}
-                                    spacing={1}
-                                >
-                                    <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                        sx={{ fontSize: '0.8rem' }}
-                                    >
-                                        Código: <strong>{alert.codigo_alerta}</strong> </Typography>
-                                    <Tooltip
-                                        title={alert.revisada
-                                            ? "Alerta ya revisada"
-                                            : "Alerta NUEVA (no revisada)"}
-                                    >
-                                        <Chip
-                                            icon={alert.revisada
-                                                ? <VisibleIcon />
-                                                : <NotVisibleIcon />}
-                                            label={alert.revisada
-                                                ? "Revisada"
-                                                : "Nueva"}
-                                            size="small"
-                                            color={alert.revisada
-                                                ? "default"
-                                                : "warning"}
-                                            variant="outlined"
-                                        /> </Tooltip> </Stack>
+            {/* 1. Indicador Visual Lateral */}
+            <Box 
+                sx={{ 
+                    width: 4, 
+                    height: 40, 
+                    borderRadius: 4, 
+                    bgcolor: isActive ? 'error.main' : 'text.disabled' 
+                }} 
+            />
 
-                                ```
-                                {/* Datos de contacto y mensaje */}
-                                <Box>
-                                    <Typography
-                                        variant="caption"
-                                        color="text.secondary"
-                                    >
-                                        Contacto Emergencia: {alert.contacto_emergencia_telefono || 'N/A'}
-                                    </Typography>
-                                    <Tooltip title={alert.contacto_emergencia_mensaje || ''}>
-                                        <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                            noWrap
-                                            display="block"
-                                        >
-                                            Mensaje: {alert.contacto_emergencia_mensaje || 'N/A'}
-                                        </Typography>
-                                    </Tooltip>
-                                </Box>
+            {/* 2. Info Principal */}
+            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
+                    <StatusBadge isActive={isActive} />
+                    <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                        #{alert.codigo_alerta}
+                    </Typography>
+                    {!alert.revisada && (
+                        <Chip label="NUEVA" size="small" color="error" sx={{ height: 16, fontSize: '0.6rem', fontWeight: 'bold' }} />
+                    )}
+                </Stack>
+                
+                <Stack direction="row" alignItems="center" spacing={2}>
+                    <Box display="flex" alignItems="center" gap={0.5} color="text.primary">
+                        <PersonIcon sx={{ fontSize: 16, color: 'action.active' }} />
+                        <Typography variant="body2" fontWeight="bold">
+                            {alert.alias || alert.nombre || 'Desconocido'}
+                        </Typography>
+                    </Box>
+                    <Divider orientation="vertical" flexItem sx={{ height: 12, my: 'auto' }} />
+                    <Box display="flex" alignItems="center" gap={0.5} color="text.secondary">
+                        <TimeIcon sx={{ fontSize: 16 }} />
+                        <Typography variant="caption">
+                            {new Date(alert.fecha_inicio).toLocaleString()}
+                        </Typography>
+                    </Box>
+                </Stack>
+                
+                {/* Contacto Resumen */}
+                {alert.contacto_emergencia_telefono && (
+                    <Box display="flex" alignItems="center" gap={0.5} mt={0.5} color="text.secondary">
+                        <ContactIcon sx={{ fontSize: 14 }} />
+                        <Typography variant="caption" noWrap>
+                            Contacto: {alert.contacto_emergencia_telefono}
+                        </Typography>
+                    </Box>
+                )}
+            </Box>
 
-                                {/* Controles de atención */}
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-                                    <EstadoAtencionControl
-                                        estado={alert.estado_atencion}
-                                        alertId={alert.id}
-                                        onChange={onAttentionChange}
-                                    />
-                                </Box>
-                            </Stack>
-                        }
-                    />
-                </ListItemButton>
-            ))}
-        </List>
-    </Paper>
+            {/* 3. Acciones Derecha */}
+            <Stack direction="column" alignItems="flex-end" spacing={1}>
+                <AttentionControl 
+                    status={alert.estado_atencion || 'En Espera'} 
+                    onChange={(newStatus) => onAttentionChange(alert.id, newStatus)}
+                />
+                
+                <Tooltip title="Eliminar del historial">
+                    <IconButton 
+                        size="small" 
+                        onClick={(e) => onDelete(e, alert.id)}
+                        sx={{ 
+                            color: 'text.disabled',
+                            '&:hover': { color: 'error.main', bgcolor: alpha(theme.palette.error.main, 0.1) }
+                        }}
+                    >
+                        <DeleteIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+            </Stack>
+        </Paper>
+    );
+};
+
+// --- COMPONENTE PRINCIPAL ---
+
+function ListaAlertasSOS({ alerts, selectedAlertId, loading, onSelectAlert, onAttentionChange, onRefresh }) {
+    const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
+
+    const handleDeleteClick = (e, id) => {
+        e.stopPropagation();
+        setDeleteModal({ open: true, id });
+    };
+
+    const confirmDelete = async () => {
+        try {
+            await sosService.deleteAlert(deleteModal.id);
+            if (onRefresh) onRefresh();
+            else window.location.reload(); 
+        } catch (error) {
+            console.error("Error al eliminar alerta:", error);
+            alert("Error al eliminar.");
+        } finally {
+            setDeleteModal({ open: false, id: null });
+        }
+    };
+
+    if (loading) {
+        return (
+            <Stack spacing={2}>
+                {[1, 2, 3].map((i) => (
+                    <Paper key={i} sx={{ p: 2, borderRadius: 2 }} variant="outlined">
+                        <Skeleton variant="text" width="40%" height={30} />
+                        <Skeleton variant="text" width="70%" />
+                    </Paper>
+                ))}
+            </Stack>
+        );
+    }
+
+    if (!alerts || alerts.length === 0) {
+        return (
+            <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', borderStyle: 'dashed', borderRadius: 3, bgcolor: 'background.default' }}>
+                <Typography color="text.secondary">No se encontraron alertas en el historial.</Typography>
+            </Paper>
+        );
+    }
+
+    return (
+        <>
+            <Box sx={{ maxHeight: '800px', overflowY: 'auto', pr: 1 }}>
+                <Stack spacing={0}>
+                    {alerts.map((alert) => (
+                        <Fade in={true} key={alert.id}>
+                            <Box>
+                                <AlertListItem
+                                    alert={alert}
+                                    isSelected={selectedAlertId === alert.id}
+                                    onSelect={onSelectAlert}
+                                    onDelete={handleDeleteClick}
+                                    onAttentionChange={onAttentionChange}
+                                />
+                            </Box>
+                        </Fade>
+                    ))}
+                </Stack>
+            </Box>
+
+            <ModalConfirmacion
+                open={deleteModal.open}
+                onClose={() => setDeleteModal({ open: false, id: null })}
+                title="Eliminar Registro"
+                content="¿Estás seguro de eliminar esta alerta del historial? Esta acción no se puede deshacer."
+                confirmText="Eliminar"
+                confirmColor="error"
+                onConfirm={confirmDelete}
+            />
+        </>
     );
 }
 

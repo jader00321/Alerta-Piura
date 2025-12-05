@@ -55,6 +55,7 @@ router.put('/reports/:id/set-pending', reporteAdminController.adminSetReportToPe
 router.get('/latest-pending', reporteAdminController.getLatestPendingReports);
 router.get('/review-requests', reporteAdminController.getReviewRequests);
 router.put('/review-requests/:id', jsonParser, reporteAdminController.resolveReviewRequest);
+router.get('/conversations', reporteAdminController.getAllConversations); 
 router.get('/reports/:id/chat', reporteAdminController.getChatHistory);
 
 // Moderation
@@ -88,4 +89,9 @@ router.get('/sms-log', comunicacionAdminController.getSimulatedSmsLog);
 // SOS
 router.get('/sos-dashboard', sosAdminController.getSosDashboardData);
 
+router.put('/reports/:id/chat/mark-read', reporteAdminController.markChatAsReadAdmin);
+
+router.get('/conversations/unread-count', reporteAdminController.getUnreadGlobalCount);
+
+router.delete('/sms-log/:id', comunicacionAdminController.deleteSmsLog);
 module.exports = router;

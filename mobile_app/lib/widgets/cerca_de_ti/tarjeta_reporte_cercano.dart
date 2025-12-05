@@ -2,35 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:mobile_app/models/reporte_cercano_model.dart';
 
 /// {@template tarjeta_reporte_cercano}
-/// Tarjeta que muestra un resumen de un reporte cercano en la lista
-/// de [PantallaCercaDeTi].
+/// Widget visual que representa un reporte individual en la lista de "Cerca de Ti".
 ///
-/// Muestra información clave como imagen, título, categoría, urgencia, distancia,
-/// autor y estado.
+/// Muestra:
+/// - Imagen del reporte (con placeholder si falla).
+/// - Chips de metadatos: Categoría, Urgencia, Distancia.
+/// - Indicador de prioridad (estrella) si aplica.
+/// - Título, Autor y Fecha.
+/// - Botón de acción dinámico para reportes 'pendiente_verificacion'.
 ///
-/// La característica principal es el **botón de acción dinámico** para reportes
-/// en estado 'pendiente_verificacion':
-/// - Muestra "Unirme (+X)" si [reporte.puedeUnirse] es `true`.
-/// - Muestra "Unido (+X)" si [reporte.usuarioActualUnido] es `true`.
-/// - Muestra "Es tu reporte" (deshabilitado) si el usuario es el autor.
-///
-/// Maneja los estados de carga [isJoining] y [isUnjoining] para los botones.
+/// Lógica de Botones Pendientes:
+/// 1. Si el usuario ya se unió: Muestra botón VERDE "Unido". Al presionar dispara [onUnjoinTap].
+/// 2. Si el usuario puede unirse: Muestra botón OUTLINED (borde) "Unirme". Al presionar dispara [onJoinTap].
+/// 3. Si es el autor: Muestra botón GRIS deshabilitado "Es tu reporte".
 /// {@endtemplate}
 class TarjetaReporteCercano extends StatelessWidget {
-  /// Los datos del reporte cercano a mostrar.
+  /// Modelo de datos del reporte.
   final ReporteCercano reporte;
-  /// Indica si se está procesando la acción de "unirse".
+
+  /// Indica si hay una operación de "unirse" en progreso para este reporte.
   final bool isJoining;
-  /// Indica si se está procesando la acción de "quitar apoyo".
+
+  /// Indica si hay una operación de "quitar apoyo" en progreso para este reporte.
   final bool isUnjoining;
-  /// Callback al tocar cualquier parte de la tarjeta.
+
+  /// Callback principal al tocar la tarjeta (navegación a detalle).
   final VoidCallback onCardTap;
-  /// Callback al presionar el botón "Unirme".
+
+  /// Callback al presionar "Unirme".
   final VoidCallback onJoinTap;
-  /// Callback al presionar el botón "Unido" (para quitar apoyo).
+
+  /// Callback al presionar "Unido" (para confirmar retiro de apoyo).
   final VoidCallback onUnjoinTap;
 
-  /// {@macro tarjeta_reporte_cercano}
   const TarjetaReporteCercano({
     super.key,
     required this.reporte,
@@ -41,7 +45,7 @@ class TarjetaReporteCercano extends StatelessWidget {
     this.isUnjoining = false,
   });
 
-  /// Helper para determinar el color basado en la urgencia.
+  /// Determina el color del chip/texto según la urgencia.
   Color _getUrgencyColor(String? urgency) {
     switch (urgency?.toLowerCase()) {
       case 'alta':
@@ -55,7 +59,7 @@ class TarjetaReporteCercano extends StatelessWidget {
     }
   }
 
-  /// Helper para determinar el icono basado en la urgencia.
+  /// Determina el icono según la urgencia.
   IconData _getUrgencyIcon(String? urgency) {
     switch (urgency?.toLowerCase()) {
       case 'alta':
@@ -72,8 +76,9 @@ class TarjetaReporteCercano extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Verificar estado para mostrar UI correspondiente
     final bool esPendiente = reporte.estado == 'pendiente_verificacion';
-    /// Flag para deshabilitar botones si cualquier acción está en progreso.
+    // Bloquear interacción si cualquiera de las dos acciones está cargando
     final bool isLoadingAction = isJoining || isUnjoining;
 
     return Card(
@@ -82,14 +87,15 @@ class TarjetaReporteCercano extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
+        // Permitimos navegar al detalle siempre, salvo que se esté procesando una acción de botón
         onTap: isLoadingAction ? null : onCardTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// Sección de Imagen y Chips superpuestos.
+            // --- SECCIÓN 1: IMAGEN Y CHIPS SUPERPUESTOS ---
             Stack(
               children: [
-                /// Imagen del reporte (o placeholder).
+                // Imagen
                 if (reporte.fotoUrl != null)
                   Image.network(
                     reporte.fotoUrl!,
@@ -116,7 +122,7 @@ class TarjetaReporteCercano extends StatelessWidget {
                           child: Icon(Icons.image_not_supported,
                               size: 40, color: Colors.grey.shade400))),
 
-                /// Chips de Categoría y Urgencia (arriba a la izquierda).
+                // Chips Superiores (Categoría y Urgencia)
                 Positioned(
                   top: 8,
                   left: 8,
@@ -152,7 +158,7 @@ class TarjetaReporteCercano extends StatelessWidget {
                   ),
                 ),
 
-                /// Chip de Distancia (arriba a la derecha).
+                // Chip de Distancia (Superior Derecha)
                 Positioned(
                   top: 8,
                   right: 8,
@@ -168,7 +174,7 @@ class TarjetaReporteCercano extends StatelessWidget {
                   ),
                 ),
 
-                /// Icono de Prioridad (abajo a la derecha).
+                // Estrella de Prioridad (Inferior Derecha)
                 if (reporte.esPrioritario)
                   Positioned(
                     bottom: 8,
@@ -186,12 +192,13 @@ class TarjetaReporteCercano extends StatelessWidget {
               ],
             ),
 
-            /// Sección de Detalles Textuales.
+            // --- SECCIÓN 2: DATOS DEL REPORTE Y BOTONES ---
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Título
                   Text(
                     reporte.titulo,
                     style: theme.textTheme.titleMedium
@@ -200,7 +207,8 @@ class TarjetaReporteCercano extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
-                  /// Fila de Autor/Fecha y Estado.
+
+                  // Autor, Fecha y Estado
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -240,13 +248,14 @@ class TarjetaReporteCercano extends StatelessWidget {
                       ),
                     ],
                   ),
-                  /// Botón de Acción Dinámico (solo para reportes pendientes).
+
+                  // --- LÓGICA DE BOTONES PARA REPORTES PENDIENTES ---
                   if (esPendiente) ...[
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
                       child: reporte.usuarioActualUnido
-                          /// Caso 1: El usuario ya se unió. Muestra botón "Unido".
+                          // CASO 1: YA ESTÁ UNIDO -> Mostrar botón VERDE (Permite quitar apoyo)
                           ? ElevatedButton.icon(
                               icon: isUnjoining
                                   ? const SizedBox(
@@ -260,6 +269,7 @@ class TarjetaReporteCercano extends StatelessWidget {
                                     ? 'Unido (+${reporte.apoyosPendientes})'
                                     : 'Unido',
                               ),
+                              // Habilitado para permitir "des-unirse"
                               onPressed: isLoadingAction ? null : onUnjoinTap,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green.shade600,
@@ -270,8 +280,8 @@ class TarjetaReporteCercano extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(8)),
                               ),
                             )
+                          // CASO 2: NO UNIDO Y ELEGIBLE -> Mostrar botón AZUL/OUTLINE (Permite unirse)
                           : reporte.puedeUnirse
-                              /// Caso 2: El usuario puede unirse. Muestra botón "Unirme".
                               ? OutlinedButton.icon(
                                   icon: isJoining
                                       ? const SizedBox(
@@ -297,7 +307,7 @@ class TarjetaReporteCercano extends StatelessWidget {
                                         const EdgeInsets.symmetric(vertical: 8),
                                   ),
                                 )
-                              /// Caso 3: El usuario es el autor. Muestra botón deshabilitado.
+                              // CASO 3: ES EL AUTOR -> Mostrar botón GRIS (Deshabilitado)
                               : ElevatedButton.icon(
                                   icon: const Icon(Icons.person_outline,
                                       size: 18, color: Colors.white70),
@@ -307,7 +317,7 @@ class TarjetaReporteCercano extends StatelessWidget {
                                           : 'Es tu reporte',
                                       style:
                                           const TextStyle(color: Colors.white70)),
-                                  onPressed: null, // Deshabilitado
+                                  onPressed: null, // Deshabilitado intencionalmente
                                   style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.blueGrey.shade400,
                                       padding:

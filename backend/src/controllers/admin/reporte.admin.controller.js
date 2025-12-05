@@ -1,6 +1,7 @@
 // backend/src/controllers/admin/reporte.admin.controller.js
 const db = require('../../config/db'); // <-- Adjusted path
-const servicioNotificacionesZonas = require('../../services/servicioNotificacionesZonas'); // <-- Adjusted path
+const servicioNotificacionesZonas = require('../../services/servicioNotificacionesZonas');
+const socketNotificationService = require('../../services/socketNotificationService');
 
 const getAllAdminReports = async (req, res) => {
   try {
@@ -44,7 +45,10 @@ const getAllAdminReports = async (req, res) => {
     // Status filter (unchanged)
     if (status) { whereClauses.push(`r.estado = $${paramIndex++}`); queryParams.push(status); }
     // Category filter (unchanged logic)
-    if (categoryId && !showOnlySuggested) { whereClauses.push(`r.id_categoria = $${paramIndex++}`); queryParams.push(categoryId); }
+    if (categoryId && suggestedOnly !== 'true') { 
+        whereClauses.push(`r.id_categoria = $${paramIndex++}`); 
+        queryParams.push(categoryId); 
+    }
     // Suggested Only filter (unchanged logic)
     if (suggestedOnly === 'true') { whereClauses.push(`r.categoria_sugerida IS NOT NULL AND r.categoria_sugerida != ''`); }
 
@@ -233,16 +237,15 @@ const getReviewRequests = async (req, res) => {
   }
 };
 const resolveReviewRequest = async (req, res) => {
-  const { id } = req.params; // ID de la solicitud_revision
-  const { action, motivoRechazo } = req.body; // 'aprobar' o 'desestimar', motivoRechazo opcional
-  const client = await db.getClient(); // Usar transacción
+  const { id } = req.params; // ID de la solicitud
+  const { action, motivoRechazo } = req.body; 
+  const client = await db.getClient();
 
   try {
     await client.query('BEGIN');
 
-    // Obtener datos de la solicitud y verificar estado
     const solicitudResult = await client.query(
-        "SELECT id_reporte, id_lider FROM solicitudes_revision WHERE id = $1 AND estado = 'pendiente' FOR UPDATE", // FOR UPDATE para bloqueo
+        "SELECT id_reporte, id_lider FROM solicitudes_revision WHERE id = $1 AND estado = 'pendiente' FOR UPDATE",
         [id]
     );
 
@@ -255,47 +258,56 @@ const resolveReviewRequest = async (req, res) => {
     let nuevoEstadoSolicitud = '';
     let notificationTitle = '';
     let notificationBody = '';
-    let notificationPayload = '';
+    let payloadObj = {}; // Objeto para el payload
 
     if (action === 'aprobar') {
       nuevoEstadoSolicitud = 'aprobada';
-      // Cambiar estado del reporte a pendiente_verificacion
       await client.query(
-          "UPDATE reportes SET estado = 'pendiente_verificacion', fecha_actualizacion = NOW(), id_lider_verificador = NULL WHERE id = $1", // Quitar verificador anterior
+          "UPDATE reportes SET estado = 'pendiente_verificacion', fecha_actualizacion = NOW(), id_lider_verificador = NULL WHERE id = $1",
           [id_reporte]
       );
       notificationTitle = `Solicitud Aprobada`;
-      notificationBody = `Tu solicitud de revisión para el reporte #${id_reporte} fue aprobada. El reporte está nuevamente pendiente.`;
-      notificationPayload = JSON.stringify({ type: 'verification_panel' }); // Ir a pendientes
+      notificationBody = `Tu solicitud de revisión para el reporte #${id_reporte} fue aprobada.`;
+      
+      // --- CAMBIO: Payload específico apuntando al reporte ---
+      payloadObj = { type: 'report_detail', id: id_reporte }; 
 
     } else if (action === 'desestimar') {
-      nuevoEstadoSolicitud = 'desestimada'; // Cambiado de 'rechazada' a 'desestimada' para coincidir con tu schema
-      // No se cambia el estado del reporte original
+      nuevoEstadoSolicitud = 'desestimada';
       notificationTitle = `Solicitud Desestimada`;
       notificationBody = `Tu solicitud de revisión para el reporte #${id_reporte} fue desestimada. ${motivoRechazo || ''}`.trim();
-      notificationPayload = JSON.stringify({ type: 'moderation_history' }); // Ir al historial
+      
+      // --- CAMBIO: Payload específico para que el líder vea el reporte rechazado ---
+      payloadObj = { type: 'report_detail', id: id_reporte }; 
     } else {
        await client.query('ROLLBACK');
        return res.status(400).json({ message: 'Acción inválida.' });
     }
 
-    // Actualizar estado de la solicitud
     await client.query(
         "UPDATE solicitudes_revision SET estado = $1 WHERE id = $2",
         [nuevoEstadoSolicitud, id]
     );
 
-    // (Opcional) Registrar en moderation_log si es necesario
-    // await client.query("INSERT INTO moderation_log (...) VALUES (...)");
-
     await client.query('COMMIT');
 
-    // Notificar al líder (fuera de TX)
+    // Notificar al líder
     const io = req.app.get('socketio');
+    const payloadJson = JSON.stringify(payloadObj);
+    const categoria = 'Sistema'; // Categoría para el icono
+
     try {
-        await db.query('INSERT INTO notificaciones (id_usuario_receptor, titulo, cuerpo, payload) VALUES ($1, $2, $3, $4)', [id_lider, notificationTitle, notificationBody, notificationPayload]);
-        socketNotificationService.sendNotification(io, id_lider, { title: notificationTitle, body: notificationBody, payload: notificationPayload });
-    } catch (notifyError) { console.error(`Error al notificar resolución solicitud ${id}:`, notifyError); }
+        await db.query(
+            'INSERT INTO notificaciones (id_usuario_receptor, titulo, cuerpo, payload, categoria) VALUES ($1, $2, $3, $4, $5)', 
+            [id_lider, notificationTitle, notificationBody, payloadJson, categoria]
+        );
+        socketNotificationService.sendNotification(io, id_lider, { 
+            title: notificationTitle, 
+            body: notificationBody, 
+            payload: payloadJson,
+            categoria: categoria 
+        });
+    } catch (notifyError) { console.error(`Error al notificar resolución:`, notifyError); }
 
     res.status(200).json({ message: `Solicitud marcada como ${nuevoEstadoSolicitud}.` });
 
@@ -308,22 +320,136 @@ const resolveReviewRequest = async (req, res) => {
   }
 };
 
+const getAllConversations = async (req, res) => {
+  try {
+    const { search } = req.query;
+    
+    let query = `
+      WITH LastMessages AS (
+        SELECT DISTINCT ON (m.id_reporte) 
+          m.id_reporte, 
+          m.mensaje, 
+          m.fecha_envio, 
+          m.id_remitente,
+          m.es_admin
+        FROM chat_messages m
+        ORDER BY m.id_reporte, m.fecha_envio DESC
+      )
+      SELECT 
+        lm.*,
+        r.titulo as reporte_titulo,
+        r.codigo_reporte,
+        COALESCE(u.alias, u.nombre) as usuario_nombre,
+        u.email as usuario_email,
+        r.foto_url,
+        -- CORRECCIÓN CRÍTICA: Contamos mensajes donde es_admin = FALSE (son del usuario)
+        -- y leido = FALSE. Estos son los que el Admin debe atender.
+        (SELECT COUNT(*) FROM chat_messages cm 
+         WHERE cm.id_reporte = lm.id_reporte 
+         AND cm.es_admin = false 
+         AND cm.leido = false
+        ) as unread_count
+      FROM LastMessages lm
+      JOIN reportes r ON lm.id_reporte = r.id
+      JOIN usuarios u ON r.id_usuario = u.id
+    `;
+
+    const params = [];
+    let paramIndex = 1;
+    
+    if (search) {
+      query += ` WHERE (r.titulo ILIKE $${paramIndex} OR u.nombre ILIKE $${paramIndex} OR u.alias ILIKE $${paramIndex} OR r.codigo_reporte ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+    }
+
+    // Ordenamos por fecha descendente en SQL también por defecto
+    query += ` ORDER BY lm.fecha_envio DESC`;
+
+    const result = await db.query(query, params);
+    res.status(200).json(result.rows);
+
+  } catch (error) {
+    console.error("Error en getAllConversations:", error);
+    if(!res.headersSent) res.status(500).json({ message: 'Error al cargar conversaciones.' });
+  }
+};
+
 const getChatHistory = async (req, res) => {
   const { id: id_reporte } = req.params;
+  const client = await db.getClient();
+
   try {
+    await client.query('BEGIN');
+
+    // Obtener mensajes
     const query = `
-      SELECT m.id, m.id_reporte, m.id_remitente, m.remitente_alias, m.mensaje,
+      SELECT m.id, m.id_reporte, m.id_remitente, m.remitente_alias, m.mensaje, m.es_admin,
              to_char(m.fecha_envio, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as timestamp
       FROM chat_messages m
-      -- No necesitamos JOIN usuarios aquí si ya guardamos el alias
       WHERE m.id_reporte = $1
       ORDER BY m.fecha_envio ASC
     `;
-    const result = await db.query(query, [id_reporte]);
+    const result = await client.query(query, [id_reporte]);
+
+    // MARCAR COMO LEÍDO (Perspectiva Admin)
+    // Actualizamos a leido=true solo los mensajes que NO son del admin (es_admin=false)
+    await client.query(
+      `UPDATE chat_messages 
+       SET leido = true 
+       WHERE id_reporte = $1 AND es_admin = false AND leido = false`,
+      [id_reporte]
+    );
+
+    await client.query('COMMIT');
     res.status(200).json(result.rows);
+
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error fetching chat history:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
+    if(!res.headersSent) res.status(500).json({ message: 'Error interno del servidor.' });
+  } finally {
+    client.release();
+  }
+};
+
+// Marcar mensajes del usuario como leídos por el admin
+const markChatAsReadAdmin = async (req, res) => {
+  const { id: id_reporte } = req.params;
+  const client = await db.getClient();
+  try {
+    await client.query('BEGIN');
+    // El admin lee los mensajes que envió el USUARIO (es_admin = false) y que no estaban leídos
+    const result = await client.query(
+      `UPDATE chat_messages 
+       SET leido = true 
+       WHERE id_reporte = $1 AND es_admin = false AND leido = false`,
+      [id_reporte]
+    );
+    await client.query('COMMIT');
+    
+    res.status(200).json({ message: 'Chat marcado como leído.', updated: result.rowCount });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error("Error marking chat read (admin):", error);
+    if(!res.headersSent) res.status(500).json({ message: 'Error interno.' });
+  } finally {
+    client.release();
+  }
+};
+
+const getUnreadGlobalCount = async (req, res) => {
+  try {
+    // Contamos cuántos reportes tienen al menos un mensaje del usuario sin leer
+    const query = `
+      SELECT COUNT(DISTINCT id_reporte) as count
+      FROM chat_messages
+      WHERE es_admin = false AND leido = false
+    `;
+    const result = await db.query(query);
+    res.status(200).json({ count: parseInt(result.rows[0].count) });
+  } catch (error) {
+    console.error("Error counting unread chats:", error);
+    res.status(500).json({ count: 0 });
   }
 };
 
@@ -337,5 +463,8 @@ module.exports = {
   getLatestPendingReports,
   getReviewRequests,
   resolveReviewRequest,
+  getAllConversations,
   getChatHistory,
+  markChatAsReadAdmin,
+  getUnreadGlobalCount,
 };
