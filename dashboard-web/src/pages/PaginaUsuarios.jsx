@@ -193,7 +193,7 @@ function PaginaUsuarios() {
 
   // --- RENDERIZADO MEJORADO ---
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '1600px', mx: 'auto' }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '1200px', mx: 'auto' }}>
       
       {/* 1. Header más limpio */}
       <Box sx={{ mb: 4 }}>
@@ -259,7 +259,7 @@ function PaginaUsuarios() {
                 name="search"
                 value={filters.search} onChange={handleFilterChange}
                 size="small" 
-                sx={{ flexGrow: 1, minWidth: { xs: '100%', md: '350px' } }}
+                sx={{ flexGrow: 1, minWidth: { xs: '100%', md: '300px' } }}
                 InputProps={{ 
                   startAdornment: (<InputAdornment position="start"><SearchIcon color="action"/></InputAdornment>),
                   sx: { borderRadius: 2 }
@@ -280,7 +280,7 @@ function PaginaUsuarios() {
                     <MenuItem value="admin">Administrador</MenuItem>
                   </Select>
               </FormControl>
-              <FormControl size="small" sx={{ minWidth: 160 }}>
+              <FormControl size="small" sx={{ minWidth: 130 }}>
                   <InputLabel>Estado</InputLabel>
                   <Select name="status" value={filters.status} label="Estado" onChange={handleFilterChange} sx={{ borderRadius: 2 }}>
                     <MenuItem value="">Cualquier Estado</MenuItem>

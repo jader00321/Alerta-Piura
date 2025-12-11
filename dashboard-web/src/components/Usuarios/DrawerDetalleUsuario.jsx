@@ -145,7 +145,7 @@ function DrawerDetalleUsuario({
       */}
       <Box sx={{ 
         position: 'relative', 
-        p: 4, 
+        p: 2, 
         background: `linear-gradient(180deg, ${theme.palette.grey[900]} 0%, ${theme.palette.grey[800]} 100%)`,
         color: 'white',
         textAlign: 'center',

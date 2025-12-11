@@ -1,4 +1,4 @@
-/*import 'dart:io';
+import 'dart:io';
 
 /// Define las constantes estáticas para conectarse a la API.
 ///
@@ -31,8 +31,8 @@ class ApiConstants {
 
   /// Endpoint para el inicio de sesión de usuarios.
   static String loginEndpoint = '/api/auth/login';
-}*/
-
+}
+/*
 import 'dart:io';
 
 class ApiConstants {
@@ -41,8 +41,8 @@ class ApiConstants {
   // --------------------------------------------------
   // 1. Abre CMD en Windows y escribe: ipconfig
   // 2. Copia la "Dirección IPv4" y pégala aquí abajo:
-  static const String _miIpLocal = '192.168.100.5'; // <--- ¡CAMBIA ESTO POR TU IP!
-  
+  //static const String _miIpLocal = '192.168.100.5';
+  static const String _miIpLocal = '192.168.56.1';
   // Puerto de tu servidor Node.js
   static const String _puerto = '3000'; 
 
@@ -63,4 +63,4 @@ class ApiConstants {
   // Endpoints
   static String registerEndpoint = '/api/auth/register';
   static String loginEndpoint = '/api/auth/login';
-}
+}*/
