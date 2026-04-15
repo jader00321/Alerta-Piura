@@ -83,7 +83,7 @@ Para desplegar el ecosistema completo de manera local:
 * PostgreSQL instalado y configurado.
 
 ### 2. Preparación del Backend
-  ```bash
+  ``bash
   cd backend
   npm install
   # Configura tu .env con las credenciales de BD y Cloudinary
