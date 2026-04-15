@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="mobile_app/assets/icons/Icon-512.png" alt="Alerta Piura Logo" width="150">
+  <img src="dashboard-web/src/assets/logo.png" alt="Alerta Piura Logo" width="150">
 </p>
 
 <h1 align="center">Alerta Piura: Plataforma Cívica Integral</h1>
