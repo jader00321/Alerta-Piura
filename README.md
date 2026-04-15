@@ -83,23 +83,26 @@ Para desplegar el ecosistema completo de manera local:
 * PostgreSQL instalado y configurado.
 
 ### 2. Preparación del Backend
-  ``bash
+  ```bash
   cd backend
   npm install
   # Configura tu .env con las credenciales de BD y Cloudinary
   npm start
+  ```
 
 ### 3. Lanzamiento del Dashboard Web
   ```bash
   cd dashboard-web
   npm install
   npm run dev
+  ```
 
 ### 4. Ejecución de la App Móvil
   ```bash
   cd mobile_app
   flutter pub get
   flutter run
+  ```
 
 ### 📈 Impacto Tecnológico
 
