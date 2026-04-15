@@ -85,20 +85,26 @@ Para desplegar el ecosistema completo de manera local:
 ### 2. Preparación del Backend
   ```bash
   cd backend
+  ```bash
   npm install
   # Configura tu .env con las credenciales de BD y Cloudinary
+  ```bash
   npm start
 
 ### 3. Lanzamiento del Dashboard Web
   ```Bash
   cd dashboard-web
+  ```bash
   npm install
+  ```bash
   npm run dev
 
 ### 4. Ejecución de la App Móvil
   ```Bash
   cd mobile_app
+  ```bash
   flutter pub get
+  ```bash
   flutter run
 
 ### 📈 Impacto Tecnológico
